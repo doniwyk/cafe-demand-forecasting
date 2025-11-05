@@ -159,4 +159,34 @@ conda activate base
 
 ## Project Structure
 
-will put this later
+```
+cafe-supply-forecasting/
+├── .gitignore                    # Git ignore file
+├── README.md                     # Project documentation
+├── environment.yml               # Conda environment specification
+├── requirements.txt              # Pip requirements file
+├── export-env.sh                 # Environment export script
+├── data/                         # Data directory
+│   ├── predictions/              # Model predictions
+│   │   └── example.csv
+│   └── raw/                      # Raw data files
+│   └── processed/                # Processed data files
+├── models/                       # Trained model files
+│   └── example.pkl
+├── notebooks/                    # Jupyter notebooks
+│   └── example.ipynb
+├── scripts/                      # Utility scripts
+│   ├── forecast.py               # Forecasting script
+│   └── train_models.py           # Model training script
+├── src/                          # Source code
+│   ├── data/                     # Data processing modules
+│   │   └── __init__.py
+│   ├── evaluation/               # Model evaluation modules
+│   │   └── __init__.py
+│   ├── models/                   # Model definitions
+│   │   └── __init__.py
+│   └── utils/                    # Utility functions
+│       └── __init__.py
+└── tests/                        # Unit Test files
+    └── __init__.py
+```
