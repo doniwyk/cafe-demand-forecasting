@@ -239,6 +239,5 @@ def main():
         print('\nData summary:')
         print(merged_data.info())
 
-
 if __name__ == "__main__":
     main()

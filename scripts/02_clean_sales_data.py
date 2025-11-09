@@ -464,7 +464,7 @@ def main():
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sales_path = os.path.join(base_path, 'data', 'processed', 'sales_data.csv')
     menu_bom_path = os.path.join(base_path, 'data', 'raw', 'bom', 'menu_bom.csv')
-    output_path = os.path.join(base_path, 'data', 'processed', 'sales_data.csv')
+    output_path = os.path.join(base_path, 'data', 'processed', 'sales_data_cleaned.csv')
 
     print('=' * 80)
     print('SALES DATA CLEANER')

@@ -304,7 +304,7 @@ def main():
     """Main execution function"""
     # Define file paths
     base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sales_path = os.path.join(base_path, 'data', 'processed', 'sales_data_copy.csv')
+    sales_path = os.path.join(base_path, 'data', 'processed', 'sales_data_cleaned.csv')
     menu_bom_path = os.path.join(base_path, 'data', 'raw', 'bom', 'menu_bom.csv')
     condiment_bom_path = os.path.join(base_path, 'data', 'raw', 'bom', 'condiment_bom.csv')
     output_path = os.path.join(base_path, 'data', 'processed', 'daily_raw_material_requirements.csv')
