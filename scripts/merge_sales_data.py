@@ -1,10 +1,29 @@
+"""
+Sales Data Merger Script
+
+This script merges two sales CSV files with different languages (Indonesian and English)
+into a single standardized dataset. It handles:
+1. Translation of Indonesian columns and values to English
+2. Date parsing from multiple formats
+3. Numeric data cleaning and standardization
+"""
+
 import pandas as pd
 import numpy as np
 import os
+from typing import Dict, Optional
 
-def translate_indonesian_to_english(df_indonesian):
-    """Translate Indonesian column names and values to English"""
-    
+
+def translate_indonesian_to_english(df_indonesian: pd.DataFrame) -> pd.DataFrame:
+    """
+    Translate Indonesian column names and values to English
+
+    Args:
+        df_indonesian: DataFrame with Indonesian column names and values
+
+    Returns:
+        DataFrame with translated English columns and values
+    """
     # Column mapping from Indonesian to English
     column_mapping = {
         'Tanggal': 'Date',
@@ -55,13 +74,21 @@ def translate_indonesian_to_english(df_indonesian):
     
     return df_indonesian
 
-def parse_date(date_str):
-    """Parse different date formats to standard datetime"""
+def parse_date(date_str) -> pd.Timestamp:
+    """
+    Parse different date formats to standard datetime
+
+    Args:
+        date_str: Date string in various formats
+
+    Returns:
+        Parsed datetime object or NaT if parsing fails
+    """
     if pd.isna(date_str):
         return pd.NaT
-    
+
     date_str = str(date_str).strip()
-    
+
     # Try different date formats
     formats_to_try = [
         '%d/%m/%y %H.%M',  # Indonesian format: 13/05/25 23.43
@@ -69,66 +96,83 @@ def parse_date(date_str):
         '%m/%d/%y %I:%M %p',  # English format: 9/25/25 10:07 PM
         '%m/%d/%Y %I:%M %p',  # English format with 4-digit year
     ]
-    
+
     for fmt in formats_to_try:
         try:
             return pd.to_datetime(date_str, format=fmt)
         except:
             continue
-    
+
     # If none of the specific formats work, try pandas auto-detection
     try:
         return pd.to_datetime(date_str)
     except:
         return pd.NaT
 
-def clean_numeric_columns(df):
-    """Clean and convert numeric columns"""
+def clean_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Clean and convert numeric columns to proper numeric types
+
+    Args:
+        df: DataFrame with numeric columns that may contain non-numeric characters
+
+    Returns:
+        DataFrame with cleaned numeric columns
+    """
     numeric_columns = [
-        'Quantity', 'Gross sales', 'Discounts', 'Net sales', 
+        'Quantity', 'Gross sales', 'Discounts', 'Net sales',
         'Cost of goods', 'Gross profit', 'Taxes'
     ]
-    
+
     for col in numeric_columns:
         if col in df.columns:
             # Remove any non-numeric characters except decimal point
             df[col] = df[col].astype(str).str.replace(r'[^\d.]', '', regex=True)
             # Convert to numeric, errors='coerce' will turn invalid values to NaN
             df[col] = pd.to_numeric(df[col], errors='coerce')
-    
+
     return df
 
-def merge_sales_files(file1_path, file2_path, output_path):
-    """Merge two sales CSV files with different languages"""
-    
-    print(f"Reading file 1: {file1_path}")
-    print(f"Reading file 2: {file2_path}")
-    
+def merge_sales_files(file1_path: str, file2_path: str, output_path: str) -> Optional[pd.DataFrame]:
+    """
+    Merge two sales CSV files with different languages
+
+    Args:
+        file1_path: Path to Indonesian sales CSV file
+        file2_path: Path to English sales CSV file
+        output_path: Path where merged CSV should be saved
+
+    Returns:
+        Merged DataFrame or None if merge fails
+    """
+    print(f'Reading file 1: {file1_path}')
+    print(f'Reading file 2: {file2_path}')
+
     # Read both files
     try:
         # Indonesian file (first file)
         df1 = pd.read_csv(file1_path, sep=';')
-        print(f"File 1 loaded successfully. Shape: {df1.shape}")
-        
+        print(f'File 1 loaded successfully. Shape: {df1.shape}')
+
         # English file (second file)
         df2 = pd.read_csv(file2_path, sep=',')
-        print(f"File 2 loaded successfully. Shape: {df2.shape}")
-        
+        print(f'File 2 loaded successfully. Shape: {df2.shape}')
+
     except Exception as e:
-        print(f"Error reading files: {e}")
-        return
-    
+        print(f'Error reading files: {e}')
+        return None
+
     # Translate Indonesian file to English
-    print("Translating Indonesian file to English...")
+    print('Translating Indonesian file to English...')
     df1_translated = translate_indonesian_to_english(df1)
-    
+
     # Clean numeric columns in both dataframes
-    print("Cleaning numeric columns...")
+    print('Cleaning numeric columns...')
     df1_translated = clean_numeric_columns(df1_translated)
     df2 = clean_numeric_columns(df2)
-    
+
     # Parse dates in both dataframes
-    print("Parsing dates...")
+    print('Parsing dates...')
     df1_translated['Date'] = df1_translated['Date'].apply(parse_date)
     df2['Date'] = df2['Date'].apply(parse_date)
     
@@ -154,41 +198,47 @@ def merge_sales_files(file1_path, file2_path, output_path):
     df2 = df2[column_order]
     
     # Combine the dataframes
-    print("Combining dataframes...")
+    print('Combining dataframes...')
     combined_df = pd.concat([df1_translated, df2], ignore_index=True)
-    
+
     # Sort by date
-    print("Sorting by date...")
+    print('Sorting by date...')
     combined_df = combined_df.sort_values('Date', na_position='last')
-    
+
     # Reset index
     combined_df = combined_df.reset_index(drop=True)
-    
+
     # Save the merged file
-    print(f"Saving merged file to: {output_path}")
+    print(f'Saving merged file to: {output_path}')
     combined_df.to_csv(output_path, index=False)
-    
-    print(f"Merge completed successfully!")
-    print(f"Total records: {len(combined_df)}")
-    print(f"Date range: {combined_df['Date'].min()} to {combined_df['Date'].max()}")
+
+    print(f'Merge completed successfully!')
+    print(f'Total records: {len(combined_df)}')
+    print(f'Date range: {combined_df["Date"].min()} to {combined_df["Date"].max()}')
     
     return combined_df
 
-if __name__ == "__main__":
+def main():
+    """Main execution function"""
     # Define file paths
-    file1_path = "data/raw/sales/receipts-by-item-2022-01-01-2025-06-30.csv"
-    file2_path = "data/raw/sales/receipts-by-item-2025-05-01-2025-09-25.csv"
-    output_path = "data/processed/sales_data.csv"
-    
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    file1_path = os.path.join(base_path, 'data', 'raw', 'sales', 'receipts-by-item-2022-01-01-2025-06-30.csv')
+    file2_path = os.path.join(base_path, 'data', 'raw', 'sales', 'receipts-by-item-2025-05-01-2025-09-25.csv')
+    output_path = os.path.join(base_path, 'data', 'processed', 'sales_data.csv')
+
     # Create output directory if it doesn't exist
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
+
     # Merge the files
     merged_data = merge_sales_files(file1_path, file2_path, output_path)
-    
+
     if merged_data is not None:
-        print("\nFirst few rows of merged data:")
+        print('\nFirst few rows of merged data:')
         print(merged_data.head())
-        
-        print("\nData summary:")
+
+        print('\nData summary:')
         print(merged_data.info())
+
+
+if __name__ == "__main__":
+    main()
