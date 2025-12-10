@@ -95,8 +95,25 @@ class SalesDataTransformer:
         # Clean Item names
         df['Item'] = df['Item'].str.strip()
         
+        # Consolidate espresso variants - treat 'espresso bon-bon' as 'espresso'
+        df['Item'] = df['Item'].str.replace(r'^espresso bon-bon$', 'espresso', case=False, regex=True)
+        
         # Filter out invalid quantities
         df = df[df['Quantity'] > 0]
+        
+        # Filter out items with 'add' prefix (case insensitive) - these are modifiers
+        initial_count = len(df)
+        df = df[~df['Item'].str.lower().str.startswith('add')]
+        filtered_count = initial_count - len(df)
+        if filtered_count > 0:
+            print(f"Filtered out {filtered_count} transactions with 'add' prefix (modifiers)")
+        
+        # Filter out discontinued items - cheese cake
+        initial_count = len(df)
+        df = df[~df['Item'].str.lower().str.contains('cheese cake')]
+        filtered_count = initial_count - len(df)
+        if filtered_count > 0:
+            print(f"Filtered out {filtered_count} transactions for discontinued item 'cheese cake'")
         
         # Filter out returns/refunds (negative quantities already handled above)
         
