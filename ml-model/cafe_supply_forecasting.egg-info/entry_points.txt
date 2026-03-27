@@ -1,0 +1,2 @@
+[console_scripts]
+forecast = scripts.forecast:main

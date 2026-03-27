@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cafe-supply-forecasting"
+version = "0.1.0"
+description = "Cafe supply forecasting system with XGBoost models"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scikit-learn>=1.3",
+    "xgboost>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "jupyter>=1.0",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "statsmodels>=0.14",
+    "scipy>=1.11",
+]
+
+[project.scripts]
+forecast = "scripts.forecast:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]
