@@ -1,0 +1,21 @@
+Date,Receipt number,Receipt type,Category,SKU,Item,Variant,Modifiers applied,Quantity,Gross sales,Discounts,Net sales,Cost of goods,Gross profit,Taxes,Dining option,POS,Store,Cashier name,Customer name,Customer contacts,Comment,Status
+9/25/25 10:07 PM,3-1551,Sale,,10009,kasmaran,,,1.000,23000.00,0.00,23000.00,11000.00,12000.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 10:07 PM,3-1551,Sale,Tea Based,60004,Lychee Tea Ice,,,1.000,17000.00,0.00,17000.00,4975.00,12025.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 10:06 PM,3-1550,Sale,Snack,80001,Basreng,,,1.000,16000.00,0.00,16000.00,4744.00,11256.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 8:49 PM,3-1549,Sale,Tea Based,60006,Milk Tea Ice,,,1.000,17000.00,0.00,17000.00,2790.00,14210.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 8:49 PM,3-1549,Sale,Espresso Based,30007,Latte Ice,,,1.000,27000.00,0.00,27000.00,9723.00,17277.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 8:33 PM,3-1548,Sale,Tea Based,60006,Milk Tea Ice,,,1.000,17000.00,0.00,17000.00,2790.00,14210.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 8:01 PM,3-1547,Sale,Coffee Based,10003,Vietnam Drip,,,1.000,18000.00,0.00,18000.00,3415.00,14585.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 8:01 PM,3-1547,Sale,Toast,11004,Roti Bakar Keju,,,1.000,14000.00,0.00,14000.00,6214.00,7786.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:55 PM,3-1546,Sale,Signature Based,40004,Husgendam Ice,,,1.000,24000.00,0.00,24000.00,9179.00,14821.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:54 PM,3-1545,Sale,Snack,80001,Basreng,,,1.000,16000.00,0.00,16000.00,4744.00,11256.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:32 PM,3-1544,Sale,Tea Based,60001,Lemon Hot,,,1.000,16000.00,0.00,16000.00,1284.00,14716.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:32 PM,3-1544,Sale,,10021,V60 argopuro,,,1.000,25000.00,0.00,25000.00,0.00,25000.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:32 PM,3-1544,Sale,Toast,11004,Roti Bakar Keju,,,1.000,14000.00,0.00,14000.00,6214.00,7786.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:16 PM,3-1543,Sale,Tea Based,60004,Lychee Tea Ice,,,1.000,17000.00,0.00,17000.00,4975.00,12025.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 7:16 PM,3-1543,Sale,Signature Based,40002,Kopi Susu Ice,,,1.000,22000.00,0.00,22000.00,7735.00,14265.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 6:26 PM,3-1542,Sale,Signature Based,40004,Husgendam Ice,,,1.000,24000.00,0.00,24000.00,9179.00,14821.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 6:26 PM,3-1542,Sale,Milk Based,20005,Coklat Ice,,,1.000,24000.00,0.00,24000.00,7376.00,16624.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 6:26 PM,3-1542,Sale,Snack,80003,Kentang Goreng,,,1.000,16000.00,0.00,16000.00,7288.00,8712.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 6:26 PM,3-1542,Sale,Snack,80006,Tempe Mendoan,,,1.000,17000.00,0.00,17000.00,8512.00,8488.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
+9/25/25 6:26 PM,3-1542,Sale,Snack,80004,Tahu Tuna,,,1.000,16000.00,0.00,16000.00,9653.00,6347.00,0.00,Dine in,POS 2,Husgendam Coffee Indonesia,Husgendam,,,,Closed
