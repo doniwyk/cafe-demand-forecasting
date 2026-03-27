@@ -1,0 +1,33 @@
+Tanggal;Nomor struk;Jenis struk;Kategori;SKU;Barang;Varian;Pemodifikasi diterapkan;Kuantitas;Penjualan Kotor;Diskon;Penjualan bersih;Harga pokok;Laba kotor;Pajak;Jenis pesanan;POS;Toko;Nama Kasir;Nama Pelanggan;Kontak Pelanggan;Komentar;Keadaan
+13/05/25 23.43;4-13284;Penjualan;Espresso based;10025;Americano Hot;;;1.000;17000.00;00.00;17000.00;5000.00.00;12000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;4 Naufal Satrio;naufalsatrio82@gmail.com, 0895364316009;;Ditutup
+13/05/25 22.34;4-13283;Penjualan;Espresso based;25;Kopi susu ice;;;1.000;20000.00;00.00;20000.00;6000.00.00;14000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 22.34;4-13283;Penjualan;snack;10018;Basreng;;;1.000;15000.00;00.00;15000.00;4500.00.00;10500.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 22.29;4-13282;Penjualan;Specialty;61;Cappucino;;;1.000;23000.00;00.00;23000.00;6000.00.00;17000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 22.29;4-13282;Penjualan;;10115;Add caramel topping;;;1.000;2000.00.00;00.00;2000.00.00;1000.00.00;1000.00.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 21.26;4-13281;Penjualan;Specialty;61;Cappucino;;;1.000;23000.00;00.00;23000.00;6000.00.00;17000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 21.26;4-13281;Penjualan;;10012;Coklat ice;;;1.000;23000.00;00.00;23000.00;5000.00.00;18000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 21.26;4-13281;Penjualan;snack;82;Donat;;;1.000;16000.00;00.00;16000.00;6000.00.00;10000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 21.26;4-13281;Penjualan;snack;10082;Tempe mendoan;;;2.000;32000.00;00.00;32000.00;10000.00;22000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.33;4-13280;Penjualan;Tea;10014;Lemon Tea Ice;;;1.000;15000.00;00.00;15000.00;3000.00.00;12000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.24;4-13279;Penjualan;;10012;Coklat ice;;;2.000;46000.00;00.00;46000.00;10000.00;36000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.24;4-13279;Penjualan;Signature;10074;Nirmala Hot;;;1.000;24000.00;00.00;24000.00;8000.00.00;16000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.24;4-13279;Penjualan;Other;87;Singkong keju;;;1.000;18000.00;00.00;18000.00;5000.00.00;13000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.14;4-13278;Penjualan;Tea;10085;Milk Tea Ice;;;1.000;16000.00;00.00;16000.00;3000.00.00;13000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;9 Nizar;neruha48@gmail.com, 083853324866;;Ditutup
+13/05/25 20.07;4-13277;Penjualan;Espresso based;25;Kopi susu ice;;;1.000;20000.00;00.00;20000.00;6000.00.00;14000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.01;4-13276;Penjualan;Coffee Base;10000;Vietnam drip;;;1.000;17000.00;00.00;17000.00;5000.00.00;12000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 20.01;4-13275;Penjualan;Coffee Base;160;Tubruk Susu;;;1.000;15000.00;00.00;15000.00;3000.00.00;12000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 19.46;4-13274;Penjualan;Maincourse;10094;Nasi Cumi Asin;;;1.000;23000.00;00.00;23000.00;10000.00;13000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 19.46;4-13274;Penjualan;Mie;521;Mie rebus;;;1.000;14000.00;00.00;14000.00;5000.00.00;9000.00.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+13/05/25 19.46;4-13274;Penjualan;Milk Base;23;Coklat Hot;;;1.000;23000.00;00.00;23000.00;5000.00.00;18000.00;00.00;Makan di tempat;samsung tab;Husgendam Coffee;Pemilik;;;;Ditutup
+
+
+
+
+
+
+06/01/22 21.18;Jan-76;Penjualan;Tea;42;Lemon Tea Hot;;;1.000;12000.00;00.00;12000.00;2400.00.00;9600.00.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup
+06/01/22 20.27;Jan-72;Penjualan;Milk Base;22;Matcha Hot;;;1.000;20000.00;00.00;20000.00;3600.00.00;16400.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup
+06/01/22 20.09;Jan-71;Penjualan;Milk Base;22;Matcha Hot;;;1.000;20000.00;00.00;20000.00;3600.00.00;16400.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup
+06/01/22 17.22;Jan-66;Penjualan;Milk Base;22;Matcha Hot;;;1.000;20000.00;00.00;20000.00;3600.00.00;16400.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup
+06/01/22 17.22;Jan-66;Penjualan;Tea;42;Lemon Tea Hot;;;1.000;12000.00;00.00;12000.00;2400.00.00;9600.00.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup
+06/01/22 15.50;Jan-63;Penjualan;Tea;42;Lemon Tea Hot;;;1.000;12000.00;00.00;12000.00;2400.00.00;9600.00.00;00.00;Makan di tempat;POS 1;Husgendam Coffee;Pemilik;;;;Ditutup

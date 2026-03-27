@@ -1,0 +1,435 @@
+Tipe,Item,Bahan,Qty,Unit
+Coffee Based,Tubruk,Robusta,13.0,gr
+Coffee Based,Tubruk,Air Cleo,170.0,ml
+Coffee Based,Tubruk Susu,Robusta,13.0,gr
+Coffee Based,Tubruk Susu,Air Cleo,130.0,ml
+Coffee Based,Tubruk Susu,SKM,25.0,ml
+Coffee Based,Vietnam Drip,Robusta,15.0,gr
+Coffee Based,Vietnam Drip,Air Cleo,150.0,ml
+Coffee Based,Vietnam Drip,SKM,25.0,ml
+Coffee Based,v60,Arabika,15.0,gr
+Coffee Based,v60,Air Cleo,200.0,ml
+Milk Based,Coklat Hot,Powder Coklat,12.0,gr
+Milk Based,Coklat Hot,BSJ -  Simple Syrup,10.0,ml
+Milk Based,Coklat Hot,Susu Karton,140.0,ml
+Milk Based,Coklat Hot,Powder Matcha,12.0,gr
+Milk Based,Coklat Hot,BSJ -  Simple Syrup,10.0,ml
+Milk Based,Coklat Hot,Susu Karton,140.0,ml
+Milk Based,Matcha Hot,Powder Matcha,12.0,gr
+Milk Based,Matcha Hot,BSJ -  Simple Syrup,10.0,ml
+Milk Based,Matcha Hot,Susu Karton,140.0,ml
+Milk Based,Red Velvet Hot,Powder RedVelvet,12.0,gr
+Milk Based,Red Velvet Hot,BSJ -  Simple Syrup,10.0,ml
+Milk Based,Red Velvet Hot,Susu Karton,140.0,ml
+Milk Based,Taro Hot,Powder Taro,12.0,gr
+Milk Based,Taro Hot,BSJ -  Simple Syrup,10.0,ml
+Milk Based,Taro Hot,Susu Karton,140.0,ml
+Milk Based,Coklat Ice,Powder Coklat,15.0,gr
+Milk Based,Coklat Ice,BSJ -  Simple Syrup,20.0,ml
+Milk Based,Coklat Ice,Susu Karton,70.0,ml
+Milk Based,Coklat Ice,Es Batu,4.0,cubes
+Milk Based,Coklat Ice,BSJ -  Creamer,50.0,gr
+Milk Based,Coklat Ice,BSJ -  Whipped Cream,18.0,gr
+Milk Based,Matcha Ice,Powder Matcha,15.0,gr
+Milk Based,Matcha Ice,BSJ -  Simple Syrup,20.0,ml
+Milk Based,Matcha Ice,Susu Karton,70.0,ml
+Milk Based,Matcha Ice,Es Batu,4.0,cubes
+Milk Based,Matcha Ice,BSJ -  Creamer,50.0,gr
+Milk Based,Matcha Ice,BSJ -  Whipped Cream,18.0,gr
+Milk Based,Taro Ice,Powder Taro,15.0,gr
+Milk Based,Taro Ice,BSJ -  Simple Syrup,20.0,ml
+Milk Based,Taro Ice,Susu Karton,70.0,ml
+Milk Based,Taro Ice,Es Batu,4.0,cubes
+Milk Based,Taro Ice,BSJ -  Creamer,50.0,gr
+Milk Based,Taro Ice,BSJ -  Whipped Cream,18.0,gr
+Milk Based,Red Velvet Ice,Powder Redvelvet,15.0,gr
+Milk Based,Red Velvet Ice,BSJ -  Simple Syrup,20.0,ml
+Milk Based,Red Velvet Ice,Susu Karton,70.0,ml
+Milk Based,Red Velvet Ice,Es Batu,4.0,cubes
+Milk Based,Red Velvet Ice,BSJ -  Creamer,50.0,gr
+Milk Based,Red Velvet Ice,BSJ -  Whipped Cream,18.0,gr
+Espresso Based,Espresso,Arabika,18.0,gr
+Espresso Based,Espresso Bon-Bon,Blend 5050,18.0,gr
+Espresso Based,Espresso Bon-Bon,SKM,25.0,ml
+Espresso Based,Black Hot,Arabika,18.0,gr
+Espresso Based,Black Hot,Air Cleo,150.0,ml
+Espresso Based,Black Ice,Arabika,18.0,gr
+Espresso Based,Black Ice,Air Cleo,100.0,ml
+Espresso Based,Black Ice,Es Batu,4.0,cubes
+Espresso Based,Piccolo,Arabika,18.0,gr
+Espresso Based,Piccolo,Susu Karton,120.0,ml
+Espresso Based,Latte Hot,Arabika,18.0,gr
+Espresso Based,Latte Hot,Susu Karton,150.0,ml
+Espresso Based,Latte Ice,Arabika,18.0,gr
+Espresso Based,Latte Ice,Susu Karton,140.0,ml
+Espresso Based,Latte Ice,BSJ -  Palm Sugar Syrup,27.0,ml
+Espresso Based,Latte Ice,Es Batu,4.0,cubes
+Espresso Based,Cappucino,Arabika,18.0,gr
+Espresso Based,Cappucino,Susu Karton,130.0,ml
+Espresso Based,Cappucino Ice,Arabika,18.0,gr
+Espresso Based,Cappucino Ice,Susu Karton,130.0,ml
+Espresso Based,Cappucino Ice,Powder Coklat,1.0,gr
+Espresso Based,Cappucino Ice,BSJ -  Palm Sugar Syrup,25.0,ml
+Espresso Based,Cappucino Ice,Es Batu,4.0,cubes
+Espresso Based,Affogato,Ice Cream Vanilla,2.0,scoop
+Espresso Based,Affogato,Blend 5050,18.0,gr
+Signature Based,Kopi Susu Hot,Blend 5050,18.0,gr
+Signature Based,Kopi Susu Hot,SKM,15.0,ml
+Signature Based,Kopi Susu Hot,Susu Karton,140.0,ml
+Signature Based,Kopi Susu Ice,BSJ -  Blend 5050,40.0,ml
+Signature Based,Kopi Susu Ice,SKM,30.0,ml
+Signature Based,Kopi Susu Ice,Susu Karton,100.0,ml
+Signature Based,Kopi Susu Ice,BSJ -  Creamer,30.0,gr
+Signature Based,Kopi Susu Ice,Es Batu,4.0,cubes
+Signature Based,Husgendam Hot,Arabika,18.0,gr
+Signature Based,Husgendam Hot,BSJ -  Palm Sugar Syrup,13.0,ml
+Signature Based,Husgendam Hot,Susu Coconut,140.0,ml
+Signature Based,Husgendam ice,Arabika,18.0,gr
+Signature Based,Husgendam ice,BSJ -  Palm Sugar Syrup,25.0,ml
+Signature Based,Husgendam ice,Susu Coconut,100.0,ml
+Signature Based,Husgendam ice,BSJ -  Creamer,30.0,gr
+Signature Based,Husgendam ice,Es Batu,4.0,cubes
+Signature Based,Kinasih,BSJ -  Blend 5050,30.0,ml
+Signature Based,Kinasih,Sirup Vanilla,25.0,ml
+Signature Based,Kinasih,Susu Karton,70.0,ml
+Signature Based,Kinasih,BSJ -  Creamer,50.0,gr
+Signature Based,Kinasih,BSJ -  Whipped Cream,18.0,gr
+Signature Based,Kinasih,Topping Caramel,5.0,gr
+Signature Based,Kinasih,Topping Caramel,3.0,gr
+Signature Based,Kinasih,Es Batu,4.0,cubes
+Signature Based,Kinasih,Powder Coklat,1.0,gr
+Signature Based,Arunika,Sprite,120.0,ml
+Signature Based,Arunika,Serai,1.0,batang
+Signature Based,Arunika,Lemon,1.0,gr
+Signature Based,Arunika,Daun Mint,1.0,gr
+Signature Based,Arunika,BSJ -  Palm Sugar Syrup,25.0,ml
+Signature Based,Arunika,Es Batu,4.0,cubes
+Signature Based,Terpesona,Robusta,15.0,gr
+Signature Based,Terpesona,Sirup Leci,10.0,ml
+Signature Based,Terpesona,Es Batu,4.0,cubes
+Signature Based,Terpesona,Air Leci,30.0,ml
+Signature Based,Terpesona,Leci Kaleng,2.0,biji
+Signature Based,Nirmala Ice,Sirup Vanilla,15.0,ml
+Signature Based,Nirmala Ice,SKM,15.0,ml
+Signature Based,Nirmala Ice,Cinnamon Powder,3.0,gr
+Signature Based,Nirmala Ice,Susu Karton,70.0,ml
+Signature Based,Nirmala Ice,BSJ -  Creamer,50.0,gr
+Signature Based,Nirmala Ice,BSJ -  Whipped Cream,18.0,gr
+Signature Based,Nirmala Ice,Cinnamon Powder,1.0,gr
+Signature Based,Nirmala Ice,Powder Coklat,1.0,gr
+Signature Based,Nirmala Ice,Es Batu,4.0,cubes
+Signature Based,Nirmala Hot,Sirup Vanilla,7.5,ml
+Signature Based,Nirmala Hot,SKM,7.5,ml
+Signature Based,Nirmala Hot,Cinnamon Powder,3.0,gr
+Signature Based,Nirmala Hot,Susu Karton,130.0,ml
+Signature Based,Nirmala Hot,Cinnamon Powder,1.0,gr
+Signature Based,Nirmala Hot,Powder Coklat,1.0,gr
+Signature Based,Kirana,Susu Karton,70.0,ml
+Signature Based,Kirana,BSJ -  Creamer,50.0,gr
+Signature Based,Kirana,BSJ -  Strawberry Jam,55.0,gr
+Signature Based,Kirana,BSJ -  Whipped Cream,18.0,gr
+Signature Based,Kirana,Es Batu,4.0,cubes
+Signature Based,Kirana,Daun Mint,1.0,gr
+Signature Based,Kirana,Powder Coklat,1.0,gr
+Artisan Tea,Ajeng Hot,Teh Ajeng,3.5,gr
+Artisan Tea,Ajeng Hot,Air Cleo,250.0,ml
+Artisan Tea,Ajeng Ice,Teh Ajeng,5.0,gr
+Artisan Tea,Ajeng Ice,Air Cleo,150.0,ml
+Artisan Tea,Ajeng Ice,Es Batu,3.0,cubes
+Artisan Tea,Anindya Hot,Teh Anindya,3.5,gr
+Artisan Tea,Anindya Hot,Air Cleo,250.0,ml
+Artisan Tea,Anindya Ice,Teh Anindya,5.0,gr
+Artisan Tea,Anindya Ice,Air Cleo,150.0,ml
+Artisan Tea,Anindya Ice,Es Batu,3.0,cubes
+Tea Based,Lemon Hot,BSJ -  Simple Syrup,40.0,ml
+Tea Based,Lemon Hot,Air Cleo,150.0,ml
+Tea Based,Lemon Hot,BSJ -  Teh,100.0,gr
+Tea Based,Lemon Hot,sirup Lemon,0.5,ml
+Tea Based,Lemon Ice,BSJ -  Simple Syrup,40.0,ml
+Tea Based,Lemon Ice,Air Cleo,100.0,ml
+Tea Based,Lemon Ice,BSJ -  Teh,100.0,gr
+Tea Based,Lemon Ice,Sirup Lemon,0.5,ml
+Tea Based,Lemon Ice,Es Batu,4.0,cubes
+Tea Based,Lychee Tea Hot,Sirup Leci,15.0,ml
+Tea Based,Lychee Tea Hot,BSJ -  Teh,100.0,gr
+Tea Based,Lychee Tea Hot,Air Cleo,150.0,ml
+Tea Based,Lychee Tea Hot,Leci Kaleng,2.0,biji
+Tea Based,Lychee Tea Ice,Sirup Leci,15.0,ml
+Tea Based,Lychee Tea Ice,BSJ -  Simple Syrup,15.0,ml
+Tea Based,Lychee Tea Ice,BSJ -  Teh,100.0,gr
+Tea Based,Lychee Tea Ice,Air Cleo,150.0,ml
+Tea Based,Lychee Tea Ice,Es Batu,4.0,cubes
+Tea Based,Lychee Tea Ice,Leci Kaleng,2.0,biji
+Tea Based,Lychee Tea Ice,Daun Mint,1.0,gr
+Tea Based,Milk Tea Hot,SKM,30.0,ml
+Tea Based,Milk Tea Hot,BSJ -  Creamer,50.0,gr
+Tea Based,Milk Tea Hot,BSJ -  Teh,150.0,gr
+Tea Based,Milk Tea Ice,SKM,30.0,ml
+Tea Based,Milk Tea Ice,BSJ -  Palm Sugar Syrup,10.0,ml
+Tea Based,Milk Tea Ice,BSJ -  Creamer,50.0,gr
+Tea Based,Milk Tea Ice,BSJ -  Teh,150.0,gr
+Tea Based,Milk Tea Ice,Es Batu,4.0,cubes
+Additional,Add Ice Cream Vanilla,Ice Cream Vanilla,1.0,scoop
+Additional,Add Espresso,Blend 5050,18.0,gr
+Additional,Add Whipped Cream,BSJ -  Whipped Cream,18.0,gr
+Additional,Add Topping Caramel,Topping Caramel,5.0,gr
+Additional,Add Keju,Keju,3.0,gr
+Additional,Add Kerupuk,Kerupuk,10.0,biji
+Additional,Add Telur,Telur,1.0,biji
+Additional,Add Sambal,BSJ -  Sambal Bawang,15.0,gr
+Kopi Botol,Kasmaran,BSJ -  Espresso,25.0,gr
+Kopi Botol,Kasmaran,BSJ -  Creamer,70.0,gr
+Kopi Botol,Kasmaran,Susu Non-Karton,135.0,ml
+Kopi Botol,Kasmaran,Sirup Strawberry,12.0,ml
+Kopi Botol,Kasmaran,Sirup Cheese,12.0,ml
+Kopi Botol,Kasmaran,Botol Kosong,1.0,pcs
+Kopi Botol,Kasmaran,Stiker,1.0,pcs
+Kopi Botol,Mesra,BSJ -  Espresso,35.0,gr
+Kopi Botol,Mesra,BSJ -  Creamer,60.0,gr
+Kopi Botol,Mesra,Susu Non-Karton,130.0,ml
+Kopi Botol,Mesra,Madu,20.0,gr
+Kopi Botol,Mesra,BSJ -  Simple Syrup,10.0,ml
+Kopi Botol,Mesra,Botol Kosong,1.0,pcs
+Kopi Botol,Mesra,Stiker,1.0,pcs
+Kopi Botol,Rayu,Air Cleo,160.0,ml
+Kopi Botol,Rayu,BSJ -  Espresso,40.0,gr
+Kopi Botol,Rayu,Sirup Leci,15.0,ml
+Kopi Botol,Rayu,Air Leci,30.0,ml
+Kopi Botol,Rayu,Botol Kosong,1.0,pcs
+Kopi Botol,Rayu,Stiker,1.0,pcs
+Kopi Botol,Rindu,BSJ -  Espresso,25.0,gr
+Kopi Botol,Rindu,BSJ -  Creamer,70.0,gr
+Kopi Botol,Rindu,Susu Non-Karton,135.0,ml
+Kopi Botol,Rindu,Sirup Apple,12.0,ml
+Kopi Botol,Rindu,Sirup Cinnamon,12.0,ml
+Kopi Botol,Rindu,Botol Kosong,1.0,pcs
+Kopi Botol,Rindu,Stiker,1.0,pcs
+Signature,Panacotta,BSJ -  Panacotta,1,cup
+Signature,Panacotta,BSJ -  Butterscotch Caramel,50,gr
+Signature,Panacotta,Cup Pannacota,1,pcs
+Signature,Waffle Vanilla,BSJ -  Waffle Base,3,pcs
+Signature,Waffle Vanilla,Sirup Maple,10,gr
+Signature,Waffle Vanilla,Powder Coklat,1,gr
+Signature,Waffle Vanilla,Ice Cream Vanilla,2,scoop
+Signature,Waffle Vanilla,Daun Mint,1,gr
+Signature,Waffle Matcha,BSJ -  Waffle Base,3,pcs
+Signature,Waffle Matcha,Sirup Maple,10,gr
+Signature,Waffle Matcha,Powder Coklat,1,gr
+Signature,Waffle Matcha,Ice Cream Vanilla,1,scoop
+Signature,Waffle Matcha,BSJ -  Whipped Cream,15,gr
+Signature,Waffle Matcha,Powder Matcha,10,gr
+Signature,Waffle Matcha,Essence Matcha,1,gr
+Signature,Waffle Matcha,Daun Mint,1,gr
+Signature,Waffle Strawberry,BSJ -  Waffle Base,3,pcs
+Signature,Waffle Strawberry,Sirup Maple,10,gr
+Signature,Waffle Strawberry,Powder Coklat,1,gr
+Signature,Waffle Strawberry,Ice Cream Vanilla,1,scoop
+Signature,Waffle Strawberry,BSJ -  Whipped Cream,15,gr
+Signature,Waffle Strawberry,BSJ -  Strawberry Jam,20,gr
+Signature,Waffle Strawberry,Daun Mint,1,gr
+Snack,Basreng,Basreng,9,biji
+Snack,Basreng,BSJ -  Bumbu Basreng,3,gr
+Snack,Basreng,Saos Tomat,30,gr
+Snack,Cireng,Cireng,6,biji
+Snack,Cireng,Bumbu Cireng,20,gr
+Snack,Kentang Goreng,Kentang,120,gr
+Snack,Kentang Goreng,Saos Tomat,30,gr
+Snack,Kentang Goreng,Royco,1,gr
+Snack,Kentang Goreng,Parsley,1,gr
+Snack,Tahu Tuna,Tahu Tuna,5,biji
+Snack,Tahu Tuna,Saos Tomat,30,gr
+Snack,Tahu Tuna,Parsley,1,gr
+Snack,Pisang Goreng Aren,Pisang,1,pcs
+Snack,Pisang Goreng Aren,BSJ -  Pisang Goreng,120,gr
+Snack,Pisang Goreng Aren,BSJ -  Palm Sugar Syrup,15,ml
+Snack,Pisang Goreng Aren,Gula Aren,5,gr
+Snack,Tempe Mendoan,Tempe,5,potong
+Snack,Tempe Mendoan,BSJ -  Tempe Mendoan,100,gr
+Snack,Tempe Mendoan,Cabe Rawit,2,gr
+Snack,Tempe Mendoan,Kecap Indofood,20,gr
+Snack,Tempe Mendoan,Bawang Goreng,5,gr
+Snack,Donat,Donat,5,biji
+Snack,Donat,Gula Halus,25,gr
+Snack,Donat,Cinnamon Powder,2,gr
+Snack,Donat,Powder Coklat,1,gr
+Snack,Singkong Keju,Singkong,1,pcs
+Snack,Singkong Keju,Keju,30,gr
+Mie,Mie Goreng,Mie Goreng,1,pcs
+Mie,Mie Goreng,Sawi,20,gr
+Mie,Mie Goreng,BSJ -  Bawang,5,gr
+Mie,Mie Goreng,Bawang Goreng,2,gr
+Mie,Mie Rebus,Mie Rebus,1,pcs
+Mie,Mie Rebus,Sawi,20,gr
+Mie,Mie Rebus,BSJ -  Bawang,5,gr
+Mie,Mie Rebus,Telur,1,biji
+Mie,Mie Rebus,Bawang Goreng,2,gr
+Mie,Pizza Mie,Mie Goreng,1,pcs
+Mie,Pizza Mie,Telur,2,biji
+Mie,Pizza Mie,Royco,1,gr
+Mie,Pizza Mie,Saos Tomat,30,gr
+Mie,Pizza Mie,Parsley,1,gr
+Toast,Roti Bakar Coklat,Roti,1,pasang
+Toast,Roti Bakar Coklat,Selai Coklat,20,gr
+Toast,Roti Bakar Coklat,Mentega,15,gr
+Toast,Roti Bakar Klasik,Roti,1,pasang
+Toast,Roti Bakar Klasik,Gula Pasir,15,gr
+Toast,Roti Bakar Klasik,Mentega,15,gr
+Toast,Roti Bakar Klasik,Skm,10,ml
+Toast,Roti Bakar Strawberry,Roti,1,pasang
+Toast,Roti Bakar Strawberry,Selai Strawberry,20,gr
+Toast,Roti Bakar Strawberry,Mentega,15,gr
+Toast,Roti Bakar Keju,Roti,1,pasang
+Toast,Roti Bakar Keju,Keju,25,gr
+Toast,Roti Bakar Keju,Mentega,15,gr
+Toast,Roti Bakar Keju,Skm,10,ml
+Toast,Cheese Cake,Cheese Cake,1,pcs
+Main Course,Nasi Cumi Asin,Nasi,200,gr
+Main Course,Nasi Cumi Asin,BSJ -  Sambal Cumi Asin,100,gr
+Main Course,Nasi Cumi Asin,Tempe,2,potong
+Main Course,Nasi Cumi Asin,Telur,1,biji
+Main Course,Nasi Cumi Asin,Timun Slice,2,slice
+Main Course,Nasi Cumi Asin,Bawang Goreng,2,gr
+Main Course,Nasi Gila,Nasi,200,gr
+Main Course,Nasi Gila,Ayam,40,gr
+Main Course,Nasi Gila,Pentol,3,biji
+Main Course,Nasi Gila,Sosis,1,biji
+Main Course,Nasi Gila,Sawi,20,gr
+Main Course,Nasi Gila,BSJ -  Bawang,5,gr
+Main Course,Nasi Gila,Minyak Wijen,5,ml
+Main Course,Nasi Gila,Kecap Bader,10,gr
+Main Course,Nasi Gila,Raja Rasa,5,ml
+Main Course,Nasi Gila,Saos Tiram,5,ml
+Main Course,Nasi Gila,Air Cleo,100,ml
+Main Course,Nasi Gila,Lada Bubuk,1,gr
+Main Course,Nasi Gila,Micin,1,gr
+Main Course,Nasi Gila,Timun Slice,2,slice
+Main Course,Nasi Gila,Kerupuk,10,biji
+Main Course,Nasi Gila,Bawang Goreng,2,gr
+Main Course,Nasi Gila,BSJ -  Larutan Maizena,10,ml
+Main Course,Nasi Goreng Jawa,Nasi,150,gr
+Main Course,Nasi Goreng Jawa,BSJ -  Bawang,5,gr
+Main Course,Nasi Goreng Jawa,Telur,1,biji
+Main Course,Nasi Goreng Jawa,Ayam,40,gr
+Main Course,Nasi Goreng Jawa,Pentol,3,biji
+Main Course,Nasi Goreng Jawa,Sawi,20,gr
+Main Course,Nasi Goreng Jawa,Kecambah,10,gr
+Main Course,Nasi Goreng Jawa,Kecap Bader,5,gr
+Main Course,Nasi Goreng Jawa,Raja Rasa,5,ml
+Main Course,Nasi Goreng Jawa,Saos Tiram,5,ml
+Main Course,Nasi Goreng Jawa,Garam,1,gr
+Main Course,Nasi Goreng Jawa,Lada Bubuk,1,gr
+Main Course,Nasi Goreng Jawa,Kerupuk,10,biji
+Main Course,Nasi Goreng Jawa,Acar Timun,30,gr
+Main Course,Nasi Goreng Jawa,Bawang Goreng,2,gr
+Main Course,Ayam Teriyaki,Nasi,200,gr
+Main Course,Ayam Teriyaki,Ayam,60,gr
+Main Course,Ayam Teriyaki,BSJ -  Tepung Kering,25,gr
+Main Course,Ayam Teriyaki,BSJ -  Tepung Basah,40,gr
+Main Course,Ayam Teriyaki,BSJ -  Sayur Teriyaki,15,gr
+Main Course,Ayam Teriyaki,BSJ -  Bawang,5,gr
+Main Course,Ayam Teriyaki,Bawang Bombay,5,gr
+Main Course,Ayam Teriyaki,Saos Teriyaki,10,ml
+Main Course,Ayam Teriyaki,Air Rebusan,200,ml
+Main Course,Ayam Teriyaki,Garam,1,gr
+Main Course,Ayam Teriyaki,Micin,1,gr
+Main Course,Ayam Teriyaki,BSJ -  Larutan Maizena,20,ml
+Main Course,Ayam Teriyaki,Parsley,1,gr
+Main Course,Ayam Teriyaki,Minyak Wijen,1,ml
+Main Course,Ayam Curry,Nasi,200,gr
+Main Course,Ayam Curry,Ayam,60,gr
+Main Course,Ayam Curry,BSJ -  Tepung Basah,40,gr
+Main Course,Ayam Curry,Tepung Roti,30,gr
+Main Course,Ayam Curry,BSJ -  Bawang,5,gr
+Main Course,Ayam Curry,Bumbu Curry,5,gr
+Main Course,Ayam Curry,BSJ -  Creamer,30,gr
+Main Course,Ayam Curry,Air Cleo,150,ml
+Main Course,Ayam Curry,BSJ -  Sayur Curry,15,gr
+Main Course,Ayam Curry,Kecap Bader,10,gr
+Main Course,Ayam Curry,Garam,1,gr
+Main Course,Ayam Curry,Micin,1,gr
+Main Course,Ayam Curry,BSJ -  Larutan Maizena,20,ml
+Main Course,Ayam Curry,Parsley,1,gr
+Main Course,Ayam Curry,Wijen Biji,1,gr
+Main Course,Ayam Mentega,Nasi,200,gr
+Main Course,Ayam Mentega,Ayam,60,gr
+Main Course,Ayam Mentega,BSJ -  Tepung Basah,50,gr
+Main Course,Ayam Mentega,BSJ -  Tepung Kering,30,gr
+Main Course,Ayam Mentega,BSJ -  Bawang,5,gr
+Main Course,Ayam Mentega,Mentega,5,gr
+Main Course,Ayam Mentega,Bawang Bombay,5,gr
+Main Course,Ayam Mentega,Cabe Merah,5,gr
+Main Course,Ayam Mentega,Cabe Hijau,5,gr
+Main Course,Ayam Mentega,Saos Mentega,5,gr
+Main Course,Ayam Mentega,Kecap Bader,10,gr
+Main Course,Ayam Mentega,Air Rebusan,200,ml
+Main Course,Ayam Mentega,BSJ -  Larutan Maizena,20,ml
+Main Course,Ayam Mentega,Micin,1,gr
+Main Course,Ayam Mentega,Wijen Biji,1,gr
+Main Course,Ayam Chili Padi,Nasi,200,gr
+Main Course,Ayam Chili Padi,Ayam,60,gr
+Main Course,Ayam Chili Padi,BSJ -  Tepung Basah,50,gr
+Main Course,Ayam Chili Padi,BSJ -  Tepung Kering,30,gr
+Main Course,Ayam Chili Padi,Sambal Chili Padi,25,gr
+Main Course,Ayam Chili Padi,Pokcoy,2,lembar
+Main Course,Ayam Chili Padi,BSJ -  Bawang,5,gr
+Main Course,Ayam Chili Padi,Air Rebusan,200,ml
+Main Course,Ayam Chili Padi,Garam,1,gr
+Main Course,Ayam Chili Padi,Lada Bubuk,1,gr
+Main Course,Ayam Chili Padi,Micin,1,gr
+Main Course,Ayam Chili Padi,BSJ -  Larutan Maizena,20,ml
+Main Course,Ayam Chili Padi,Parsley,1,gr
+Main Course,Ayam Chili Padi,Wijen Biji,1,gr
+Main Course,Ayam Daun Jeruk,Nasi,200,gr
+Main Course,Ayam Daun Jeruk,BSJ -  Daun Jeruk,10,gr
+Main Course,Ayam Daun Jeruk,Mentega,5,gr
+Main Course,Ayam Daun Jeruk,Ayam,60,gr
+Main Course,Ayam Daun Jeruk,BSJ -  Tepung Basah,50,gr
+Main Course,Ayam Daun Jeruk,BSJ -  Tepung Kering,30,gr
+Main Course,Ayam Daun Jeruk,Serundeng,20,gr
+Main Course,Ayam Daun Jeruk,BSJ -  Sambal Bawang,10,gr
+Main Course,Ayam Daun Jeruk,Timun Slice,2,slice
+Main Course,Ayam Daun Jeruk,Bawang Goreng,2,gr
+Main Course,Ayam Rempah,Nasi,200,gr
+Main Course,Ayam Rempah,Ayam,60,gr
+Main Course,Ayam Rempah,Tomat,25,gr
+Main Course,Ayam Rempah,Kemangi,20,gr
+Main Course,Ayam Rempah,Kondimen Ayam Rempah,20,gr
+Main Course,Ayam Rempah,BSJ -  Bawang,5,gr
+Main Course,Ayam Rempah,Air Rebusan,200,ml
+Main Course,Ayam Rempah,Garam,1,gr
+Main Course,Ayam Rempah,Lada Bubuk,1,gr
+Main Course,Ayam Rempah,Micin,1,gr
+Main Course,Ayam Rempah,Kecap Bader,10,gr
+Main Course,Ayam Rempah,Timun Slice,2,slice
+Main Course,Ayam Rempah,Kerupuk,10,biji
+Main Course,Ayam Rempah,Bawang Goreng,2,gr
+Main Course,Ayam Rempah,Gula Pasir,5,gr
+Main Course,Ayam Rempah,BSJ -  Larutan Maizena,20,ml
+Main Course,Ayam Cabe Garam,Ayam,60,gr
+Main Course,Ayam Cabe Garam,Daun Bawang,1,gr
+Main Course,Ayam Cabe Garam,Bawang Goreng,2,gr
+Main Course,Ayam Cabe Garam,BSJ -  Cabe Garam,20,gr
+Main Course,Ayam Cabe Garam,Nasi,200,gr
+Main Course,Ayam Cabe Garam,Timun Slice,45,slice
+Main Course,Ayam Cabe Garam,BSJ -  Tepung Basah,50,gr
+Main Course,Ayam Cabe Garam,BSJ -  Tepung Kering,30,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Ayam Slice 125gr,125,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Mentega,10,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,BSJ -  BBQ Sauce,150,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,BSJ -  Potato Wedges,1,porsi
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Buncis,30,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Wortel,30,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Garam,2,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Lada Bubuk,1,gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Parsley,"0,5",gr
+Main Course,Pan Seared Chicken With BSJ -  BBQ Sauce,Lemon,15,gr
+Main Course,Chicken Mushroom Cream Sauce,Ayam Slice 125gr,140,gr
+Main Course,Chicken Mushroom Cream Sauce,Mentega,10,gr
+Main Course,Chicken Mushroom Cream Sauce,BSJ -  Mushroom Sauce,150,gr
+Main Course,Chicken Mushroom Cream Sauce,BSJ -  Potato Wedges,1,porsi
+Main Course,Chicken Mushroom Cream Sauce,Buncis,30,gr
+Main Course,Chicken Mushroom Cream Sauce,Wortel,30,gr
+Main Course,Chicken Mushroom Cream Sauce,Garam,2,gr
+Main Course,Chicken Mushroom Cream Sauce,Lada Bubuk,1,gr
+Main Course,Chicken Mushroom Cream Sauce,Parsley,"0,5",gr
+Main Course,Chicken Mushroom Cream Sauce,Lemon,15,gr

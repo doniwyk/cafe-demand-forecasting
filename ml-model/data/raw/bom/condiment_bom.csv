@@ -1,0 +1,187 @@
+Condiment,Condiment_Qty,Condiment_Unit,Sub_Ingredient,Qty_per_condiment_unit,Sub_Unit
+BSJ -  Simple Syrup,1000,ml,Air Cleo,1000,ml
+BSJ -  Simple Syrup,1000,ml,Gula Pasir,1000,gr
+BSJ -  Palm Sugar Syrup,750,ml,Air Cleo,500,ml
+BSJ -  Palm Sugar Syrup,750,ml,Gula Aren,1000,gr
+BSJ -  Palm Sugar Syrup,750,ml,Garam,5,gr
+BSJ -  Creamer,2000,gr,Air Cleo,2000,ml
+BSJ -  Creamer,2000,gr,Creamer Bubuk,1000,gr
+BSJ -  Teh,2000,gr,Teh Naga,1,pcs
+BSJ -  Teh,2000,gr,Teh 999,10,gr
+BSJ -  Teh,2000,gr,Air Cleo,2000,ml
+BSJ -  Whipped Cream,450,gr,Dancow,50,gr
+BSJ -  Whipped Cream,450,gr,Sp,125,gr
+BSJ -  Whipped Cream,450,gr,Skm,50,ml
+BSJ -  Whipped Cream,450,gr,BSJ -  Simple Syrup,60,ml
+BSJ -  Whipped Cream,450,gr,Gold Label,30,gr
+BSJ -  Whipped Cream,450,gr,Air Cleo,200,ml
+BSJ -  Strawberry Jam,2000,gr,Strawberry Buah,2000,gr
+BSJ -  Strawberry Jam,2000,gr,Gula Pasir,2000,gr
+BSJ -  Strawberry Jam,2000,gr,Air Cleo,1000,ml
+BSJ -  Blend 5050,50,ml,Blend 5050,18,gr
+BSJ -  Butterscotch Caramel,400,gr,Gula Pasir,150,gr
+BSJ -  Butterscotch Caramel,400,gr,Gula Aren,75,gr
+BSJ -  Butterscotch Caramel,400,gr,Mentega,40,gr
+BSJ -  Butterscotch Caramel,400,gr,Susu Karton,100,ml
+BSJ -  Bumbu Basreng,200,gr,Cabe Bubuk,100,gr
+BSJ -  Bumbu Basreng,200,gr,Royco,50,gr
+BSJ -  Pisang Goreng,1000,gr,Telur,2,biji
+BSJ -  Pisang Goreng,1000,gr,Gula Pasir,150,gr
+BSJ -  Pisang Goreng,1000,gr,Sp,30,gr
+BSJ -  Pisang Goreng,1000,gr,Tepung Terigu,400,gr
+BSJ -  Pisang Goreng,1000,gr,Air Cleo,350,ml
+BSJ -  Pisang Goreng,1000,gr,Vanili,5,ml
+BSJ -  Tempe Mendoan,1000,gr,Bawang Putih,8,gr
+BSJ -  Tempe Mendoan,1000,gr,Kunyit,50,gr
+BSJ -  Tempe Mendoan,1000,gr,Ketumbar,15,gr
+BSJ -  Tempe Mendoan,1000,gr,Garam,10,gr
+BSJ -  Tempe Mendoan,1000,gr,Royco,25,gr
+BSJ -  Tempe Mendoan,1000,gr,Daun Bawang,150,gr
+BSJ -  Tempe Mendoan,1000,gr,Tepung Terigu,600,gr
+BSJ -  Tempe Mendoan,1000,gr,Air Cleo,675,ml
+BSJ -  Bawang,1000,gr,Bawang Putih,500,gr
+BSJ -  Bawang,1000,gr,Bawang Merah,500,gr
+BSJ -  Bawang,1000,gr,Kemiri,50,gr
+BSJ -  Bawang,1000,gr,Garam,25,gr
+Ayam Slice 60gr,60,gr,Ayam,60,gr
+Ayam Slice 60gr,60,gr,Marinasi Ayam,60,gr
+Ayam Slice 125gr,125,gr,Ayam,125,gr
+Ayam Slice 125gr,125,gr,Marinasi Ayam,125,gr
+Marinasi Ayam,8000,gr,BSJ -  Bawang,200,gr
+Marinasi Ayam,8000,gr,Saos Tomat,250,gr
+Marinasi Ayam,8000,gr,Saos Tiram,100,ml
+Marinasi Ayam,8000,gr,Lada Bubuk,25,gr
+Marinasi Ayam,8000,gr,Royco,75,gr
+BSJ -  Daun Jeruk,1200,gr,Bawang Putih,600,gr
+BSJ -  Daun Jeruk,1200,gr,Daun Jeruk,150,gr
+BSJ -  Daun Jeruk,1200,gr,Mentega,500,gr
+BSJ -  Daun Jeruk,1200,gr,Garam,50,gr
+BSJ -  Daun Jeruk,1200,gr,Royco,50,gr
+BSJ -  Sayur Teriyaki,3000,gr,Wortel,1500,gr
+BSJ -  Sayur Teriyaki,3000,gr,Buncis,1000,gr
+BSJ -  Sayur Teriyaki,3000,gr,Jagung,1000,gr
+BSJ -  Sayur Curry,2500,gr,Kentang,1000,gr
+BSJ -  Sayur Curry,2500,gr,Wortel,1500,gr
+BSJ -  Waffle Base,30,pcs,Telur,8,biji
+BSJ -  Waffle Base,30,pcs,Mentega,190,gr
+BSJ -  Waffle Base,30,pcs,Susu Karton,700,ml
+BSJ -  Waffle Base,30,pcs,Tepung Terigu,500,gr
+BSJ -  Waffle Base,30,pcs,Garam,3,gr
+BSJ -  Waffle Base,30,pcs,Baking Powder,3,gr
+BSJ -  Waffle Base,30,pcs,Dancow,60,gr
+BSJ -  Waffle Base,30,pcs,BSJ -  Simple Syrup,120,ml
+BSJ -  Waffle Base,30,pcs,Vanili,20,ml
+BSJ -  Sambal Bawang,1800,gr,Cabe Rawit,1000,gr
+BSJ -  Sambal Bawang,1800,gr,Bawang Putih,500,gr
+BSJ -  Sambal Bawang,1800,gr,Bawang Merah,300,gr
+BSJ -  Sambal Bawang,1800,gr,Minyak Goreng,800,ml
+BSJ -  Sambal Bawang,1800,gr,Royco,30,gr
+BSJ -  Sambal Bawang,1800,gr,Garam,30,gr
+BSJ -  Sambal Bawang,1800,gr,Micin,10,gr
+BSJ -  Sambal Bawang,1800,gr,Gula Pasir,25,gr
+BSJ -  Cabe Garam,1100,gr,Bawang Putih,500,gr
+BSJ -  Cabe Garam,1100,gr,Bawang Merah,200,gr
+BSJ -  Cabe Garam,1100,gr,Cabe Rawit,300,gr
+BSJ -  Cabe Garam,1100,gr,Cabe Merah,120,gr
+BSJ -  Cabe Garam,1100,gr,Cabe Hijau,120,gr
+BSJ -  Cabe Garam,1100,gr,Serai,1,batang
+BSJ -  Cabe Garam,1100,gr,Garam,20,gr
+BSJ -  Cabe Garam,1100,gr,Royco,10,gr
+BSJ -  Cabe Garam,1100,gr,Lada Bubuk,10,gr
+BSJ -  Cabe Garam,1100,gr,Gula Pasir,15,gr
+BSJ -  Cabe Garam,1100,gr,Micin,5,gr
+BSJ -  Panacotta,3,cup,Gula Pasir,35,gr
+BSJ -  Panacotta,3,cup,Dancow,15,gr
+BSJ -  Panacotta,3,cup,Susu Karton,200,ml
+BSJ -  Panacotta,3,cup,Air Rebusan,110,ml
+BSJ -  Panacotta,3,cup,Nutrijel Plain,3,gr
+BSJ -  Panacotta,3,cup,Air Cleo,130,ml
+BSJ -  Panacotta,3,cup,Regal,5,gr
+BSJ -  Espresso,25,gr,Arabika,18,gr
+BSJ -  Tepung Basah,500,gr,Tepung Terigu,500,gr
+BSJ -  Tepung Basah,500,gr,Royco,15,gr
+BSJ -  Tepung Basah,500,gr,Lada Bubuk,3,gr
+BSJ -  Tepung Basah,500,gr,Air Cleo,500,ml
+BSJ -  Tepung Kering,570,gr,Tepung Terigu,500,gr
+BSJ -  Tepung Kering,570,gr,Tepung Maizena,20,gr
+BSJ -  Tepung Kering,570,gr,Royco,35,gr
+BSJ -  Tepung Kering,570,gr,Lada Bubuk,10,gr
+BSJ -  Tepung Kering,570,gr,Baking Powder,5,gr
+BSJ -  Potato Wedges,6,porsi,Kentang,1000,gr
+BSJ -  Potato Wedges,6,porsi,Garam,10,gr
+BSJ -  Potato Wedges,6,porsi,Lada Bubuk,3,gr
+BSJ -  Potato Wedges,6,porsi,Royco,5,gr
+BSJ -  Potato Wedges,6,porsi,Bawang Putih Bubuk,5,gr
+BSJ -  BBQ Sauce,435,gr,Saos Tomat,200,gr
+BSJ -  BBQ Sauce,435,gr,Cuka Apel,15,ml
+BSJ -  BBQ Sauce,435,gr,Gula Aren,60,gr
+BSJ -  BBQ Sauce,435,gr,Madu,50,gr
+BSJ -  BBQ Sauce,435,gr,Mustard,5,gr
+BSJ -  BBQ Sauce,435,gr,Paprika Powder,5,gr
+BSJ -  BBQ Sauce,435,gr,Lada Bubuk,3,gr
+BSJ -  BBQ Sauce,435,gr,Bawang Putih Bubuk,5,gr
+BSJ -  BBQ Sauce,435,gr,Saos Sambal,40,gr
+BSJ -  BBQ Sauce,435,gr,Garam,3,gr
+BSJ -  BBQ Sauce,435,gr,Air Cleo,200,ml
+BSJ -  Mushroom Sauce,600,gr,Mentega,25,gr
+BSJ -  Mushroom Sauce,600,gr,Bawang Putih,5,gr
+BSJ -  Mushroom Sauce,600,gr,Bawang Bombay,100,gr
+BSJ -  Mushroom Sauce,600,gr,Jamur Kancing,250,gr
+BSJ -  Mushroom Sauce,600,gr,Garam,5,gr
+BSJ -  Mushroom Sauce,600,gr,Lada Bubuk,3,gr
+BSJ -  Mushroom Sauce,600,gr,Saos Tiram,20,ml
+BSJ -  Mushroom Sauce,600,gr,BSJ -  Creamer,300,gr
+BSJ -  Mushroom Sauce,600,gr,Susu Non-karton,200,ml
+BSJ -  Mushroom Sauce,600,gr,Parsley,1,gr
+BSJ -  Mushroom Sauce,600,gr,BSJ -  Larutan Maizena,30,ml
+BSJ -  Sambal Cumi Asin,8500,gr,Bawang Merah,1000,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Bawang Putih,500,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Cumi Asin,2000,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Tomat,5000,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Terong,2000,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Cabe Rawit,500,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Serai,8,batang
+BSJ -  Sambal Cumi Asin,8500,gr,Cabe Merah,1000,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Daun Jeruk,10,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Daun Salam,5,lembar
+BSJ -  Sambal Cumi Asin,8500,gr,Gula Aren,500,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Garam,50,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Micin,50,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Lada Bubuk,20,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Royco,100,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Gula Pasir,100,gr
+BSJ -  Sambal Cumi Asin,8500,gr,Minyak Goreng,1200,ml
+Nasi,5000,gr,Beras,5000,gr
+BSJ -  Larutan Maizena,250,ml,Tepung Maizena,70,gr
+BSJ -  Larutan Maizena,250,ml,Air Rebusan,225,ml
+Acar Timun,500,gr,Timun,500,gr
+Acar Timun,500,gr,Bawang Merah,50,gr
+Acar Timun,500,gr,Cabe Hijau,30,gr
+Acar Timun,500,gr,Cuka Apel,10,ml
+Acar Timun,500,gr,Air Rebusan,100,ml
+Acar Timun,500,gr,Garam,5,gr
+Acar Timun,500,gr,Gula Pasir,25,gr
+Timun Slice,1,slice,Timun,10,gr
+BSJ - espresso 60,60,gr,Arabika,17,gr
+BSJ - espresso 61,60,gr,Air Cleo,60,ml
+BSJ - Double Ristrette ,20,gr,Arabika,18,gr
+BSJ - Double Ristrette ,20,gr,Air Cleo,30,ml
+BSJ - Butter Cream,7,porsi,mentega cake and coockies,100,-
+BSJ - Butter Cream,7,porsi,Gula Halus,30,gr
+BSJ - Butter Cream,7,porsi,Skm,40,ml
+BSJ - MATCHA CREME,75,gr,rich creme,25,-
+BSJ - MATCHA CREME,75,gr,Air Cleo,50,ml
+BSJ - MATCHA CREME,75,gr,Powder Matcha,6,gr
+BSJ - MATCHA CREME,75,gr,Essence Matcha,6,gr
+BSJ - Espresso bersemi,1,porsi,Blend 5050,18,gr
+BSJ - Espresso bersemi,1,porsi,Air Cleo,40,ml
+BSJ - Fiber creme,200,gr,fiber creme,50,-
+BSJ - Fiber creme,200,gr,Air Cleo,150,ml
+BSJ - Creamer 1:3,4000,gr,Air Rebusan,"3,000.00",ml
+BSJ - Creamer 1:3,4000,gr,Creamer Bubuk,"1,000.00",gr
+BSJ - WHIPCREMÉ,225,gr,Gold Label,90,gr
+BSJ - WHIPCREMÉ,225,gr,Air Cleo,60,ml
+BSJ - WHIPCREMÉ,225,gr,Sp,40,gr
+BSJ - WHIPCREMÉ,225,gr,Dancow,30,gr
+BSJ - WHIPCREMÉ,225,gr,BSJ - Simple Syrup,20,ml
+BSJ - WHIPCREMÉ,225,gr,Skm,15,ml
