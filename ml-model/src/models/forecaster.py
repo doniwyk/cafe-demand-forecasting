@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 import numpy as np
 import pickle
@@ -236,7 +238,14 @@ def predict(
         test_item["DOW"] = test_item["Date"].dt.weekday
 
         factors = dow_factor_dict.get(item, {str(i): 1.0 for i in range(7)})
-        factors = {int(k) if k.isdigit() else k: v for k, v in factors.items()}
+        factors = {
+            int(k)
+            if isinstance(k, str) and k.isdigit()
+            else int(k)
+            if isinstance(k, (int, float))
+            else k: v
+            for k, v in factors.items()
+        }
         test_item["dow_factor"] = test_item["DOW"].map(factors).fillna(1.0)
         test_item["Predicted"] = (
             test_item["Raw_Pred"] * test_item["dow_factor"]
