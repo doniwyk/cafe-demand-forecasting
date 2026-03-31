@@ -22,7 +22,7 @@ CLEANED_SALES_PATH = ML_PROCESSED_DIR / "sales_data_cleaned.csv"
 DAILY_RAW_MATERIAL_PATH = ML_PROCESSED_DIR / "daily_raw_material_requirements.csv"
 ASSOCIATION_RULES_PATH = ML_PROCESSED_DIR / "association_rules_fpgrowth.csv"
 
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR = BASE_DIR.parent / "frontend" / "dist"
 
 sys_path = str(ML_MODEL_DIR)
 if sys_path not in os.sys.path:

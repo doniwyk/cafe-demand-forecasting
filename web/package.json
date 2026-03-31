@@ -1,0 +1,17 @@
+{
+  "name": "cafe-supply-forecasting",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c blue,green \"bun --cwd frontend dev\" \"make backend\"",
+    "dev:frontend": "bun --cwd frontend dev",
+    "dev:backend": "make backend",
+    "build": "cd frontend && bun run build",
+    "lint": "cd frontend && bun run lint",
+    "start": "make start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
