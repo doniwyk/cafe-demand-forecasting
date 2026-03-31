@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
+
 import pandas as pd
 
-from app.config import FORECAST_PATH, DAILY_ITEM_SALES_PATH
+from app.config import FORECAST_PATH, DAILY_ITEM_SALES_PATH, FORECAST_SUMMARY_PATH
 from app.models.forecast import (
     ForecastRecord,
     ForecastPage,
@@ -14,7 +16,6 @@ from app.models.forecast import (
     PredictResponse,
 )
 from app.ml.engine import (
-    run_evaluate,
     generate_forecast,
     run_train_and_evaluate,
     get_model_metadata,
@@ -53,11 +54,11 @@ def get_forecasts(
 
 
 def get_forecast_summary() -> ForecastSummary:
-    df_daily = pd.read_csv(DAILY_ITEM_SALES_PATH)
-    analysis = run_evaluate(df_daily)
+    with open(FORECAST_SUMMARY_PATH) as f:
+        summary = json.load(f)
 
     class_metrics = {}
-    for cls, metrics in analysis["class_metrics"].items():
+    for cls, metrics in summary["class_metrics"].items():
         class_metrics[cls] = ClassMetrics(
             n_items=metrics["n_items"],
             wmape=metrics["wmape"],
@@ -71,10 +72,10 @@ def get_forecast_summary() -> ForecastSummary:
             predicted=float(t["Predicted"]),
             accuracy_pct=float(t["accuracy_pct"]),
         )
-        for t in analysis["top_items"]
+        for t in summary["top_items"]
     ]
 
-    gm = analysis["global_metrics"]
+    gm = summary["global_metrics"]
     return ForecastSummary(
         global_metrics=ModelMetrics(
             r2=gm["r2"],

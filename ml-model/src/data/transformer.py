@@ -49,7 +49,7 @@ class SalesDataTransformer:
         df["Item"] = df["Item"].str.strip()
 
         df["Item"] = df["Item"].str.replace(
-            r"^espresso bon-bon$", "espresso", case=False, regex=True
+            r"^espresso bon-bon$", "Espresso", case=False, regex=True
         )
 
         df = df[df["Quantity"] > 0]
@@ -69,6 +69,16 @@ class SalesDataTransformer:
             print(
                 f"Filtered out {filtered_count} transactions for discontinued item 'cheese cake'"
             )
+
+        discontinued_items = ["Piccolo", "Ayam Rempah"]
+        for di in discontinued_items:
+            initial_count = len(df)
+            df = df[df["Item"] != di]
+            filtered_count = initial_count - len(df)
+            if filtered_count > 0:
+                print(
+                    f"Filtered out {filtered_count} transactions for discontinued item '{di}'"
+                )
 
         self.stats["date_range_start"] = df["Date_Only"].min()
         self.stats["date_range_end"] = df["Date_Only"].max()

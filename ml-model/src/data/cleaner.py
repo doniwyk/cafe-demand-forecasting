@@ -21,11 +21,13 @@ RENAME_MAP = {
     "picolo": "Piccolo",
     "long black hot": "Black Hot",
     "long black ice": "Black Ice",
+    "americano hot": "Black Hot",
+    "americano ice": "Black Ice",
     "red velvet": "Red Velvet Ice",
     "susu coklat": "Coklat Hot",
-    "v60 hacienda natural": "v60",
-    "v60 argopuro": "v60",
-    "v60 finca": "v60",
+    "v60 hacienda natural": "V60",
+    "v60 argopuro": "V60",
+    "v60 finca": "V60",
     "mie goreng telur": "Mie Goreng",
     "mie rebus telur": "Mie Rebus",
     "nasi goreng djawa": "Nasi Goreng Jawa",
@@ -99,6 +101,21 @@ class SalesDataCleaner:
                 print(f'  Renamed: "{old_name}" -> "{new_name}" ({count} records)')
 
         self.stats["renamed_records"] = renamed_count
+
+        bom_names = {
+            item.strip().lower(): item.strip()
+            for item in self.menu_bom_df["Item"].dropna().unique()
+        }
+        case_fixed = 0
+        for idx, row in standardized_df.iterrows():
+            item = str(row["Item"]).strip()
+            bom_match = bom_names.get(item.lower())
+            if bom_match and bom_match != item:
+                standardized_df.at[idx, "Item"] = bom_match
+                case_fixed += 1
+
+        if case_fixed:
+            print(f"  Case-normalized: {case_fixed} records to match BOM names")
 
         expanded_rows = []
         rows_to_remove = []
