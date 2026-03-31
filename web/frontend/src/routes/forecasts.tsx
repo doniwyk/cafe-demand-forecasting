@@ -25,7 +25,7 @@ function ForecastsPage() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
 
   const items = useItems()
-  const forecasts = useForecasts({ page_size: 10000 })
+  const forecasts = useForecasts({ page_size: 1000 })
   const summary = useForecastSummary()
 
   const filteredItems = useMemo(() => {

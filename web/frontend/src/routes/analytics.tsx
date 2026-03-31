@@ -148,8 +148,8 @@ function AnalyticsPage() {
                         </TableHeader>
                         <TableBody>
                           {abcByClass[cls].length > 0 ? (
-                            abcByClass[cls].slice(0, 50).map((item) => (
-                              <TableRow key={item.item}>
+                            abcByClass[cls].slice(0, 50).map((item, idx) => (
+                              <TableRow key={`${item.item}-${idx}`}>
                                 <TableCell className="font-medium">{item.item}</TableCell>
                                 <TableCell className="text-right">{Math.round(item.vol).toLocaleString()}</TableCell>
                                 <TableCell className="text-right">{(item.pct * 100).toFixed(1)}%</TableCell>

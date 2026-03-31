@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Query, BackgroundTasks
 
 from app.models.forecast import (
