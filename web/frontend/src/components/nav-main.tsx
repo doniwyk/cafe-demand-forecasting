@@ -1,5 +1,6 @@
 "use client"
 
+import { Link, useRouterState } from "@tanstack/react-router"
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,14 +32,16 @@ export function NavMain({
     }[]
   }[]
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
             key={item.title}
-            defaultOpen={item.isActive}
+            defaultOpen={item.isActive || item.items?.some((i) => i.url === pathname)}
             className="group/collapsible"
             render={<SidebarMenuItem />}
           >
@@ -53,7 +56,10 @@ export function NavMain({
               <SidebarMenuSub>
                 {item.items?.map((subItem) => (
                   <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton render={<a href={subItem.url} />}>
+                    <SidebarMenuSubButton
+                      render={<Link to={subItem.url} />}
+                      isActive={subItem.url === pathname}
+                    >
                       <span>{subItem.title}</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
