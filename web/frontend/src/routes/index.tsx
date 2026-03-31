@@ -130,15 +130,7 @@ function DashboardPage() {
   }, [recentForecasts.data])
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Overview of sales performance and forecasts
-          </p>
-        </div>
-      </div>
+    <div className="flex flex-1 flex-col gap-6 p-4">
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpiData ? (
