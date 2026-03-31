@@ -30,9 +30,9 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
 
   const items = [
     { label: 'R-squared', value: metrics['r2']?.toFixed(3) ?? '-', description: 'Higher is better' },
-    { label: 'wMAPE', value: `${((metrics['wmape'] ?? 0) * 100).toFixed(1)}%`, description: 'Lower is better' },
+    { label: 'wMAPE', value: `${(metrics['wmape'] ?? 0).toFixed(1)}%`, description: 'Lower is better' },
     { label: 'MAE', value: metrics['mae']?.toFixed(1) ?? '-', description: 'Mean absolute error' },
-    { label: 'Volume Accuracy', value: `${((metrics['volume_accuracy'] ?? 0) * 100).toFixed(1)}%`, description: 'Prediction accuracy' },
+    { label: 'Volume Accuracy', value: `${(metrics['volume_accuracy'] ?? 0).toFixed(1)}%`, description: 'Prediction accuracy' },
   ]
 
   return (
@@ -59,7 +59,7 @@ function AnalyticsPage() {
     return Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => ({
       class: cls,
       items: m.n_items,
-      accuracy: +(m.volume_accuracy * 100).toFixed(1),
+      accuracy: +m.volume_accuracy.toFixed(1),
     }))
   }, [forecastSummary.data])
 
@@ -92,8 +92,9 @@ function AnalyticsPage() {
         <CardContent>
           <div className="grid gap-4 lg:grid-cols-5">
             {classBarData.length > 0 && (
-              <div className="lg:col-span-2">
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="lg:col-span-2 flex flex-col">
+                <div className="flex-1 min-h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={classBarData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="class" tick={{ fontSize: 13, fontWeight: 600 }} stroke="var(--muted-foreground)" />
@@ -112,7 +113,8 @@ function AnalyticsPage() {
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
 

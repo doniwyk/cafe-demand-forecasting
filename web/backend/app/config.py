@@ -21,6 +21,7 @@ CONDIMENT_BOM_PATH = ML_BOM_DIR / "condiment_bom.csv"
 CLEANED_SALES_PATH = ML_PROCESSED_DIR / "sales_data_cleaned.csv"
 DAILY_RAW_MATERIAL_PATH = ML_PROCESSED_DIR / "daily_raw_material_requirements.csv"
 ASSOCIATION_RULES_PATH = ML_PROCESSED_DIR / "association_rules_fpgrowth.csv"
+FORECAST_SUMMARY_PATH = ML_PREDICTIONS_DIR / "forecast_summary.json"
 
 STATIC_DIR = BASE_DIR.parent / "frontend" / "dist"
 

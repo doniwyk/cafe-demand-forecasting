@@ -1,0 +1,87 @@
+{
+  "global_metrics": {
+    "r2": 0.8199,
+    "wmape": 21.95,
+    "mae": 1.61,
+    "volume_accuracy": 83.3
+  },
+  "class_metrics": {
+    "A": {
+      "n_items": 28,
+      "wmape": 19.1,
+      "volume_accuracy": 85.6
+    },
+    "B": {
+      "n_items": 18,
+      "wmape": 23.1,
+      "volume_accuracy": 83.9
+    },
+    "C": {
+      "n_items": 26,
+      "wmape": 38.4,
+      "volume_accuracy": 67.0
+    }
+  },
+  "top_items": [
+    {
+      "Item": "Kopi Susu Ice",
+      "Quantity_Sold": 348.0,
+      "Predicted": 315.0,
+      "accuracy_pct": 90.5
+    },
+    {
+      "Item": "Black Ice",
+      "Quantity_Sold": 327.0,
+      "Predicted": 217.0,
+      "accuracy_pct": 66.4
+    },
+    {
+      "Item": "Lychee Tea Ice",
+      "Quantity_Sold": 265.0,
+      "Predicted": 273.0,
+      "accuracy_pct": 97.0
+    },
+    {
+      "Item": "Husgendam ice",
+      "Quantity_Sold": 223.0,
+      "Predicted": 190.0,
+      "accuracy_pct": 85.2
+    },
+    {
+      "Item": "Kasmaran",
+      "Quantity_Sold": 223.0,
+      "Predicted": 223.0,
+      "accuracy_pct": 100.0
+    },
+    {
+      "Item": "Kentang Goreng",
+      "Quantity_Sold": 183.0,
+      "Predicted": 166.0,
+      "accuracy_pct": 90.7
+    },
+    {
+      "Item": "Tubruk",
+      "Quantity_Sold": 182.0,
+      "Predicted": 141.0,
+      "accuracy_pct": 77.5
+    },
+    {
+      "Item": "Kinasih",
+      "Quantity_Sold": 180.0,
+      "Predicted": 161.0,
+      "accuracy_pct": 89.4
+    },
+    {
+      "Item": "Basreng",
+      "Quantity_Sold": 170.0,
+      "Predicted": 161.0,
+      "accuracy_pct": 94.7
+    },
+    {
+      "Item": "Pisang Goreng Aren",
+      "Quantity_Sold": 157.0,
+      "Predicted": 156.0,
+      "accuracy_pct": 99.4
+    }
+  ]
+}

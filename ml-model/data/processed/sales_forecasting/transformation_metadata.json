@@ -1,0 +1,53 @@
+{
+  "transformation_date": "2026-03-31T12:58:44.488310",
+  "statistics": {
+    "original_transactions": 55566,
+    "unique_items": 84,
+    "date_range_start": "2022-01-01",
+    "date_range_end": "2025-09-25",
+    "total_days": 1364,
+    "daily_records_created": 32063
+  },
+  "categories": [
+    "Additional",
+    "Artisan Tea",
+    "Coffee Based",
+    "Espresso Based",
+    "Kopi Botol",
+    "Main Course",
+    "Mie",
+    "Milk Based",
+    "Signature",
+    "Signature Based",
+    "Snack",
+    "Tea Based",
+    "Toast"
+  ],
+  "top_items": {
+    "Kopi Susu Ice": 4185.0,
+    "Tubruk": 2799.0,
+    "Lychee Tea Ice": 2787.0,
+    "Basreng": 2172.0,
+    "Kentang Goreng": 2093.0,
+    "Vietnam Drip": 2013.0,
+    "Tubruk Susu": 1770.0,
+    "Kinasih": 1752.0,
+    "Black Ice": 1506.0,
+    "Mie Goreng": 1429.0,
+    "Lemon Ice": 1389.0,
+    "Lemon Hot": 1281.0,
+    "Cireng": 1190.0,
+    "Tahu Tuna": 1123.0,
+    "Nasi Gila": 1109.0,
+    "Milk Tea Ice": 1098.0,
+    "v60": 1089.0,
+    "Matcha Ice": 1078.0,
+    "Coklat Ice": 1021.0,
+    "Milk Tea Hot": 1020.0
+  },
+  "data_periods": {
+    "start_date": "2022-01-01",
+    "end_date": "2025-09-25",
+    "total_days": 1364
+  }
+}
