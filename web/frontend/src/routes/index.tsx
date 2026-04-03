@@ -65,6 +65,11 @@ function DashboardPage() {
     return Object.values(forecastSummary.data.class_metrics).reduce((s, m) => s + m.n_items, 0)
   }, [forecastSummary.data])
 
+  const activeItemCount = useMemo(() => {
+    if (!forecastSummary.data) return 0
+    return forecastItemCount
+  }, [forecastSummary.data, forecastItemCount])
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
 
@@ -72,8 +77,8 @@ function DashboardPage() {
         <>
           <KpiCard
             title="Active Items"
-            value={items.data?.length ?? '-'}
-            description="Menu items tracked"
+            value={activeItemCount || '-'}
+            description="Menu items with sales"
             icon={<PackageIcon className="size-4" />}
           />
           <KpiCard
