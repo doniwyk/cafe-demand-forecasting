@@ -1,51 +1,59 @@
 from __future__ import annotations
 
-import pandas as pd
+from datetime import date
 
-from app.config import (
-    DAILY_ITEM_SALES_PATH,
-    DAILY_CATEGORY_SALES_PATH,
-    DAILY_TOTAL_SALES_PATH,
-    MENU_BOM_PATH,
+from sqlalchemy import select, func, distinct
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import (
+    Category,
+    Item,
+    DailyItemSale,
+    DailyCategorySale,
+    DailyTotalSale,
 )
 from app.models.sales import (
     DailySale,
     DailySalePage,
-    DailyTotalSale,
-    DailyCategorySale,
+    DailyTotalSale as DailyTotalSaleSchema,
+    DailyCategorySale as DailyCategorySaleSchema,
     ItemInfo,
 )
 
 
-_df_cache: dict[str, pd.DataFrame] = {}
-
-
-def _load(path) -> pd.DataFrame:
-    key = str(path)
-    if key not in _df_cache:
-        _df_cache[key] = pd.read_csv(path)
-    return _df_cache[key]
-
-
-def get_daily_sales(
+async def get_daily_sales(
+    session: AsyncSession,
     item: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> DailySalePage:
-    df = _load(DAILY_ITEM_SALES_PATH)
-    df = _apply_filters(df, item, start_date, end_date)
-    total = len(df)
-    df = df.iloc[(page - 1) * page_size : page * page_size]
+    query = select(DailyItemSale, Item.name).join(Item)
+    if item:
+        query = query.where(Item.name == item)
+    if start_date:
+        query = query.where(DailyItemSale.date >= date.fromisoformat(start_date))
+    if end_date:
+        query = query.where(DailyItemSale.date <= date.fromisoformat(end_date))
+
+    count_q = select(func.count()).select_from(query.subquery())
+    total = (await session.execute(count_q)).scalar() or 0
+
+    query = query.order_by(DailyItemSale.date, Item.name)
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await session.execute(query)
+    rows = result.all()
+
     return DailySalePage(
         data=[
             DailySale(
-                date=str(row["Date"]),
-                item=str(row["Item"]),
-                quantity_sold=float(row["Quantity_Sold"]),
+                date=str(row.DailyItemSale.date),
+                item=row.name,
+                quantity_sold=row.DailyItemSale.quantity_sold,
             )
-            for _, row in df.iterrows()
+            for row in rows
         ],
         total=total,
         page=page,
@@ -53,76 +61,83 @@ def get_daily_sales(
     )
 
 
-def get_daily_total_sales(
+async def get_daily_total_sales(
+    session: AsyncSession,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
-) -> list[DailyTotalSale]:
-    df = _load(DAILY_TOTAL_SALES_PATH)
-    df = _apply_date_filters(df, start_date, end_date)
-    df = df.iloc[(page - 1) * page_size : page * page_size]
+) -> list[DailyTotalSaleSchema]:
+    query = select(DailyTotalSale)
+    if start_date:
+        query = query.where(DailyTotalSale.date >= date.fromisoformat(start_date))
+    if end_date:
+        query = query.where(DailyTotalSale.date <= date.fromisoformat(end_date))
+
+    query = query.order_by(DailyTotalSale.date)
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await session.execute(query)
+    rows = result.scalars().all()
+
     return [
-        DailyTotalSale(
-            date=str(row["Date"]),
-            quantity=float(row["Quantity"]),
-            net_sales=float(row["Net sales"]),
-            gross_sales=float(row["Gross sales"]),
-            unique_items=int(row["UniqueItemCount"]),
+        DailyTotalSaleSchema(
+            date=str(row.date),
+            quantity=row.quantity,
+            net_sales=row.net_sales,
+            gross_sales=row.gross_sales,
+            unique_items=row.unique_items,
         )
-        for _, row in df.iterrows()
+        for row in rows
     ]
 
 
-def get_daily_category_sales(
+async def get_daily_category_sales(
+    session: AsyncSession,
     category: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
-) -> list[DailyCategorySale]:
-    df = _load(DAILY_CATEGORY_SALES_PATH)
+) -> list[DailyCategorySaleSchema]:
+    query = select(DailyCategorySale)
     if category:
-        df = df[df["Category"] == category]
-    df = _apply_date_filters(df, start_date, end_date)
-    df = df.iloc[(page - 1) * page_size : page * page_size]
-    return [
-        DailyCategorySale(
-            date=str(row["Date"]),
-            category=str(row["Category"]),
-            quantity=float(row["Quantity"]),
-            net_sales=float(row["Net sales"]),
-            gross_sales=float(row["Gross sales"]),
-            unique_items=int(row["UniqueItemCount"]),
-        )
-        for _, row in df.iterrows()
-    ]
-
-
-def get_items() -> list[ItemInfo]:
-    df = _load(DAILY_ITEM_SALES_PATH)
-    bom_df = pd.read_csv(MENU_BOM_PATH)
-    category_map = dict(zip(bom_df["Item"].str.strip(), bom_df["Tipe"].str.strip()))
-    unique_items = sorted(df["Item"].unique())
-    return [
-        ItemInfo(name=item, category=category_map.get(item)) for item in unique_items
-    ]
-
-
-def get_categories() -> list[str]:
-    df = _load(DAILY_CATEGORY_SALES_PATH)
-    return sorted(df["Category"].dropna().unique())
-
-
-def _apply_filters(df, item, start_date, end_date) -> pd.DataFrame:
-    if item:
-        df = df[df["Item"] == item]
-    return _apply_date_filters(df, start_date, end_date)
-
-
-def _apply_date_filters(df, start_date, end_date) -> pd.DataFrame:
+        query = query.where(DailyCategorySale.category == category)
     if start_date:
-        df = df[df["Date"] >= start_date]
+        query = query.where(DailyCategorySale.date >= date.fromisoformat(start_date))
     if end_date:
-        df = df[df["Date"] <= end_date]
-    return df
+        query = query.where(DailyCategorySale.date <= date.fromisoformat(end_date))
+
+    query = query.order_by(DailyCategorySale.date)
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await session.execute(query)
+    rows = result.scalars().all()
+
+    return [
+        DailyCategorySaleSchema(
+            date=str(row.date),
+            category=row.category,
+            quantity=row.quantity,
+            net_sales=row.net_sales,
+            gross_sales=row.gross_sales,
+            unique_items=row.unique_items,
+        )
+        for row in rows
+    ]
+
+
+async def get_items(session: AsyncSession) -> list[ItemInfo]:
+    query = select(Item.name, Category.name).outerjoin(Category).order_by(Item.name)
+    result = await session.execute(query)
+    return [ItemInfo(name=row[0], category=row[1]) for row in result.all()]
+
+
+async def get_categories(session: AsyncSession) -> list[str]:
+    query = (
+        select(DailyCategorySale.category)
+        .distinct()
+        .order_by(DailyCategorySale.category)
+    )
+    result = await session.execute(query)
+    return [row[0] for row in result.all()]
