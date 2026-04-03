@@ -1,41 +1,58 @@
-import json
-import re
+from __future__ import annotations
 
-import pandas as pd
+from datetime import datetime
+from re import search
 
-from app.config import (
-    DAILY_ITEM_SALES_PATH,
-    ASSOCIATION_RULES_PATH,
-    FORECAST_SUMMARY_PATH,
-)
+from sqlalchemy import select, func, text, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import ItemABC, AssociationRule, Item, DailyItemSale
 from app.models.analytics import ABCItem, ABCAnalysisResponse, AssociationRule
-from src.evaluation.metrics import classify_abc
 
 
-def get_abc_analysis() -> ABCAnalysisResponse:
-    df = pd.read_csv(DAILY_ITEM_SALES_PATH)
-    abc_df = classify_abc(df, volume_col="Quantity_Sold")
-    class_metrics = {}
-    for cls in ["A", "B", "C"]:
-        sub = abc_df[abc_df["Class"] == cls]
-        if len(sub) == 0:
-            continue
-        class_metrics[cls] = {
-            "n_items": len(sub),
-            "total_volume": float(sub["Vol"].sum()),
-            "pct_volume": float(sub["Pct"].iloc[-1] * 100) if len(sub) > 0 else 0,
-        }
-
-    classifications = [
-        ABCItem(
-            item=str(idx),
-            vol=float(row["Vol"]),
-            cum=float(row["Cum"]),
-            pct=float(row["Pct"]),
-            class_label=str(row["Class"]),
+async def get_abc_analysis(session: AsyncSession) -> ABCAnalysisResponse:
+    item_vol_q = (
+        select(
+            Item.name,
+            func.sum(DailyItemSale.quantity_sold).label("total_vol"),
         )
-        for idx, row in abc_df.iterrows()
-    ]
+        .join(DailyItemSale, Item.id == DailyItemSale.item_id)
+        .group_by(Item.id, Item.name)
+        .order_by(text("total_vol DESC"))
+    )
+    result = await session.execute(item_vol_q)
+    rows = result.all()
+
+    if not rows:
+        return ABCAnalysisResponse(class_metrics={}, classifications=[])
+
+    total = sum(r.total_vol for r in rows)
+    cumulative = 0
+    class_metrics = {
+        "A": {"n_items": 0, "total_volume": 0, "pct_volume": 0},
+        "B": {"n_items": 0, "total_volume": 0, "pct_volume": 0},
+        "C": {"n_items": 0, "total_volume": 0, "pct_volume": 0},
+    }
+    classifications = []
+
+    for r in rows:
+        cumulative += r.total_vol
+        pct = cumulative / total
+        abc = "A" if pct <= 0.70 else ("B" if pct <= 0.90 else "C")
+        class_metrics[abc]["n_items"] += 1
+        class_metrics[abc]["total_volume"] += r.total_vol
+        classifications.append(
+            ABCItem(
+                item=r.name,
+                vol=float(r.total_vol),
+                cum=float(cumulative),
+                pct=float(pct),
+                class_label=abc,
+            )
+        )
+
+    for cls in class_metrics.values():
+        cls["pct_volume"] = round(cls["total_volume"] / total * 100, 1) if total else 0
 
     return ABCAnalysisResponse(
         class_metrics=class_metrics,
@@ -43,45 +60,65 @@ def get_abc_analysis() -> ABCAnalysisResponse:
     )
 
 
-def get_metrics():
-    with open(FORECAST_SUMMARY_PATH) as f:
-        summary = json.load(f)
-    return summary["global_metrics"]
+async def get_metrics(session: AsyncSession) -> dict:
+    from app.db.models import ModelRun
+
+    run_q = (
+        select(ModelRun)
+        .where(ModelRun.is_active == True)
+        .order_by(ModelRun.trained_at.desc())
+        .limit(1)
+    )
+    run = (await session.execute(run_q)).scalar_one_or_none()
+    if run is None:
+        return {"r2": 0, "wmape": 0, "mae": 0, "volume_accuracy": 0}
+    return {
+        "r2": run.r2 or 0,
+        "wmape": run.wmape or 0,
+        "mae": run.mae or 0,
+        "volume_accuracy": run.volume_accuracy or 0,
+    }
 
 
-def get_top_items(n: int = 20) -> list[dict]:
-    df = pd.read_csv(DAILY_ITEM_SALES_PATH)
-    top = df.groupby("Item")["Quantity_Sold"].sum().sort_values(ascending=False).head(n)
-    return [{"item": item, "total_quantity": float(qty)} for item, qty in top.items()]
+async def get_top_items(session: AsyncSession, n: int = 20) -> list[dict]:
+    query = (
+        select(
+            Item.name,
+            func.sum(DailyItemSale.quantity_sold).label("total_qty"),
+        )
+        .join(DailyItemSale, Item.id == DailyItemSale.item_id)
+        .group_by(Item.id, Item.name)
+        .order_by(text("total_qty DESC"))
+        .limit(n)
+    )
+    result = await session.execute(query)
+    return [
+        {"item": row.name, "total_quantity": float(row.total_qty)}
+        for row in result.all()
+    ]
 
 
-def _clean_frozenset(val: str) -> str:
-    m = re.search(r"'([^']+)'\}", str(val))
-    return m.group(1) if m else str(val)
-
-
-def get_association_rules(
+async def get_association_rules(
+    session: AsyncSession,
     min_confidence: float = 0.3,
     min_lift: float = 1.0,
 ) -> list[AssociationRule]:
-    try:
-        df = pd.read_csv(ASSOCIATION_RULES_PATH)
-    except FileNotFoundError:
-        return []
-
-    df = df[df["confidence"] >= min_confidence]
-    df = df[df["lift"] >= min_lift]
-    df = df.sort_values("lift", ascending=False).head(100)
-
-    rules = []
-    for _, row in df.iterrows():
-        rules.append(
-            AssociationRule(
-                antecedents=_clean_frozenset(row.get("antecedents", "")),
-                consequents=_clean_frozenset(row.get("consequents", "")),
-                support=float(row.get("support", 0)),
-                confidence=float(row.get("confidence", 0)),
-                lift=float(row.get("lift", 0)),
-            )
+    query = (
+        select(AssociationRule)
+        .where(AssociationRule.confidence >= min_confidence)
+        .where(AssociationRule.lift >= min_lift)
+        .order_by(AssociationRule.lift.desc())
+        .limit(100)
+    )
+    result = await session.execute(query)
+    rows = result.scalars().all()
+    return [
+        AssociationRule(
+            antecedents=row.antecedents,
+            consequents=row.consequents,
+            support=row.support,
+            confidence=row.confidence,
+            lift=row.lift,
         )
-    return rules
+        for row in rows
+    ]

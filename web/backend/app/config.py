@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BASE_DIR.parent.parent
 ML_MODEL_DIR = ROOT_DIR / "ml-model"
@@ -24,6 +28,11 @@ ASSOCIATION_RULES_PATH = ML_PROCESSED_DIR / "association_rules_fpgrowth.csv"
 FORECAST_SUMMARY_PATH = ML_PREDICTIONS_DIR / "forecast_summary.json"
 
 STATIC_DIR = BASE_DIR.parent / "frontend" / "dist"
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_forecasting",
+)
 
 sys_path = str(ML_MODEL_DIR)
 if sys_path not in os.sys.path:

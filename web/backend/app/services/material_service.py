@@ -1,52 +1,51 @@
 from __future__ import annotations
 
-import pandas as pd
+from datetime import date
 
-from app.config import (
-    DAILY_RAW_MATERIAL_PATH,
-    FORECAST_PATH,
-    MENU_BOM_PATH,
-    CONDIMENT_BOM_PATH,
-    CLEANED_SALES_PATH,
-)
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models import RawMaterialRequirement
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
-from src.models.raw_materials import RawMaterialProcessor
 
 
-_df_cache: dict[str, pd.DataFrame] = {}
-
-
-def _load(path) -> pd.DataFrame:
-    key = str(path)
-    if key not in _df_cache:
-        _df_cache[key] = pd.read_csv(path)
-    return _df_cache[key]
-
-
-def get_daily_materials(
+async def get_daily_materials(
+    session: AsyncSession,
     material: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    df = _load(DAILY_RAW_MATERIAL_PATH)
+    query = select(RawMaterialRequirement)
     if material:
-        df = df[df["Raw_Material"].str.contains(material, case=False, na=False)]
+        query = query.where(RawMaterialRequirement.raw_material.ilike(f"%{material}%"))
     if start_date:
-        df = df[df["Date"] >= start_date]
+        query = query.where(
+            RawMaterialRequirement.date >= date.fromisoformat(start_date)
+        )
     if end_date:
-        df = df[df["Date"] <= end_date]
-    total = len(df)
-    df = df.iloc[(page - 1) * page_size : page * page_size]
+        query = query.where(RawMaterialRequirement.date <= date.fromisoformat(end_date))
+
+    count_q = select(func.count()).select_from(query.subquery())
+    total = (await session.execute(count_q)).scalar() or 0
+
+    query = query.order_by(
+        RawMaterialRequirement.date, RawMaterialRequirement.raw_material
+    )
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await session.execute(query)
+    rows = result.scalars().all()
+
     return MaterialRequirementPage(
         data=[
             DailyMaterialRequirement(
-                date=str(row["Date"]),
-                raw_material=str(row["Raw_Material"]),
-                quantity_required=float(row["Quantity_Required"]),
+                date=str(row.date),
+                raw_material=row.raw_material,
+                quantity_required=row.quantity_required,
             )
-            for _, row in df.iterrows()
+            for row in rows
         ],
         total=total,
         page=page,
@@ -54,23 +53,41 @@ def get_daily_materials(
     )
 
 
-def get_material_forecast(
+async def get_material_forecast(
+    session: AsyncSession,
     material: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    forecast_df = _load(FORECAST_PATH)
-    sales_df = forecast_df.rename(columns={"Quantity_Sold": "Quantity"})
-    sales_df["Date"] = pd.to_datetime(sales_df["Date"]).dt.date
+    import pandas as pd
+    from sqlalchemy import text
+
+    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH, CLEANED_SALES_PATH
+    from src.models.raw_materials import RawMaterialProcessor
+
+    forecast_q = text(
+        "SELECT f.date, i.name as item, f.quantity_predicted as quantity "
+        "FROM forecasts f JOIN items i ON f.item_id = i.id "
+        "JOIN model_runs mr ON f.model_run_id = mr.id "
+        "WHERE mr.is_active = TRUE"
+    )
+    result = await session.execute(forecast_q)
+    rows = result.fetchall()
+
+    if not rows:
+        return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
+
+    forecast_df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity"])
+    forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
 
     processor = RawMaterialProcessor(
         sales_path=CLEANED_SALES_PATH,
         menu_bom_path=MENU_BOM_PATH,
         condiment_bom_path=CONDIMENT_BOM_PATH,
     )
-    requirements = processor.compute_material_requirements(sales_df)
+    requirements = processor.compute_material_requirements(forecast_df)
 
     if material:
         requirements = requirements[

@@ -5,3 +5,5 @@ data/processed/
 *.pkl
 __pycache__/
 *.pyc
+.env
+.env.local

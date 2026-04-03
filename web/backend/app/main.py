@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
+from app.db.engine import engine
+from app.db.base import Base
 from app.routers import (
     sales_router,
     forecasts_router,
@@ -12,10 +18,18 @@ from app.routers import (
 )
 from app.config import STATIC_DIR
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await engine.dispose()
+
+
 app = FastAPI(
     title="Cafe Supply Forecasting API",
     description="API for cafe sales forecasting, raw material requirements, and analytics",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
