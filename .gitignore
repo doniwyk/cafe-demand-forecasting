@@ -3,3 +3,5 @@ data/raw/
 data/processed/
 .opencode
 *.pkl
+__pycache__/
+*.pyc
