@@ -57,10 +57,13 @@ def train_and_predict_prophet(
 
     print("Training per-item Prophet models...")
     predictions = []
-    items = test["Item"].unique()
+    items = list(test["Item"].unique())
+    total_items = len(items)
     for i, item in enumerate(items):
-        if (i + 1) % 10 == 0:
-            print(f"  Fitting item {i + 1}/{len(items)}...")
+        if (i + 1) % 10 == 0 or i == 0:
+            print(
+                f"  Progress: {i + 1}/{total_items} items ({((i + 1) / total_items * 100):.1f}%)"
+            )
 
         train_item = train[train["Item"] == item].sort_values("Date")
         test_item = test[test["Item"] == item].copy()
@@ -148,9 +151,11 @@ def train_models_prophet(
 
     print("Training per-item Prophet models...")
     item_models = {}
-    for i, item in enumerate(df_weekly["Item"].unique()):
-        if (i + 1) % 10 == 0:
-            print(f"  Fitting item {i + 1}/{len(df_weekly['Item'].unique())}...")
+    items = list(df_weekly["Item"].unique())
+    total = len(items)
+    print(f"  Total items: {total}")
+    for i, item in enumerate(items):
+        print(f"  [{i + 1}/{total}] Training {item}...")
 
         train_item = df_weekly[df_weekly["Item"] == item].sort_values("Date")
         if len(train_item) < MIN_TRAIN_WEEKS:
@@ -205,6 +210,7 @@ def train_models_prophet(
 
     print(f"Prophet Models saved to: {output_dir}")
     print(f"  - Per-item models: {len(item_models)} items in item_models_prophet.pkl")
+    print(f"  Completed all {total} items")
     return item_models, None, dow_factor_dict
 
 

@@ -1,40 +1,71 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Skeleton } from '@/components/ui/skeleton'
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { useABCAnalysis, useModelMetrics, useAssociationRules } from '@/hooks/use-analytics'
-import { useForecastSummary } from '@/hooks/use-forecasts'
-import { useModelType } from '@/contexts/model-context'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useABCAnalysis, useModelMetrics, useAssociationRules } from "@/hooks/use-analytics";
+import { useForecastSummary } from "@/hooks/use-forecasts";
+import { useModelType } from "@/contexts/model-context";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
-export const Route = createFileRoute('/analytics')({
+export const Route = createFileRoute("/analytics")({
   component: AnalyticsPage,
-})
+});
 
 const CLASS_COLORS: Record<string, string> = {
-  A: 'var(--chart-1)',
-  B: 'var(--chart-2)',
-  C: 'var(--chart-3)',
-}
+  A: "var(--chart-1)",
+  B: "var(--chart-2)",
+  C: "var(--chart-3)",
+};
 
 function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined }) {
   if (!metrics) {
-    return <div className="grid grid-cols-2 gap-4 lg:grid-cols-4"><Skeleton className="h-20" /><Skeleton className="h-20" /><Skeleton className="h-20" /><Skeleton className="h-20" /></div>
+    return (
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+        <Skeleton className="h-20" />
+      </div>
+    );
   }
 
   const items = [
-    { label: 'R-squared', value: metrics['r2']?.toFixed(3) ?? '-', description: 'Higher is better' },
-    { label: 'wMAPE', value: `${(metrics['wmape'] ?? 0).toFixed(1)}%`, description: 'Lower is better' },
-    { label: 'MAE', value: metrics['mae']?.toFixed(1) ?? '-', description: 'Mean absolute error' },
-    { label: 'Volume Accuracy', value: `${(metrics['volume_accuracy'] ?? 0).toFixed(1)}%`, description: 'Prediction accuracy' },
-  ]
+    {
+      label: "R-squared",
+      value: metrics["r2"]?.toFixed(3) ?? "-",
+      description: "Higher is better",
+    },
+    {
+      label: "wMAPE",
+      value: `${(metrics["wmape"] ?? 0).toFixed(1)}%`,
+      description: "Lower is better",
+    },
+    { label: "MAE", value: metrics["mae"]?.toFixed(1) ?? "-", description: "Mean absolute error" },
+    {
+      label: "Volume Accuracy",
+      value: `${(metrics["volume_accuracy"] ?? 0).toFixed(1)}%`,
+      description: "Prediction accuracy",
+    },
+  ];
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -46,38 +77,37 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function AnalyticsPage() {
-  const { modelType } = useModelType()
-  const abc = useABCAnalysis()
-  const metrics = useModelMetrics(modelType)
-  const rules = useAssociationRules({ min_confidence: 0.3, min_lift: 1.0 })
-  const forecastSummary = useForecastSummary(modelType)
+  const { modelType } = useModelType();
+  const abc = useABCAnalysis(modelType);
+  const metrics = useModelMetrics(modelType);
+  const rules = useAssociationRules(modelType, { min_confidence: 0.3, min_lift: 1.0 });
+  const forecastSummary = useForecastSummary(modelType);
 
   const classBarData = useMemo(() => {
-    if (!forecastSummary.data) return []
+    if (!forecastSummary.data) return [];
     return Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => ({
       class: cls,
       items: m.n_items,
       accuracy: +m.volume_accuracy.toFixed(1),
-    }))
-  }, [forecastSummary.data])
+    }));
+  }, [forecastSummary.data]);
 
   const abcByClass = useMemo(() => {
-    if (!abc.data?.classifications) return { A: [], B: [], C: [] }
-    const grouped: Record<string, typeof abc.data.classifications> = { A: [], B: [], C: [] }
+    if (!abc.data?.classifications) return { A: [], B: [], C: [] };
+    const grouped: Record<string, typeof abc.data.classifications> = { A: [], B: [], C: [] };
     for (const item of abc.data.classifications) {
-      const cls = item.class_label
-      if (grouped[cls]) grouped[cls].push(item)
+      const cls = item.class_label;
+      if (grouped[cls]) grouped[cls].push(item);
     }
-    return grouped
-  }, [abc.data])
+    return grouped;
+  }, [abc.data]);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
-
       <Card>
         <CardHeader>
           <CardTitle>Model Performance</CardTitle>
@@ -97,24 +127,28 @@ function AnalyticsPage() {
               <div className="lg:col-span-2 flex flex-col">
                 <div className="flex-1 min-h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={classBarData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="class" tick={{ fontSize: 13, fontWeight: 600 }} stroke="var(--muted-foreground)" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--popover)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius)',
-                        fontSize: 12,
-                      }}
-                    />
-                    <Bar dataKey="items" name="Items" radius={[4, 4, 0, 0]}>
-                      {classBarData.map((d) => (
-                        <Cell key={d.class} fill={CLASS_COLORS[d.class] || 'var(--chart-1)'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                    <BarChart data={classBarData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis
+                        dataKey="class"
+                        tick={{ fontSize: 13, fontWeight: 600 }}
+                        stroke="var(--muted-foreground)"
+                      />
+                      <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--popover)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius)",
+                          fontSize: 12,
+                        }}
+                      />
+                      <Bar dataKey="items" name="Items" radius={[4, 4, 0, 0]}>
+                        {classBarData.map((d) => (
+                          <Cell key={d.class} fill={CLASS_COLORS[d.class] || "var(--chart-1)"} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
@@ -134,7 +168,7 @@ function AnalyticsPage() {
                       C-class {abcByClass.C.length > 0 && `(${abcByClass.C.length})`}
                     </TabsTrigger>
                   </TabsList>
-                  {(['A', 'B', 'C'] as const).map((cls) => (
+                  {(["A", "B", "C"] as const).map((cls) => (
                     <TabsContent key={cls} value={cls} className="max-h-65 overflow-y-auto">
                       <Table>
                         <TableHeader>
@@ -149,8 +183,12 @@ function AnalyticsPage() {
                             abcByClass[cls].slice(0, 50).map((item, idx) => (
                               <TableRow key={`${item.item}-${idx}`}>
                                 <TableCell className="font-medium">{item.item}</TableCell>
-                                <TableCell className="text-right">{Math.round(item.vol).toLocaleString()}</TableCell>
-                                <TableCell className="text-right">{(item.pct * 100).toFixed(1)}%</TableCell>
+                                <TableCell className="text-right">
+                                  {Math.round(item.vol).toLocaleString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {(item.pct * 100).toFixed(1)}%
+                                </TableCell>
                               </TableRow>
                             ))
                           ) : (
@@ -199,9 +237,11 @@ function AnalyticsPage() {
                       <Badge variant="secondary">{rule.consequents}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{(rule.support * 100).toFixed(1)}%</TableCell>
-                    <TableCell className="text-right">{(rule.confidence * 100).toFixed(1)}%</TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={rule.lift >= 1.5 ? 'default' : 'secondary'}>
+                      {(rule.confidence * 100).toFixed(1)}%
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant={rule.lift >= 1.5 ? "default" : "secondary"}>
                         {rule.lift.toFixed(2)}
                       </Badge>
                     </TableCell>
@@ -211,11 +251,15 @@ function AnalyticsPage() {
             </Table>
           ) : (
             <div className="flex h-50 items-center justify-center text-muted-foreground">
-              {rules.isLoading ? <Skeleton className="h-full w-full" /> : 'No strong association rules found'}
+              {rules.isLoading ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                "No strong association rules found"
+              )}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

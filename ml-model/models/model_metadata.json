@@ -1,6 +1,6 @@
 {
-  "trained_at": "2026-03-31T11:26:18.622386",
-  "n_item_models": 71,
+  "trained_at": "2026-04-05T09:56:59.935714",
+  "n_item_models": 66,
   "items_with_models": [
     "Affogato",
     "Ajeng Hot",
@@ -8,13 +8,11 @@
     "Anindya Hot",
     "Anindya Ice",
     "Arunika",
+    "Ayam Chili Padi",
     "Ayam Curry",
     "Ayam Daun Jeruk",
     "Ayam Mentega",
-    "Ayam Rempah",
     "Ayam Teriyaki",
-    "Ayam chili padi",
-    "Ayam rempah",
     "Basreng",
     "Black Hot",
     "Black Ice",
@@ -26,7 +24,7 @@
     "Donat",
     "Espresso",
     "Husgendam Hot",
-    "Husgendam Ice",
+    "Husgendam ice",
     "Kentang Goreng",
     "Kinasih",
     "Kirana",
@@ -50,7 +48,6 @@
     "Nirmala Hot",
     "Nirmala Ice",
     "Panacotta",
-    "Piccolo",
     "Pisang Goreng Aren",
     "Pizza Mie",
     "Red Velvet Ice",
@@ -66,12 +63,10 @@
     "Terpesona",
     "Tubruk",
     "Tubruk Susu",
-    "V60",
     "Vietnam Drip",
     "Waffle Matcha",
     "Waffle Strawberry",
     "Waffle Vanilla",
-    "espresso",
     "v60"
   ],
   "features": [
@@ -104,7 +99,7 @@
     "Diff_1",
     "Accel_2"
   ],
-  "n_records": 12032,
+  "n_records": 11581,
   "date_range": [
     "2022-01-03 00:00:00",
     "2025-09-29 00:00:00"
