@@ -106,11 +106,7 @@ export const api = {
       );
     },
     retrainStatus() {
-      return request<import("@/types").RetrainStatusMap>(
-        "/forecasts/retrain/status?tail=200",
-        undefined,
-        { timeoutMs: 4000 },
-      );
+      return request<import("@/types").RetrainStatusMap>("/forecasts/retrain/status?tail=200");
     },
     cleanup() {
       return request<{

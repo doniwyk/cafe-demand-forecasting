@@ -29,6 +29,7 @@ services:
     volumes:
       - ./web/backend:/app/web/backend
       - ./ml-model:/app/ml-model
+      - modeldata:/app/ml-model/models
     depends_on:
       db:
         condition: service_healthy
@@ -53,3 +54,4 @@ services:
 
 volumes:
   pgdata:
+  modeldata:

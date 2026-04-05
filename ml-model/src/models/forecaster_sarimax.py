@@ -8,6 +8,7 @@ import warnings
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
+import time
 
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.stattools import adfuller
@@ -184,9 +185,13 @@ def train_models_sarimax(
             item_models[item] = result
 
     print("Saving SARIMAX item models to disk...")
-    with open(output_dir / "item_models_sarimax.pkl", "wb") as f:
-        pickle.dump(item_models, f)
-    print("Saved SARIMAX item models")
+    model_path = output_dir / "item_models_sarimax.pkl"
+    t0 = time.time()
+    with open(model_path, "wb") as f:
+        pickle.dump(item_models, f, protocol=pickle.HIGHEST_PROTOCOL)
+    save_secs = time.time() - t0
+    size_mb = model_path.stat().st_size / (1024 * 1024)
+    print(f"Saved SARIMAX item models ({size_mb:.1f} MB) in {save_secs:.1f}s")
 
     print("Computing DOW factors...")
     dow_factor_dict = _compute_dow_factors(df_weekly)
