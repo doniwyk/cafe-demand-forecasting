@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useItems, useTopItems } from '@/hooks/use-sales'
 import { useForecastSummary } from '@/hooks/use-forecasts'
+import { useModelType } from '@/contexts/model-context'
 import { PackageIcon, TargetIcon, BarChart3Icon } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -51,9 +52,10 @@ function ChartCard({ title, children, className }: { title: string; children: Re
 }
 
 function DashboardPage() {
+  const { modelType } = useModelType()
   const items = useItems()
   const topItems = useTopItems(10)
-  const forecastSummary = useForecastSummary()
+  const forecastSummary = useForecastSummary(modelType)
 
   const topItemsData = useMemo(() => {
     if (!topItems.data) return []

@@ -9,10 +9,10 @@ export function useABCAnalysis() {
   })
 }
 
-export function useModelMetrics() {
+export function useModelMetrics(modelType?: string) {
   return useQuery({
-    queryKey: ['analytics', 'metrics'],
-    queryFn: () => api.analytics.metrics(),
+    queryKey: ['analytics', 'metrics', modelType],
+    queryFn: () => api.analytics.metrics(modelType),
   })
 }
 

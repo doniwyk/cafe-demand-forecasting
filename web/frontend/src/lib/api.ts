@@ -33,24 +33,37 @@ export const api = {
     },
   },
   forecasts: {
-    list(params?: { item?: string; start_date?: string; end_date?: string; page?: number; page_size?: number }) {
+    list(params?: { item?: string; start_date?: string; end_date?: string; model_type?: string; page?: number; page_size?: number }) {
       const q = new URLSearchParams(params as Record<string, string>)
       return request<import('@/types').ForecastPage>(`/forecasts?${q}`)
     },
-    summary() {
-      return request<import('@/types').ForecastSummary>('/forecasts/summary')
+    summary(model_type?: string) {
+      const q = model_type ? `?model_type=${model_type}` : ''
+      return request<import('@/types').ForecastSummary>(`/forecasts/summary${q}`)
     },
-    predict(data: { items: string[]; weeks?: number }) {
+    predict(data: { items: string[]; weeks?: number; model_type?: string }) {
       return request<import('@/types').PredictResponse>('/forecasts/predict', {
         method: 'POST',
         body: JSON.stringify(data),
       })
     },
-    retrain() {
-      return request<import('@/types').RetrainResponse>('/forecasts/retrain', { method: 'POST' })
+    retrain(model_type: string) {
+      return request<import('@/types').RetrainResponse>('/forecasts/retrain', {
+        method: 'POST',
+        body: JSON.stringify({ model_type }),
+      })
+    },
+    retrainCancel(model_type: string) {
+      return request<{ status: string; model_type?: string; message?: string }>('/forecasts/retrain/cancel', {
+        method: 'POST',
+        body: JSON.stringify({ model_type }),
+      })
     },
     retrainStatus() {
-      return request<{ status: string; message: string }>('/forecasts/retrain/status')
+      return request<Record<string, { status: string; message: string }>>('/forecasts/retrain/status')
+    },
+    cleanup() {
+      return request<{ deleted_runs: number; deleted_forecasts: number; deleted_class_metrics: number; deleted_top_items: number }>('/forecasts/cleanup', { method: 'POST' })
     },
   },
   materials: {
@@ -67,8 +80,9 @@ export const api = {
     abc() {
       return request<import('@/types').ABCAnalysisResponse>('/analytics/abc')
     },
-    metrics() {
-      return request<Record<string, number>>('/analytics/metrics')
+    metrics(model_type?: string) {
+      const q = model_type ? `?model_type=${model_type}` : ''
+      return request<Record<string, number>>(`/analytics/metrics${q}`)
     },
     topItems(n?: number) {
       return request<import('@/types').TopSellingItem[]>(`/analytics/top-items${n ? `?n=${n}` : ''}`)

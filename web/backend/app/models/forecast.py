@@ -43,6 +43,11 @@ class ForecastSummary(BaseModel):
 class PredictRequest(BaseModel):
     items: list[str]
     weeks: int = 12
+    model_type: str = "xgboost"
+
+
+class RetrainRequest(BaseModel):
+    model_type: str = "xgboost"
 
 
 class PredictResponse(BaseModel):
