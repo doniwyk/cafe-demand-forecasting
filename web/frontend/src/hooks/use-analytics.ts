@@ -1,24 +1,31 @@
-import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
-
-export function useABCAnalysis() {
+export function useABCAnalysis(modelType?: string) {
   return useQuery({
-    queryKey: ['analytics', 'abc'],
-    queryFn: () => api.analytics.abc(),
-  })
+    queryKey: ["analytics", "abc", modelType],
+    queryFn: () => api.analytics.abc(modelType),
+  });
 }
 
 export function useModelMetrics(modelType?: string) {
   return useQuery({
-    queryKey: ['analytics', 'metrics', modelType],
+    queryKey: ["analytics", "metrics", modelType],
     queryFn: () => api.analytics.metrics(modelType),
-  })
+  });
 }
 
-export function useAssociationRules(params?: { min_confidence?: number; min_lift?: number }) {
+export function useAssociationRules(
+  modelType?: string,
+  params?: { min_confidence?: number; min_lift?: number },
+) {
+  const queryParams = {
+    ...params,
+    ...(modelType ? { model_type: modelType } : {}),
+  };
+
   return useQuery({
-    queryKey: ['analytics', 'association-rules', params],
-    queryFn: () => api.analytics.associationRules(params),
-  })
+    queryKey: ["analytics", "association-rules", modelType, params],
+    queryFn: () => api.analytics.associationRules(queryParams),
+  });
 }

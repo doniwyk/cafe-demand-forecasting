@@ -14,8 +14,11 @@ async def get_session():
 
 
 @router.get("/abc", response_model=ABCAnalysisResponse)
-async def get_abc_analysis(session: AsyncSession = Depends(get_session)):
-    return await analytics_service.get_abc_analysis(session)
+async def get_abc_analysis(
+    session: AsyncSession = Depends(get_session),
+    model_type: str | None = Query(None),
+):
+    return await analytics_service.get_abc_analysis(session, model_type)
 
 
 @router.get("/metrics")
@@ -39,7 +42,8 @@ async def get_association_rules(
     session: AsyncSession = Depends(get_session),
     min_confidence: float = Query(0.3, ge=0, le=1),
     min_lift: float = Query(1.0, ge=0),
+    model_type: str | None = Query(None),
 ):
     return await analytics_service.get_association_rules(
-        session, min_confidence, min_lift
+        session, min_confidence, min_lift, model_type
     )

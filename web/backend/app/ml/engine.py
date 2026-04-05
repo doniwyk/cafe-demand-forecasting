@@ -137,8 +137,11 @@ def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
             train_models_rf(df_feat, ML_MODELS_DIR)
             test_pred = train_and_predict_rf(df_feat)
     elif model_type == "sarimax":
+        print("[SARIMAX] Training and saving per-item models...")
         train_models_sarimax(df_weekly, ML_MODELS_DIR)
+        print("[SARIMAX] Running backtest evaluation...")
         test_pred = train_and_predict_sarimax(df_weekly)
+        print("[SARIMAX] Backtest evaluation complete")
     elif model_type == "prophet":
         train_models_prophet(df_weekly, ML_MODELS_DIR)
         test_pred = train_and_predict_prophet(df_weekly)
@@ -205,4 +208,5 @@ def generate_forecast(
 
         future_features = _gen_fw(df_weekly, future_weeks=weeks)
 
+    print(f"[{model_type}] Forecast inference started for {weeks} weeks")
     return run_predict(future_features, model_type)

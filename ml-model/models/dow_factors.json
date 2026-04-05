@@ -17,6 +17,9 @@
   "Arunika": {
     "0": 1.0
   },
+  "Ayam Cabe Garam": {
+    "0": 1.0
+  },
   "Ayam Chili Padi": {
     "0": 1.0
   },
@@ -29,19 +32,7 @@
   "Ayam Mentega": {
     "0": 1.0
   },
-  "Ayam Rempah": {
-    "0": 1.0
-  },
   "Ayam Teriyaki": {
-    "0": 1.0
-  },
-  "Ayam cabe garam": {
-    "0": 1.0
-  },
-  "Ayam chili padi": {
-    "0": 1.0
-  },
-  "Ayam rempah": {
     "0": 1.0
   },
   "Basreng": {
@@ -77,7 +68,10 @@
   "Husgendam Hot": {
     "0": 1.0
   },
-  "Husgendam Ice": {
+  "Husgendam ice": {
+    "0": 1.0
+  },
+  "Kasmaran": {
     "0": 1.0
   },
   "Kentang Goreng": {
@@ -119,6 +113,9 @@
   "Matcha Ice": {
     "0": 1.0
   },
+  "Mesra": {
+    "0": 1.0
+  },
   "Mie Goreng": {
     "0": 1.0
   },
@@ -147,9 +144,6 @@
     "0": 1.0
   },
   "Panacotta": {
-    "0": 1.0
-  },
-  "Piccolo": {
     "0": 1.0
   },
   "Pisang Goreng Aren": {
@@ -206,9 +200,6 @@
   "Tubruk Susu": {
     "0": 1.0
   },
-  "V60": {
-    "0": 1.0
-  },
   "Vietnam Drip": {
     "0": 1.0
   },
@@ -219,15 +210,6 @@
     "0": 1.0
   },
   "Waffle Vanilla": {
-    "0": 1.0
-  },
-  "espresso": {
-    "0": 1.0
-  },
-  "kasmaran": {
-    "0": 1.0
-  },
-  "mesra": {
     "0": 1.0
   },
   "v60": {

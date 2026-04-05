@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
+import time
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
@@ -15,6 +16,32 @@ from src.models.features import create_features
 
 
 MIN_TRAIN_RECORDS = 40
+
+XGB_GLOBAL_PARAMS = {
+    "objective": "reg:tweedie",
+    "tweedie_variance_power": 1.5,
+    "n_estimators": 700,
+    "learning_rate": 0.03,
+    "max_depth": 7,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "tree_method": "hist",
+    "n_jobs": -1,
+    "random_state": 42,
+}
+
+XGB_ITEM_PARAMS = {
+    "objective": "reg:tweedie",
+    "tweedie_variance_power": 1.5,
+    "n_estimators": 500,
+    "learning_rate": 0.04,
+    "max_depth": 6,
+    "subsample": 0.85,
+    "colsample_bytree": 0.85,
+    "tree_method": "hist",
+    "n_jobs": -1,
+    "random_state": 42,
+}
 
 
 def train_and_predict(
@@ -50,37 +77,25 @@ def train_and_predict(
     features = FEATURE_COLUMNS
 
     print("Training global fallback model...")
-    global_model = XGBRegressor(
-        objective="reg:tweedie",
-        tweedie_variance_power=1.5,
-        n_estimators=2000,
-        learning_rate=0.02,
-        max_depth=7,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        n_jobs=-1,
-        random_state=42,
-    )
+    t0 = time.time()
+    global_model = XGBRegressor(**XGB_GLOBAL_PARAMS)
     global_model.fit(train[features], train["Quantity_Sold"])
+    print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
     print("Training per-item models...")
     predictions = []
-    for item in test["Item"].unique():
+    items = list(test["Item"].unique())
+    total_items = len(items)
+    for idx, item in enumerate(items):
+        if (idx + 1) % 20 == 0 or idx == 0:
+            print(
+                f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
+            )
         train_item = train[train["Item"] == item]
         test_item = test[test["Item"] == item].copy()
 
         if len(train_item) >= MIN_TRAIN_RECORDS:
-            model = XGBRegressor(
-                objective="reg:tweedie",
-                tweedie_variance_power=1.5,
-                n_estimators=1500,
-                learning_rate=0.03,
-                max_depth=6,
-                subsample=0.85,
-                colsample_bytree=0.85,
-                n_jobs=-1,
-                random_state=42,
-            )
+            model = XGBRegressor(**XGB_ITEM_PARAMS)
             model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
             pred = model.predict(test_item[features])
         else:
@@ -112,36 +127,25 @@ def train_models(
     features = FEATURE_COLUMNS
 
     print("Training global fallback model...")
-    global_model = XGBRegressor(
-        objective="reg:tweedie",
-        tweedie_variance_power=1.5,
-        n_estimators=2000,
-        learning_rate=0.02,
-        max_depth=7,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        n_jobs=-1,
-        random_state=42,
-    )
+    t0 = time.time()
+    global_model = XGBRegressor(**XGB_GLOBAL_PARAMS)
     global_model.fit(df_features[features], df_features["Quantity_Sold"])
+    print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
     item_models = {}
-    for item in df_features["Item"].unique():
+    items = list(df_features["Item"].unique())
+    total_items = len(items)
+    print(f"Training per-item models... total items: {total_items}")
+    for idx, item in enumerate(items):
+        if (idx + 1) % 20 == 0 or idx == 0:
+            print(
+                f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
+            )
         train_item = df_features[df_features["Item"] == item]
         if len(train_item) < MIN_TRAIN_RECORDS:
             continue
 
-        model = XGBRegressor(
-            objective="reg:tweedie",
-            tweedie_variance_power=1.5,
-            n_estimators=1500,
-            learning_rate=0.03,
-            max_depth=6,
-            subsample=0.85,
-            colsample_bytree=0.85,
-            n_jobs=-1,
-            random_state=42,
-        )
+        model = XGBRegressor(**XGB_ITEM_PARAMS)
         model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
         item_models[item] = model
 

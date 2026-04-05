@@ -32,6 +32,9 @@ def _fit_item(ts: pd.Series) -> "SARIMAXResultsWrapper | None":
     if len(ts) < MIN_TRAIN_WEEKS:
         return None
 
+    ts = ts.copy()
+    ts.index = pd.DatetimeIndex(ts.index, freq="W-MON")
+
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -99,12 +102,13 @@ def train_and_predict_sarimax(
 
     global_mean = train["Quantity_Sold"].mean()
 
-    print("Training per-item SARIMAX models...")
+    print("Training per-item SARIMAX models (backtest)...")
     predictions = []
-    items = test["Item"].unique()
+    items = list(test["Item"].unique())
+    total_items = len(items)
+    print(f"  Total items to train: {total_items}")
     for i, item in enumerate(items):
-        if (i + 1) % 10 == 0:
-            print(f"  Fitting item {i + 1}/{len(items)}...")
+        print(f"  [{i + 1}/{total_items}] Training {item}...")
 
         train_item = train[train["Item"] == item].sort_values("Date")
         test_item = test[test["Item"] == item].copy()
@@ -130,6 +134,9 @@ def train_and_predict_sarimax(
         test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
 
         predictions.append(test_item)
+
+    print(f"  Completed all {total_items} items")
+    print("Building combined SARIMAX backtest predictions...")
 
     return pd.concat(predictions).sort_values(["Item", "Date"])
 
@@ -164,9 +171,11 @@ def train_models_sarimax(
 
     print("Training per-item SARIMAX models...")
     item_models = {}
-    for i, item in enumerate(df_weekly["Item"].unique()):
-        if (i + 1) % 10 == 0:
-            print(f"  Fitting item {i + 1}/{len(df_weekly['Item'].unique())}...")
+    items = list(df_weekly["Item"].unique())
+    total = len(items)
+    print(f"  Total items: {total}")
+    for i, item in enumerate(items):
+        print(f"  [{i + 1}/{total}] Training {item}...")
 
         train_item = df_weekly[df_weekly["Item"] == item].sort_values("Date")
         ts = train_item.set_index("Date")["Quantity_Sold"]
@@ -174,12 +183,16 @@ def train_models_sarimax(
         if result is not None:
             item_models[item] = result
 
+    print("Saving SARIMAX item models to disk...")
     with open(output_dir / "item_models_sarimax.pkl", "wb") as f:
         pickle.dump(item_models, f)
+    print("Saved SARIMAX item models")
 
+    print("Computing DOW factors...")
     dow_factor_dict = _compute_dow_factors(df_weekly)
     with open(output_dir / "dow_factors_sarimax.json", "w") as f:
         json.dump(dow_factor_dict, f, indent=2)
+    print("Saved DOW factors")
 
     global_mean = float(df_weekly["Quantity_Sold"].mean())
     metadata = {
@@ -193,9 +206,11 @@ def train_models_sarimax(
     }
     with open(output_dir / "model_metadata_sarimax.json", "w") as f:
         json.dump(metadata, f, indent=2)
+    print("Saved SARIMAX metadata")
 
     print(f"SARIMAX Models saved to: {output_dir}")
     print(f"  - Per-item models: {len(item_models)} items in item_models_sarimax.pkl")
+    print(f"  Completed all {total} items")
     return item_models, None, dow_factor_dict
 
 
@@ -231,6 +246,7 @@ def predict_sarimax(
         with open(meta_path) as f:
             global_mean = json.load(f).get("global_mean", 0)
 
+    print(f"Running SARIMAX inference for {df_weekly['Item'].nunique()} items...")
     predictions = []
     for item in df_weekly["Item"].unique():
         test_item = df_weekly[df_weekly["Item"] == item].copy()

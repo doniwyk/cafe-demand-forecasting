@@ -75,7 +75,13 @@ def train_and_predict_rf(
 
     print("Training per-item models (Random Forest)...")
     predictions = []
-    for item in test["Item"].unique():
+    items = list(test["Item"].unique())
+    total_items = len(items)
+    for idx, item in enumerate(items):
+        if (idx + 1) % 20 == 0 or idx == 0:
+            print(
+                f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
+            )
         train_item = train[train["Item"] == item]
         test_item = test[test["Item"] == item].copy()
 
