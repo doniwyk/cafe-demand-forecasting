@@ -14,175 +14,159 @@ from src.models.forecaster import (
     generate_future_features,
     train_and_predict,
 )
+from src.models.forecaster_rf import (
+    train_and_predict_rf,
+    train_models_rf,
+    load_models_rf,
+    predict_rf,
+)
+from src.models.forecaster_sarimax import (
+    train_and_predict_sarimax,
+    train_models_sarimax,
+    load_models_sarimax,
+    predict_sarimax,
+    generate_future_weekly as generate_future_weekly_sarimax,
+)
+from src.models.forecaster_prophet import (
+    train_and_predict_prophet,
+    train_models_prophet,
+    load_models_prophet,
+    predict_prophet,
+)
 from src.models.features import create_features
 from src.evaluation.metrics import generate_abc_analysis
 
 
-_models_cache = {
-    "item_models": None,
-    "global_model": None,
-    "dow_factors": None,
-    "loaded": False,
+VALID_MODEL_TYPES = {"xgboost", "random_forest", "sarimax", "prophet"}
+
+_METADATA_FILE = {
+    "xgboost": "model_metadata.json",
+    "random_forest": "model_metadata_rf.json",
+    "sarimax": "model_metadata_sarimax.json",
+    "prophet": "model_metadata_prophet.json",
+}
+
+_models_cache: dict[str, dict] = {
+    mt: {
+        "item_models": None,
+        "global_model": None,
+        "dow_factors": None,
+        "loaded": False,
+    }
+    for mt in VALID_MODEL_TYPES
 }
 
 
-def _ensure_models_loaded():
-    if _models_cache["loaded"]:
+def _load_for_model(model_type: str):
+    if model_type == "xgboost":
+        im, gm, dow = load_models(ML_MODELS_DIR)
+    elif model_type == "random_forest":
+        im, gm, dow = load_models_rf(ML_MODELS_DIR)
+    elif model_type == "sarimax":
+        im, gm, dow = load_models_sarimax(ML_MODELS_DIR)
+    elif model_type == "prophet":
+        im, gm, dow = load_models_prophet(ML_MODELS_DIR)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+    return im, gm, dow
+
+
+def _ensure_models_loaded(model_type: str = "xgboost"):
+    cache = _models_cache[model_type]
+    if cache["loaded"]:
         return
-    item_models, global_model, dow_factors = load_models(ML_MODELS_DIR)
-    _models_cache["item_models"] = item_models
-    _models_cache["global_model"] = global_model
-    _models_cache["dow_factors"] = dow_factors
-    _models_cache["loaded"] = True
+    im, gm, dow = _load_for_model(model_type)
+    cache["item_models"] = im
+    cache["global_model"] = gm
+    cache["dow_factors"] = dow
+    cache["loaded"] = True
 
 
-def run_predict(df_features: pd.DataFrame) -> pd.DataFrame:
-    _ensure_models_loaded()
-    return predict(
-        df_features,
-        item_models=_models_cache["item_models"],
-        global_model=_models_cache["global_model"],
-        dow_factor_dict=_models_cache["dow_factors"],
+def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors):
+    if model_type == "xgboost":
+        return predict(
+            df,
+            item_models=item_models,
+            global_model=global_model,
+            dow_factor_dict=dow_factors,
+        )
+    elif model_type == "random_forest":
+        return predict_rf(
+            df,
+            item_models=item_models,
+            global_model=global_model,
+            dow_factor_dict=dow_factors,
+        )
+    elif model_type == "sarimax":
+        return predict_sarimax(
+            df,
+            item_models=item_models,
+            global_model=global_model,
+            dow_factor_dict=dow_factors,
+        )
+    elif model_type == "prophet":
+        return predict_prophet(
+            df,
+            item_models=item_models,
+            global_model=global_model,
+            dow_factor_dict=dow_factors,
+        )
+
+
+def run_predict(df: pd.DataFrame, model_type: str = "xgboost") -> pd.DataFrame:
+    _ensure_models_loaded(model_type)
+    cache = _models_cache[model_type]
+    return _predict_dispatch(
+        model_type,
+        df,
+        cache["item_models"],
+        cache["global_model"],
+        cache["dow_factors"],
     )
 
 
-def run_train_and_evaluate(df_daily: pd.DataFrame):
+def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
     df_weekly = _to_weekly(df_daily)
-    df_feat = create_features(df_weekly)
-    train_models(df_feat, ML_MODELS_DIR)
-    test_pred = train_and_predict(df_feat)
+
+    if model_type in ("xgboost", "random_forest"):
+        df_feat = create_features(df_weekly)
+        if model_type == "xgboost":
+            train_models(df_feat, ML_MODELS_DIR)
+            test_pred = train_and_predict(df_feat)
+        else:
+            train_models_rf(df_feat, ML_MODELS_DIR)
+            test_pred = train_and_predict_rf(df_feat)
+    elif model_type == "sarimax":
+        train_models_sarimax(df_weekly, ML_MODELS_DIR)
+        test_pred = train_and_predict_sarimax(df_weekly)
+    elif model_type == "prophet":
+        train_models_prophet(df_weekly, ML_MODELS_DIR)
+        test_pred = train_and_predict_prophet(df_weekly)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+
     analysis = generate_abc_analysis(test_pred)
 
-    _save_model_run_to_db(analysis)
-
-    _models_cache["loaded"] = False
+    _models_cache[model_type]["loaded"] = False
     return analysis
 
 
-def _save_model_run_to_db(analysis: dict):
-    try:
-        from src.db import SessionLocal
-        from src.db.models import (
-            ModelRun,
-            ModelRunClassMetric,
-            ModelRunTopItem,
-            Forecast,
-            Item,
-            DailyItemSale,
-        )
-        from sqlalchemy import text, update
-
-        session = SessionLocal()
-        try:
-            session.execute(
-                update(ModelRun)
-                .where(ModelRun.model_type == "xgboost")
-                .values(is_active=False)
-            )
-
-            meta_path = ML_MODELS_DIR / "model_metadata.json"
-            meta = {}
-            if meta_path.exists():
-                with open(meta_path) as f:
-                    meta = json.load(f)
-
-            gm = analysis["global_metrics"]
-            run = ModelRun(
-                model_type="xgboost",
-                trained_at=datetime.now(),
-                n_item_models=meta.get("n_item_models"),
-                n_records=meta.get("n_records"),
-                date_range_start=pd.to_datetime(meta["date_range"][0]).date()
-                if meta.get("date_range")
-                else None,
-                date_range_end=pd.to_datetime(meta["date_range"][1]).date()
-                if meta.get("date_range")
-                else None,
-                r2=gm.get("r2"),
-                wmape=gm.get("wmape"),
-                mae=gm.get("mae"),
-                volume_accuracy=gm.get("volume_accuracy"),
-                features=json.dumps(meta.get("features", [])),
-                items_with_models=json.dumps(meta.get("items_with_models", [])),
-                is_active=True,
-            )
-            session.add(run)
-            session.flush()
-
-            for cls, cm in analysis.get("class_metrics", {}).items():
-                session.add(
-                    ModelRunClassMetric(
-                        model_run_id=run.id,
-                        abc_class=cls,
-                        n_items=cm["n_items"],
-                        wmape=cm["wmape"],
-                        volume_accuracy=cm["volume_accuracy"],
-                    )
-                )
-
-            for t in analysis.get("top_items", []):
-                session.add(
-                    ModelRunTopItem(
-                        model_run_id=run.id,
-                        item_name=t["Item"],
-                        quantity_sold=t["Quantity_Sold"],
-                        predicted=t["Predicted"],
-                        accuracy_pct=t["accuracy_pct"],
-                    )
-                )
-
-            df_feat = create_features(
-                _to_weekly(
-                    pd.read_csv(
-                        ML_MODELS_DIR.parent.parent
-                        / "data"
-                        / "processed"
-                        / "daily_item_sales.csv"
-                    )
-                )
-            )
-            future_features = generate_future_features(df_feat, future_weeks=12)
-            forecast_result = predict(
-                future_features,
-                item_models=_models_cache.get("item_models", {}),
-                global_model=_models_cache.get("global_model"),
-                dow_factor_dict=_models_cache.get("dow_factors", {}),
-            )
-
-            item_name_to_id = {}
-            item_rows = session.execute(text("SELECT id, name FROM items")).fetchall()
-            for row in item_rows:
-                item_name_to_id[row[1]] = row[0]
-
-            for _, row in forecast_result.iterrows():
-                item_name = str(row["Item"])
-                item_id = item_name_to_id.get(item_name)
-                if item_id is None:
-                    continue
-                session.add(
-                    Forecast(
-                        model_run_id=run.id,
-                        item_id=item_id,
-                        date=pd.to_datetime(row["Date"]).date(),
-                        quantity_predicted=float(row["Predicted"]),
-                    )
-                )
-
-            session.commit()
-            print(f"Model run saved to DB (id={run.id})")
-        except Exception as e:
-            session.rollback()
-            print(f"Failed to save model run to DB: {e}")
-        finally:
-            session.close()
-    except ImportError:
-        pass
-
-
-def run_evaluate(df_daily: pd.DataFrame):
+def run_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
     df_weekly = _to_weekly(df_daily)
-    df_feat = create_features(df_weekly)
-    test_pred = train_and_predict(df_feat)
+
+    if model_type in ("xgboost", "random_forest"):
+        df_feat = create_features(df_weekly)
+        if model_type == "xgboost":
+            test_pred = train_and_predict(df_feat)
+        else:
+            test_pred = train_and_predict_rf(df_feat)
+    elif model_type == "sarimax":
+        test_pred = train_and_predict_sarimax(df_weekly)
+    elif model_type == "prophet":
+        test_pred = train_and_predict_prophet(df_weekly)
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+
     return generate_abc_analysis(test_pred)
 
 
@@ -200,16 +184,25 @@ def _to_weekly(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def get_model_metadata() -> dict | None:
-    meta_path = ML_MODELS_DIR / "model_metadata.json"
+def get_model_metadata(model_type: str = "xgboost") -> dict | None:
+    meta_path = ML_MODELS_DIR / _METADATA_FILE.get(model_type, "model_metadata.json")
     if not meta_path.exists():
         return None
     with open(meta_path) as f:
         return json.load(f)
 
 
-def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12) -> pd.DataFrame:
+def generate_forecast(
+    df_daily: pd.DataFrame, weeks: int = 12, model_type: str = "xgboost"
+) -> pd.DataFrame:
     df_weekly = _to_weekly(df_daily)
-    df_feat = create_features(df_weekly)
-    future_features = generate_future_features(df_feat, future_weeks=weeks)
-    return run_predict(future_features)
+
+    if model_type in ("xgboost", "random_forest"):
+        df_feat = create_features(df_weekly)
+        future_features = generate_future_features(df_feat, future_weeks=weeks)
+    else:
+        from src.models.forecaster_sarimax import generate_future_weekly as _gen_fw
+
+        future_features = _gen_fw(df_weekly, future_weeks=weeks)
+
+    return run_predict(future_features, model_type)

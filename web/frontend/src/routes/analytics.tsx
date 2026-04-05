@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table'
 import { useABCAnalysis, useModelMetrics, useAssociationRules } from '@/hooks/use-analytics'
 import { useForecastSummary } from '@/hooks/use-forecasts'
+import { useModelType } from '@/contexts/model-context'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
@@ -49,10 +50,11 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
 }
 
 function AnalyticsPage() {
+  const { modelType } = useModelType()
   const abc = useABCAnalysis()
-  const metrics = useModelMetrics()
+  const metrics = useModelMetrics(modelType)
   const rules = useAssociationRules({ min_confidence: 0.3, min_lift: 1.0 })
-  const forecastSummary = useForecastSummary()
+  const forecastSummary = useForecastSummary(modelType)
 
   const classBarData = useMemo(() => {
     if (!forecastSummary.data) return []

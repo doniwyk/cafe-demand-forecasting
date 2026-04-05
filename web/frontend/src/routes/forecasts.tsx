@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { useForecasts, useForecastSummary } from '@/hooks/use-forecasts'
 import { useItems } from '@/hooks/use-sales'
+import { useModelType } from '@/contexts/model-context'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -23,10 +24,11 @@ export const Route = createFileRoute('/forecasts')({
 function ForecastsPage() {
   const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
+  const { modelType } = useModelType()
 
   const items = useItems()
-  const forecasts = useForecasts({ page_size: 1000 })
-  const summary = useForecastSummary()
+  const forecasts = useForecasts({ page_size: 1000, model_type: modelType })
+  const summary = useForecastSummary(modelType)
 
   const filteredItems = useMemo(() => {
     if (!items.data) return []

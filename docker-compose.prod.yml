@@ -20,36 +20,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
-    volumes:
-      - ./web/backend:/app/web/backend
-      - ./ml-model:/app/ml-model
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
     build:
-      context: ./web/frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
     ports:
-      - "5174:5173"
-    environment:
-      VITE_API_URL: http://backend:8000
-    volumes:
-      - ./web/frontend/src:/app/src
-      - ./web/frontend/index.html:/app/index.html
-      - ./web/frontend/package.json:/app/package.json
-      - ./web/frontend/tsconfig.json:/app/tsconfig.json
-      - ./web/frontend/tsconfig.app.json:/app/tsconfig.app.json
-      - ./web/frontend/tsconfig.node.json:/app/tsconfig.node.json
-      - ./web/frontend/vite.config.ts:/app/vite.config.ts
-      - ./web/frontend/components.json:/app/components.json
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:

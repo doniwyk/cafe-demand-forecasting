@@ -12,6 +12,16 @@ from src.models.forecaster_rf import (
     load_models_rf,
     predict_rf,
 )
-from src.models.forecaster_sarimax import train_and_predict_sarimax
-from src.models.forecaster_prophet import train_and_predict_prophet
+from src.models.forecaster_sarimax import (
+    train_and_predict_sarimax,
+    train_models_sarimax,
+    load_models_sarimax,
+    predict_sarimax,
+)
+from src.models.forecaster_prophet import (
+    train_and_predict_prophet,
+    train_models_prophet,
+    load_models_prophet,
+    predict_prophet,
+)
 from src.models.raw_materials import RawMaterialProcessor

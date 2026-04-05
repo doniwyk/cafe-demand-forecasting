@@ -60,15 +60,13 @@ async def get_abc_analysis(session: AsyncSession) -> ABCAnalysisResponse:
     )
 
 
-async def get_metrics(session: AsyncSession) -> dict:
+async def get_metrics(session: AsyncSession, model_type: str | None = None) -> dict:
     from app.db.models import ModelRun
 
-    run_q = (
-        select(ModelRun)
-        .where(ModelRun.is_active == True)
-        .order_by(ModelRun.trained_at.desc())
-        .limit(1)
-    )
+    run_q = select(ModelRun).where(ModelRun.is_active == True)
+    if model_type:
+        run_q = run_q.where(ModelRun.model_type == model_type)
+    run_q = run_q.order_by(ModelRun.trained_at.desc()).limit(1)
     run = (await session.execute(run_q)).scalar_one_or_none()
     if run is None:
         return {"r2": 0, "wmape": 0, "mae": 0, "volume_accuracy": 0}
