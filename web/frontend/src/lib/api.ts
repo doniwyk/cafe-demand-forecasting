@@ -138,6 +138,15 @@ export const api = {
       const q = new URLSearchParams(params as Record<string, string>);
       return request<import("@/types").MaterialRequirementPage>(`/materials/forecast?${q}`);
     },
+    dailyNeed(params?: {
+      start_date?: string;
+      end_date?: string;
+      page?: number;
+      page_size?: number;
+    }) {
+      const q = new URLSearchParams(params as Record<string, string>);
+      return request<import("@/types").MaterialRequirementPage>(`/materials/daily-forecast?${q}`);
+    },
   },
   analytics: {
     abc(model_type?: string) {

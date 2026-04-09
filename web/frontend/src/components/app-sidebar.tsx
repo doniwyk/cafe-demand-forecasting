@@ -45,7 +45,8 @@ const data = {
       url: "/materials",
       icon: <PackageIcon className="size-4" />,
       items: [
-        { title: "Raw Materials", url: "/materials" },
+        // { title: "Raw Materials", url: "/materials" },
+        { title: "Daily Need", url: "/materials/daily-need" },
       ],
     },
     {
