@@ -26,6 +26,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./web/backend:/app/web/backend
       - ./ml-model:/app/ml-model
