@@ -20,9 +20,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
@@ -41,7 +41,7 @@ services:
     ports:
       - "5174:5173"
     environment:
-      VITE_API_URL: http://backend:8000
+      VITE_API_URL: http://backend:8001
     volumes:
       - ./web/frontend/src:/app/src
       - ./web/frontend/index.html:/app/index.html

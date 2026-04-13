@@ -11,6 +11,7 @@ import {
 import { useDailyNeed } from '@/hooks/use-materials'
 import { format, parseISO } from 'date-fns'
 import { SearchIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/materials/daily-need')({
   component: DailyNeedPage,
@@ -20,6 +21,7 @@ function DailyNeedPage() {
   const [search, setSearch] = useState('')
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>('2025-10-10')
+  const { t } = useTranslation()
 
   const dailyNeed = useDailyNeed({ page_size: 1000 })
 
@@ -28,12 +30,6 @@ function DailyNeedPage() {
     const materials = [...new Set(dailyNeed.data.data.map(d => d.raw_material))]
     return materials.filter(m => m.toLowerCase().includes(search.toLowerCase()))
   }, [dailyNeed.data, search])
-
-  const availableDates = useMemo(() => {
-    if (!dailyNeed.data) return []
-    const dates = [...new Set(dailyNeed.data.data.map(d => d.date))]
-    return dates.sort()
-  }, [dailyNeed.data])
 
   const filteredData = useMemo(() => {
     if (!dailyNeed.data) return []
@@ -73,16 +69,16 @@ function DailyNeedPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
 
-      <Card>
+      <Card data-tour="material-filter">
         <CardHeader>
-          <CardTitle>Material Filter</CardTitle>
+          <CardTitle>{t("materials.materialFilter")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 flex-wrap">
             <div className="relative max-w-sm flex-1 min-w-48">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search materials..."
+                placeholder={t("materials.searchMaterials")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -108,18 +104,18 @@ function DailyNeedPage() {
           </div>
           {selectedMaterial && (
             <div className="mt-3 flex items-center gap-2">
-              <Badge variant="secondary">Material: {selectedMaterial}</Badge>
+              <Badge variant="secondary">{t("materials.material", { name: selectedMaterial })}</Badge>
               <Button variant="ghost" size="sm" onClick={() => setSelectedMaterial(null)}>
-                Clear
+                {t("common.clear")}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="daily-requirements">
         <CardHeader>
-          <CardTitle>Daily Material Requirements</CardTitle>
+          <CardTitle>{t("materials.dailyMaterialRequirements")}</CardTitle>
         </CardHeader>
         <CardContent>
           {dailyNeed.isLoading ? (
@@ -132,9 +128,9 @@ function DailyNeedPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Material</TableHead>
-                  <TableHead className="text-right">Quantity Required</TableHead>
+                  <TableHead>{t("materials.date")}</TableHead>
+                  <TableHead>{t("materials.material")}</TableHead>
+                  <TableHead className="text-right">{t("materials.quantityRequired")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,26 +153,29 @@ function DailyNeedPage() {
             </Table>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              No material requirement data available
+              {t("materials.noMaterialData")}
             </div>
           )}
         </CardContent>
       </Card>
 
       {dailyNeed.data && dailyNeed.data.data.length > 0 && (
-        <Card>
+        <Card data-tour="requirements-trend">
           <CardHeader>
-            <CardTitle>Total Daily Requirements Trend</CardTitle>
+            <CardTitle>{t("materials.totalDailyTrend")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground mb-4">
-              Total: {Math.round(dailyNeed.data.data.reduce((acc, d) => acc + d.quantity_required, 0)).toLocaleString()} units across {dailyNeed.data.total} records
+              {t("materials.totalDailyDesc", {
+                total: Math.round(dailyNeed.data.data.reduce((acc, d) => acc + d.quantity_required, 0)).toLocaleString(),
+                records: dailyNeed.data.total,
+              })}
             </div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Total Quantity</TableHead>
+                  <TableHead>{t("materials.date")}</TableHead>
+                  <TableHead className="text-right">{t("materials.totalQuantity")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

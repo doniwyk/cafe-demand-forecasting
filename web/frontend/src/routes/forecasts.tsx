@@ -16,6 +16,7 @@ import {
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import { SearchIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/forecasts')({
   component: ForecastsPage,
@@ -25,6 +26,7 @@ function ForecastsPage() {
   const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
   const { modelType } = useModelType()
+  const { t } = useTranslation()
 
   const items = useItems()
   const forecasts = useForecasts({ page_size: 1000, model_type: modelType })
@@ -70,15 +72,15 @@ function ForecastsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
 
-      <Card>
+      <Card data-tour="item-selector">
         <CardHeader>
-          <CardTitle>Item Selector</CardTitle>
+          <CardTitle>{t("forecasts.itemSelector")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="relative max-w-sm">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search items..."
+              placeholder={t("forecasts.searchItems")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -88,7 +90,7 @@ function ForecastsPage() {
             <div className="mt-3 flex items-center gap-2">
               <Badge variant="secondary">{selectedItem}</Badge>
               <Button variant="ghost" size="sm" onClick={() => setSelectedItem(null)}>
-                Clear
+                {t("common.clear")}
               </Button>
             </div>
           )}
@@ -114,10 +116,10 @@ function ForecastsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="forecast-chart">
         <CardHeader>
           <CardTitle>
-            {selectedItem ? `Forecast: ${selectedItem}` : 'Total Forecast (All Items)'}
+            {selectedItem ? `${t("forecasts.forecast")}: ${selectedItem}` : t("forecasts.totalForecast")}
           </CardTitle>
         </CardHeader>
         <CardContent className="min-h-87.5">
@@ -142,13 +144,13 @@ function ForecastsPage() {
                     stroke="var(--chart-2)"
                     strokeWidth={2}
                     dot={false}
-                    name="Predicted"
+                    name={t("forecasts.predicted")}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex h-77.5 items-center justify-center text-muted-foreground">
-                No forecast data for this item
+                {t("forecasts.noForecastData")}
               </div>
             )
           ) : allItemsChartData.length > 0 ? (
@@ -171,7 +173,7 @@ function ForecastsPage() {
                   stroke="var(--chart-1)"
                   strokeWidth={2}
                   dot={false}
-                  name="Total Predicted"
+                  name={t("forecasts.predicted")}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -184,18 +186,18 @@ function ForecastsPage() {
       </Card>
 
       {topForecastItems.length > 0 && (
-        <Card>
+        <Card data-tour="top-accuracy-table">
           <CardHeader>
-            <CardTitle>Top Items by Forecast Accuracy</CardTitle>
+            <CardTitle>{t("forecasts.topItemsByAccuracy")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Item</TableHead>
-                  <TableHead className="text-right">Actual Qty</TableHead>
-                  <TableHead className="text-right">Predicted Qty</TableHead>
-                  <TableHead className="text-right">Accuracy</TableHead>
+                  <TableHead className="text-right">{t("forecasts.actualQty")}</TableHead>
+                  <TableHead className="text-right">{t("forecasts.predictedQty")}</TableHead>
+                  <TableHead className="text-right">{t("forecasts.accuracy")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

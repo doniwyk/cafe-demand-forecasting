@@ -1,0 +1,172 @@
+{
+  "common": {
+    "search": "Cari",
+    "cancel": "Batal",
+    "clear": "Hapus",
+    "close": "Tutup",
+    "noData": "Data tidak tersedia"
+  },
+  "sidebar": {
+    "navigation": "Navigasi",
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "analytics": "Analitik",
+    "forecasts": "Prakiraan",
+    "salesForecast": "Prakiraan Penjualan",
+    "inventory": "Inventaris",
+    "settings": "Pengaturan",
+    "brand": "Cafe Supply",
+    "brandSub": "Peramalan"
+  },
+  "root": {
+    "home": "Beranda"
+  },
+  "dashboard": {
+    "activeItems": "Item Aktif",
+    "activeItemsDesc": "Item menu dengan penjualan",
+    "modelAccuracy": "Akurasi Model",
+    "modelAccuracyDesc": "Akurasi volume (wMAPE)",
+    "itemsForecasted": "Item Diprakirakan",
+    "itemsForecastedDesc": "Item unik dalam prakiraan",
+    "topItemsByVolume": "10 Item Teratas berdasarkan Volume",
+    "totalQty": "Total Qty",
+    "forecastSummary": "Ringkasan Prakiraan",
+    "volumeAccuracy": "Akurasi Volume",
+    "wmape": "wMAPE",
+    "rSquared": "R-kuadrat",
+    "items": "Item",
+    "accuracy": "Akurasi",
+    "accuracyByClass": "Akurasi berdasarkan Kelas"
+  },
+  "analytics": {
+    "modelPerformance": "Performa Model",
+    "rSquared": "R-kuadrat",
+    "rSquaredDesc": "Semakin tinggi semakin baik",
+    "wmape": "wMAPE",
+    "wmapeDesc": "Semakin rendah semakin baik",
+    "mae": "MAE",
+    "maeDesc": "Rata-rata kesalahan absolut",
+    "volumeAccuracy": "Akurasi Volume",
+    "volumeAccuracyDesc": "Akurasi prediksi",
+    "abcClassification": "Klasifikasi ABC",
+    "volume": "Volume",
+    "cumulativePct": "Persentase Kumulatif",
+    "associationRules": "Aturan Asosiasi",
+    "ifCustomerBuys": "Jika pelanggan membeli",
+    "theyAlsoBuy": "Mereka juga membeli",
+    "support": "Dukungan",
+    "confidence": "Kepercayaan",
+    "lift": "Lift",
+    "noStrongRules": "Tidak ditemukan aturan asosiasi yang kuat"
+  },
+  "forecasts": {
+    "itemSelector": "Pemilih Item",
+    "searchItems": "Cari item...",
+    "totalForecast": "Total Prakiraan (Semua Item)",
+    "forecast": "Prakiraan",
+    "predicted": "Diprediksi",
+    "topItemsByAccuracy": "Item Teratas berdasarkan Akurasi Prakiraan",
+    "actualQty": "Qty Aktual",
+    "predictedQty": "Qty Diprediksi",
+    "accuracy": "Akurasi",
+    "noForecastData": "Tidak ada data prakiraan untuk item ini"
+  },
+  "materials": {
+    "materialFilter": "Filter Material",
+    "searchMaterials": "Cari material...",
+    "dailyMaterialRequirements": "Kebutuhan Material Harian",
+    "date": "Tanggal",
+    "quantityRequired": "Kuantitas Dibutuhkan",
+    "noMaterialData": "Tidak ada data kebutuhan material",
+    "totalDailyTrend": "Tren Kebutuhan Harian Total",
+    "totalDailyDesc": "Total: {{total}} unit dari {{records}} catatan",
+    "totalQuantity": "Total Kuantitas",
+    "material": "Material: {{name}}"
+  },
+  "settings": {
+    "modelTraining": "Pelatihan Model",
+    "modelTrainingDesc": "Latih model prakiraan secara individual atau sekaligus (satu per satu).",
+    "trainAllModels": "Latih Semua Model",
+    "trainAllSequential": "Latih Semua (Berurutan)",
+    "inProgress": "Sedang Berjalan",
+    "train": "Latih",
+    "cancel": "Batalkan",
+    "showLogs": "Tampilkan Log",
+    "hideLogs": "Sembunyikan Log",
+    "dataCleanup": "Pembersihan Data",
+    "dataCleanupDesc": "Hapus hasil pelatihan model dan prakiraan yang sudah tidak digunakan.",
+    "deleteInactiveData": "Hapus Data Model Tidak Aktif",
+    "deleteInactiveDesc": "Menghapus hasil pelatihan lama, prakiraan, metrik kelas, dan item teratas yang sudah tidak aktif.",
+    "cleanup": "Bersihkan",
+    "deletedRuns": "Menghapus {{runs}} pelatihan, {{forecasts}} prakiraan",
+    "language": "Bahasa",
+    "languageDesc": "Pilih bahasa tampilan yang diinginkan."
+  },
+  "tour": {
+    "sidebar": {
+      "title": "Sidebar Navigasi",
+      "desc": "Gunakan sidebar untuk menavigasi antara Dashboard, Prakiraan, Inventaris, dan Pengaturan. Klik ikon kopi untuk mengecilkannya."
+    },
+    "modelSelector": {
+      "title": "Pemilih Model",
+      "desc": "Beralih antara model ML (XGBoost, Random Forest, SARIMAX, Prophet) untuk membandingkan hasil prakiraan dari berbagai algoritma."
+    },
+    "kpiCards": {
+      "title": "Indikator Kinerja Utama",
+      "desc": "Kartu ini menampilkan ringkasan singkat: jumlah Item Aktif, Akurasi Model (wMAPE), dan total Item yang Diprakirakan oleh model yang dipilih."
+    },
+    "topItemsChart": {
+      "title": "10 Item Teratas berdasarkan Volume",
+      "desc": "Grafik batang yang menampilkan item menu terlaris. Gunakan ini untuk mengidentifikasi produk paling populer Anda."
+    },
+    "forecastSummary": {
+      "title": "Ringkasan Prakiraan",
+      "desc": "Metrik prakiraan detail termasuk Akurasi Volume, wMAPE, R-kuadrat, dan rincian akurasi berdasarkan kelas item (A, B, C)."
+    },
+    "modelPerformance": {
+      "title": "Metrik Performa Model",
+      "desc": "Metrik evaluasi inti untuk model yang dipilih: R-kuadrat, wMAPE, MAE, dan Akurasi Volume."
+    },
+    "abcClassification": {
+      "title": "Klasifikasi ABC",
+      "desc": "Item yang dikategorikan berdasarkan volume penjualan — Kelas A (~80% teratas), Kelas B (~15%), Kelas C (~5%). Gunakan tab untuk menjelajahi setiap kelas."
+    },
+    "associationRules": {
+      "title": "Aturan Asosiasi",
+      "desc": "Analisis keranjang pasar yang menunjukkan item mana yang sering dibeli bersamaan. Lift yang lebih tinggi berarti asosiasi lebih kuat."
+    },
+    "itemSelector": {
+      "title": "Pemilih Item",
+      "desc": "Cari dan pilih item menu tertentu untuk melihat prakiraan penjualannya secara individual. Klik lencana untuk memfilter."
+    },
+    "forecastChart": {
+      "title": "Grafik Prakiraan",
+      "desc": "Lihat tren penjualan yang diprediksi dari waktu ke waktu. Pilih item untuk prakiraan per item, atau lihat total semua item."
+    },
+    "topAccuracyTable": {
+      "title": "Item Teratas berdasarkan Akurasi Prakiraan",
+      "desc": "Tabel perbandingan kuantitas aktual vs yang diprediksi. Lencana hijau menunjukkan akurasi tinggi (≥70%), merah untuk rendah (<50%)."
+    },
+    "materialFilter": {
+      "title": "Filter Material",
+      "desc": "Cari dan filter bahan baku. Klik lencana untuk fokus pada bahan tertentu."
+    },
+    "dailyRequirements": {
+      "title": "Kebutuhan Material Harian",
+      "desc": "Tabel yang menampilkan kuantitas tepat setiap bahan baku yang dibutuhkan per hari, berdasarkan prakiraan penjualan dan resep."
+    },
+    "requirementsTrend": {
+      "title": "Tren Kebutuhan",
+      "desc": "Tren kebutuhan material harian total. Klik baris untuk menyorotinya dan membandingkan total harian."
+    },
+    "modelTraining": {
+      "title": "Pelatihan Model",
+      "desc": "Latih model secara individual atau sekaligus. Pantau status pelatihan, lihat log, dan batalkan pekerjaan yang sedang berjalan."
+    },
+    "dataCleanup": {
+      "title": "Pembersihan Data",
+      "desc": "Hapus hasil pelatihan model dan prakiraan dari sesi pelatihan sebelumnya untuk menjaga data tetap segar."
+    },
+    "startTour": "Mulai tur"
+  }
+}

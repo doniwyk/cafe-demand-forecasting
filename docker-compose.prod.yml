@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
