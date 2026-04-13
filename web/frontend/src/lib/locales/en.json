@@ -1,0 +1,172 @@
+{
+  "common": {
+    "search": "Search",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "close": "Close",
+    "noData": "No data available"
+  },
+  "sidebar": {
+    "navigation": "Navigation",
+    "dashboard": "Dashboard",
+    "overview": "Overview",
+    "analytics": "Analytics",
+    "forecasts": "Forecasts",
+    "salesForecast": "Sales Forecast",
+    "inventory": "Inventory",
+    "settings": "Settings",
+    "brand": "Cafe Supply",
+    "brandSub": "Forecasting"
+  },
+  "root": {
+    "home": "Home"
+  },
+  "dashboard": {
+    "activeItems": "Active Items",
+    "activeItemsDesc": "Menu items with sales",
+    "modelAccuracy": "Model Accuracy",
+    "modelAccuracyDesc": "Volume accuracy (wMAPE)",
+    "itemsForecasted": "Items Forecasted",
+    "itemsForecastedDesc": "Unique items in forecast",
+    "topItemsByVolume": "Top 10 Items by Volume",
+    "totalQty": "Total Qty",
+    "forecastSummary": "Forecast Summary",
+    "volumeAccuracy": "Volume Accuracy",
+    "wmape": "wMAPE",
+    "rSquared": "R-squared",
+    "items": "Items",
+    "accuracy": "Accuracy",
+    "accuracyByClass": "Accuracy by Class"
+  },
+  "analytics": {
+    "modelPerformance": "Model Performance",
+    "rSquared": "R-squared",
+    "rSquaredDesc": "Higher is better",
+    "wmape": "wMAPE",
+    "wmapeDesc": "Lower is better",
+    "mae": "MAE",
+    "maeDesc": "Mean absolute error",
+    "volumeAccuracy": "Volume Accuracy",
+    "volumeAccuracyDesc": "Prediction accuracy",
+    "abcClassification": "ABC Classification",
+    "volume": "Volume",
+    "cumulativePct": "Cumulative %",
+    "associationRules": "Association Rules",
+    "ifCustomerBuys": "If customer buys",
+    "theyAlsoBuy": "They also buy",
+    "support": "Support",
+    "confidence": "Confidence",
+    "lift": "Lift",
+    "noStrongRules": "No strong association rules found"
+  },
+  "forecasts": {
+    "itemSelector": "Item Selector",
+    "searchItems": "Search items...",
+    "totalForecast": "Total Forecast (All Items)",
+    "forecast": "Forecast",
+    "predicted": "Predicted",
+    "topItemsByAccuracy": "Top Items by Forecast Accuracy",
+    "actualQty": "Actual Qty",
+    "predictedQty": "Predicted Qty",
+    "accuracy": "Accuracy",
+    "noForecastData": "No forecast data for this item"
+  },
+  "materials": {
+    "materialFilter": "Material Filter",
+    "searchMaterials": "Search materials...",
+    "dailyMaterialRequirements": "Daily Material Requirements",
+    "date": "Date",
+    "quantityRequired": "Quantity Required",
+    "noMaterialData": "No material requirement data available",
+    "totalDailyTrend": "Total Daily Requirements Trend",
+    "totalDailyDesc": "Total: {{total}} units across {{records}} records",
+    "totalQuantity": "Total Quantity",
+    "material": "Material: {{name}}"
+  },
+  "settings": {
+    "modelTraining": "Model Training",
+    "modelTrainingDesc": "Train forecasting models individually or all at once (one after another).",
+    "trainAllModels": "Train All Models",
+    "trainAllSequential": "Train All (Sequential)",
+    "inProgress": "In Progress",
+    "train": "Train",
+    "cancel": "Cancel",
+    "showLogs": "Show Logs",
+    "hideLogs": "Hide Logs",
+    "dataCleanup": "Data Cleanup",
+    "dataCleanupDesc": "Remove stale model runs and forecasts from previous training sessions.",
+    "deleteInactiveData": "Delete Inactive Model Data",
+    "deleteInactiveDesc": "Removes old model runs, their forecasts, class metrics, and top items that are no longer active.",
+    "cleanup": "Cleanup",
+    "deletedRuns": "Deleted {{runs}} runs, {{forecasts}} forecasts",
+    "language": "Language",
+    "languageDesc": "Select your preferred display language."
+  },
+  "tour": {
+    "sidebar": {
+      "title": "Navigation Sidebar",
+      "desc": "Use the sidebar to navigate between Dashboard, Forecasts, Inventory, and Settings. Click the coffee icon to collapse it."
+    },
+    "modelSelector": {
+      "title": "Model Selector",
+      "desc": "Switch between ML models (XGBoost, Random Forest, SARIMAX, Prophet) to compare forecasting results across different algorithms."
+    },
+    "kpiCards": {
+      "title": "Key Performance Indicators",
+      "desc": "These cards show a quick overview: Active Items count, Model Accuracy (wMAPE), and total Items Forecasted by the selected model."
+    },
+    "topItemsChart": {
+      "title": "Top 10 Items by Volume",
+      "desc": "A bar chart showing the best-selling menu items. Use this to identify your most popular products."
+    },
+    "forecastSummary": {
+      "title": "Forecast Summary",
+      "desc": "Detailed forecast metrics including Volume Accuracy, wMAPE, R-squared, and accuracy breakdown by item class (A, B, C)."
+    },
+    "modelPerformance": {
+      "title": "Model Performance Metrics",
+      "desc": "Core evaluation metrics for the selected model: R-squared, wMAPE, MAE, and Volume Accuracy."
+    },
+    "abcClassification": {
+      "title": "ABC Classification",
+      "desc": "Items categorized by sales volume — Class A (top ~80%), Class B (~15%), Class C (~5%). Use the tabs to explore each class."
+    },
+    "associationRules": {
+      "title": "Association Rules",
+      "desc": "Market basket analysis showing which items are frequently bought together. Higher Lift means stronger association."
+    },
+    "itemSelector": {
+      "title": "Item Selector",
+      "desc": "Search and select a specific menu item to view its individual sales forecast. Click a badge to filter."
+    },
+    "forecastChart": {
+      "title": "Forecast Chart",
+      "desc": "View the predicted sales trend over time. Select an item for per-item forecast, or see the total for all items combined."
+    },
+    "topAccuracyTable": {
+      "title": "Top Items by Forecast Accuracy",
+      "desc": "A table comparing actual vs predicted quantities. Green badges indicate high accuracy (≥70%), red for low (<50%)."
+    },
+    "materialFilter": {
+      "title": "Material Filter",
+      "desc": "Search and filter raw materials. Click a badge to focus on a specific ingredient."
+    },
+    "dailyRequirements": {
+      "title": "Daily Material Requirements",
+      "desc": "A table showing the exact quantity of each raw material needed per day, based on sales forecasts and recipes."
+    },
+    "requirementsTrend": {
+      "title": "Requirements Trend",
+      "desc": "Total daily material requirement trend. Click a row to highlight it and compare daily totals."
+    },
+    "modelTraining": {
+      "title": "Model Training",
+      "desc": "Train individual models or all models at once. Monitor training status, view logs, and cancel running jobs."
+    },
+    "dataCleanup": {
+      "title": "Data Cleanup",
+      "desc": "Remove stale model runs and forecasts from previous training sessions to keep your data fresh."
+    },
+    "startTour": "Start tour"
+  }
+}

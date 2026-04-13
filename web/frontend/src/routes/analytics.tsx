@@ -25,6 +25,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/analytics")({
   component: AnalyticsPage,
@@ -37,6 +38,8 @@ const CLASS_COLORS: Record<string, string> = {
 };
 
 function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined }) {
+  const { t } = useTranslation();
+
   if (!metrics) {
     return (
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -50,20 +53,20 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
 
   const items = [
     {
-      label: "R-squared",
+      label: t("analytics.rSquared"),
       value: metrics["r2"]?.toFixed(3) ?? "-",
-      description: "Higher is better",
+      description: t("analytics.rSquaredDesc"),
     },
     {
-      label: "wMAPE",
+      label: t("analytics.wmape"),
       value: `${(metrics["wmape"] ?? 0).toFixed(1)}%`,
-      description: "Lower is better",
+      description: t("analytics.wmapeDesc"),
     },
-    { label: "MAE", value: metrics["mae"]?.toFixed(1) ?? "-", description: "Mean absolute error" },
+    { label: t("analytics.mae"), value: metrics["mae"]?.toFixed(1) ?? "-", description: t("analytics.maeDesc") },
     {
-      label: "Volume Accuracy",
+      label: t("analytics.volumeAccuracy"),
       value: `${(metrics["volume_accuracy"] ?? 0).toFixed(1)}%`,
-      description: "Prediction accuracy",
+      description: t("analytics.volumeAccuracyDesc"),
     },
   ];
 
@@ -86,6 +89,7 @@ function AnalyticsPage() {
   const metrics = useModelMetrics(modelType);
   const rules = useAssociationRules(modelType, { min_confidence: 0.3, min_lift: 1.0 });
   const forecastSummary = useForecastSummary(modelType);
+  const { t } = useTranslation();
 
   const classBarData = useMemo(() => {
     if (!forecastSummary.data) return [];
@@ -104,22 +108,22 @@ function AnalyticsPage() {
       if (grouped[cls]) grouped[cls].push(item);
     }
     return grouped;
-  }, [abc.data]);
+  }, [abc]);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
-      <Card>
+      <Card data-tour="model-performance">
         <CardHeader>
-          <CardTitle>Model Performance</CardTitle>
+          <CardTitle>{t("analytics.modelPerformance")}</CardTitle>
         </CardHeader>
         <CardContent>
           <MetricsGrid metrics={metrics.data} />
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="abc-classification">
         <CardHeader>
-          <CardTitle>ABC Classification</CardTitle>
+          <CardTitle>{t("analytics.abcClassification")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 lg:grid-cols-5">
@@ -143,7 +147,7 @@ function AnalyticsPage() {
                           fontSize: 12,
                         }}
                       />
-                      <Bar dataKey="items" name="Items" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="items" name={t("analytics.volume")} radius={[4, 4, 0, 0]}>
                         {classBarData.map((d) => (
                           <Cell key={d.class} fill={CLASS_COLORS[d.class] || "var(--chart-1)"} />
                         ))}
@@ -158,15 +162,11 @@ function AnalyticsPage() {
               {abc.data ? (
                 <Tabs defaultValue="A">
                   <TabsList>
-                    <TabsTrigger value="A">
-                      A-class {abcByClass.A.length > 0 && `(${abcByClass.A.length})`}
-                    </TabsTrigger>
-                    <TabsTrigger value="B">
-                      B-class {abcByClass.B.length > 0 && `(${abcByClass.B.length})`}
-                    </TabsTrigger>
-                    <TabsTrigger value="C">
-                      C-class {abcByClass.C.length > 0 && `(${abcByClass.C.length})`}
-                    </TabsTrigger>
+                    {(["A", "B", "C"] as const).map((cls) => (
+                      <TabsTrigger key={cls} value={cls}>
+                        {cls}-class {abcByClass[cls].length > 0 && `(${abcByClass[cls].length})`}
+                      </TabsTrigger>
+                    ))}
                   </TabsList>
                   {(["A", "B", "C"] as const).map((cls) => (
                     <TabsContent key={cls} value={cls} className="max-h-65 overflow-y-auto">
@@ -174,8 +174,8 @@ function AnalyticsPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Item</TableHead>
-                            <TableHead className="text-right">Volume</TableHead>
-                            <TableHead className="text-right">Cumulative %</TableHead>
+                            <TableHead className="text-right">{t("analytics.volume")}</TableHead>
+                            <TableHead className="text-right">{t("analytics.cumulativePct")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -194,7 +194,7 @@ function AnalyticsPage() {
                           ) : (
                             <TableRow>
                               <TableCell colSpan={3} className="text-center text-muted-foreground">
-                                No items in this class
+                                {t("common.noData")}
                               </TableCell>
                             </TableRow>
                           )}
@@ -211,20 +211,20 @@ function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-tour="association-rules">
         <CardHeader>
-          <CardTitle>Association Rules</CardTitle>
+          <CardTitle>{t("analytics.associationRules")}</CardTitle>
         </CardHeader>
         <CardContent>
           {rules.data && rules.data.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>If customer buys</TableHead>
-                  <TableHead>They also buy</TableHead>
-                  <TableHead className="text-right">Support</TableHead>
-                  <TableHead className="text-right">Confidence</TableHead>
-                  <TableHead className="text-right">Lift</TableHead>
+                  <TableHead>{t("analytics.ifCustomerBuys")}</TableHead>
+                  <TableHead>{t("analytics.theyAlsoBuy")}</TableHead>
+                  <TableHead className="text-right">{t("analytics.support")}</TableHead>
+                  <TableHead className="text-right">{t("analytics.confidence")}</TableHead>
+                  <TableHead className="text-right">{t("analytics.lift")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -254,7 +254,7 @@ function AnalyticsPage() {
               {rules.isLoading ? (
                 <Skeleton className="h-full w-full" />
               ) : (
-                "No strong association rules found"
+                t("analytics.noStrongRules")
               )}
             </div>
           )}
