@@ -75,14 +75,15 @@
   },
   "materials": {
     "materialFilter": "Material Filter",
+    "selectMaterial": "Select a material...",
     "searchMaterials": "Search materials...",
+    "noMaterialsFound": "No materials found",
     "dailyMaterialRequirements": "Daily Material Requirements",
     "date": "Date",
     "quantityRequired": "Quantity Required",
     "noMaterialData": "No material requirement data available",
-    "totalDailyTrend": "Total Daily Requirements Trend",
-    "totalDailyDesc": "Total: {{total}} units across {{records}} records",
-    "totalQuantity": "Total Quantity",
+    "dateRange": "Date Range",
+    "selectDateRange": "Select date range",
     "material": "Material: {{name}}"
   },
   "settings": {

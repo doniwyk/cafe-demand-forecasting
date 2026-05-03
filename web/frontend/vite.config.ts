@@ -37,6 +37,9 @@ export default defineConfig({
           if (id.includes('node_modules/effect') || id.includes('node_modules/@effect')) {
             return 'vendor-effect'
           }
+          if (id.includes('node_modules/react-day-picker') || id.includes('node_modules/date-fns')) {
+            return 'vendor-date'
+          }
         },
       },
     },

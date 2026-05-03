@@ -75,14 +75,15 @@
   },
   "materials": {
     "materialFilter": "Filter Material",
+    "selectMaterial": "Pilih material...",
     "searchMaterials": "Cari material...",
+    "noMaterialsFound": "Material tidak ditemukan",
     "dailyMaterialRequirements": "Kebutuhan Material Harian",
     "date": "Tanggal",
     "quantityRequired": "Kuantitas Dibutuhkan",
     "noMaterialData": "Tidak ada data kebutuhan material",
-    "totalDailyTrend": "Tren Kebutuhan Harian Total",
-    "totalDailyDesc": "Total: {{total}} unit dari {{records}} catatan",
-    "totalQuantity": "Total Kuantitas",
+    "dateRange": "Rentang Tanggal",
+    "selectDateRange": "Pilih rentang tanggal",
     "material": "Material: {{name}}"
   },
   "settings": {
