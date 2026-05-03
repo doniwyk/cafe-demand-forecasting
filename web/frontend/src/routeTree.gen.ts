@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForecastsRouteImport } from './routes/forecasts'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as MaterialsDailyNeedRouteImport } from './routes/materials.daily
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForecastsRoute = ForecastsRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/forecasts': typeof ForecastsRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/materials/daily-need': typeof MaterialsDailyNeedRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/forecasts': typeof ForecastsRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/materials/daily-need': typeof MaterialsDailyNeedRoute
 }
@@ -60,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/forecasts': typeof ForecastsRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/materials/daily-need': typeof MaterialsDailyNeedRoute
 }
@@ -69,15 +78,23 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/forecasts'
+    | '/login'
     | '/settings'
     | '/materials/daily-need'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/forecasts' | '/settings' | '/materials/daily-need'
+  to:
+    | '/'
+    | '/analytics'
+    | '/forecasts'
+    | '/login'
+    | '/settings'
+    | '/materials/daily-need'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/forecasts'
+    | '/login'
     | '/settings'
     | '/materials/daily-need'
   fileRoutesById: FileRoutesById
@@ -86,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ForecastsRoute: typeof ForecastsRoute
+  LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   MaterialsDailyNeedRoute: typeof MaterialsDailyNeedRoute
 }
@@ -97,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forecasts': {
@@ -134,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   ForecastsRoute: ForecastsRoute,
+  LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   MaterialsDailyNeedRoute: MaterialsDailyNeedRoute,
 }

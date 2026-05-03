@@ -16,12 +16,6 @@ import {
 import { CoffeeIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-const user = {
-  name: "Cafe Manager",
-  email: "manager@cafe.com",
-  avatar: "/avatars/cafe.jpg",
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
 
@@ -80,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

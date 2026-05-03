@@ -1,4 +1,4 @@
-import { createRootRoute, Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { createRootRoute, Link, Outlet, useRouterState, useNavigate } from '@tanstack/react-router'
 import { AppSidebar } from '@/components/app-sidebar'
 import {
   SidebarInset,
@@ -29,6 +29,8 @@ import { TourProvider } from '@/contexts/tour-context'
 import { AppTour } from '@/components/app-tour'
 import { BrainCircuitIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/contexts/auth-context'
+import { useEffect } from 'react'
 
 const routeTitleKeys: Record<string, string> = {
   '/': 'sidebar.dashboard',
@@ -68,10 +70,36 @@ function ModelSelector() {
 
 function RootLayout() {
   const routerState = useRouterState()
+  const navigate = useNavigate()
   const pathname = routerState.location.pathname
+  const { isAuthenticated, isInitialized } = useAuth()
   const { t } = useTranslation()
   const titleKey = routeTitleKeys[pathname] ?? 'sidebar.dashboard'
   const title = t(titleKey)
+
+  const isLoginPage = pathname === '/login'
+
+  useEffect(() => {
+    if (!isInitialized) return
+    if (!isAuthenticated && !isLoginPage) {
+      navigate({ to: '/login', replace: true })
+    }
+    if (isAuthenticated && isLoginPage) {
+      navigate({ to: '/', replace: true })
+    }
+  }, [isAuthenticated, isInitialized, isLoginPage, navigate])
+
+  if (!isInitialized) {
+    return null
+  }
+
+  if (isLoginPage) {
+    return <Outlet />
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   return (
     <ModelProvider>

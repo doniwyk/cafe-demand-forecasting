@@ -15,6 +15,7 @@ from app.routers import (
     forecasts_router,
     materials_router,
     analytics_router,
+    auth_router,
 )
 from app.config import STATIC_DIR
 
@@ -40,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(sales_router)
 app.include_router(forecasts_router)
 app.include_router(materials_router)

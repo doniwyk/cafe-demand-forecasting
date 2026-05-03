@@ -20,6 +20,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
+from app.models.user import User
+
+
 class Category(Base):
     __tablename__ = "categories"
 

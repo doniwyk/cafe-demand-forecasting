@@ -21,17 +21,23 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { useNavigate } from "@tanstack/react-router"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { isMobile } = useSidebar()
+
+  if (!user) return null
+
+  const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase()
+
+  const handleLogout = () => {
+    logout()
+    navigate({ to: '/login', replace: true })
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -43,7 +49,7 @@ export function NavUser({
           >
             <Avatar>
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.name}</span>
@@ -62,7 +68,7 @@ export function NavUser({
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
@@ -72,9 +78,8 @@ export function NavUser({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon
-              />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOutIcon />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

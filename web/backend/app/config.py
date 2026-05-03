@@ -34,6 +34,10 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_forecasting",
 )
 
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
+
 sys_path = str(ML_MODEL_DIR)
 if sys_path not in os.sys.path:
     os.sys.path.insert(0, sys_path)
