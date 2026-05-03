@@ -61,7 +61,9 @@
   },
   "forecasts": {
     "itemSelector": "Item Selector",
+    "selectItem": "Select an item...",
     "searchItems": "Search items...",
+    "noItemsFound": "No items found",
     "totalForecast": "Total Forecast (All Items)",
     "forecast": "Forecast",
     "predicted": "Predicted",

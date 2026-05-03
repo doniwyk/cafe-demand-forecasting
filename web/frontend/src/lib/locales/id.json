@@ -61,7 +61,9 @@
   },
   "forecasts": {
     "itemSelector": "Pemilih Item",
+    "selectItem": "Pilih item...",
     "searchItems": "Cari item...",
+    "noItemsFound": "Item tidak ditemukan",
     "totalForecast": "Total Prakiraan (Semua Item)",
     "forecast": "Prakiraan",
     "predicted": "Diprediksi",

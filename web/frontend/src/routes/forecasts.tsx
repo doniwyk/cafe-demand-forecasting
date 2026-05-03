@@ -3,11 +3,12 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
 import { useForecasts, useForecastSummary } from '@/hooks/use-forecasts'
 import { useItems } from '@/hooks/use-sales'
 import { useModelType } from '@/contexts/model-context'
@@ -15,7 +16,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
-import { SearchIcon } from 'lucide-react'
+import { ChevronsUpDownIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/forecasts')({
@@ -23,21 +24,14 @@ export const Route = createFileRoute('/forecasts')({
 })
 
 function ForecastsPage() {
-  const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState<string | null>(null)
+  const [open, setOpen] = useState(false)
   const { modelType } = useModelType()
   const { t } = useTranslation()
 
   const items = useItems()
   const forecasts = useForecasts({ page_size: 1000, model_type: modelType })
   const summary = useForecastSummary(modelType)
-
-  const filteredItems = useMemo(() => {
-    if (!items.data) return []
-    return items.data.filter((i) =>
-      i.name.toLowerCase().includes(search.toLowerCase()),
-    )
-  }, [items.data, search])
 
   const forecastForItem = useMemo(() => {
     if (!forecasts.data || !selectedItem) return []
@@ -77,40 +71,42 @@ function ForecastsPage() {
           <CardTitle>{t("forecasts.itemSelector")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative max-w-sm">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder={t("forecasts.searchItems")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+              render={<Button variant="outline" role="combobox" aria-expanded={open} className="w-[280px] justify-between" />}
+            >
+              {selectedItem || t("forecasts.selectItem")}
+              <ChevronsUpDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
+            </PopoverTrigger>
+            <PopoverContent className="w-[280px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder={t("forecasts.searchItems")} />
+                <CommandList>
+                  <CommandEmpty>{t("forecasts.noItemsFound")}</CommandEmpty>
+                  <CommandGroup>
+                    {items.data?.map((item) => (
+                      <CommandItem
+                        key={item.name}
+                        value={item.name}
+                        onSelect={(value) => {
+                          setSelectedItem(value === selectedItem ? null : value)
+                          setOpen(false)
+                        }}
+                      >
+                        {item.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           {selectedItem && (
             <div className="mt-3 flex items-center gap-2">
               <Badge variant="secondary">{selectedItem}</Badge>
               <Button variant="ghost" size="sm" onClick={() => setSelectedItem(null)}>
                 {t("common.clear")}
               </Button>
-            </div>
-          )}
-          {!selectedItem && filteredItems.length > 0 && (
-            <div className="mt-3 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
-              {filteredItems.slice(0, 50).map((item) => (
-                <Badge
-                  key={item.name}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent transition-colors"
-                  onClick={() => setSelectedItem(item.name)}
-                >
-                  {item.name}
-                </Badge>
-              ))}
-              {filteredItems.length > 50 && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  +{filteredItems.length - 50} more...
-                </Badge>
-              )}
             </div>
           )}
         </CardContent>
