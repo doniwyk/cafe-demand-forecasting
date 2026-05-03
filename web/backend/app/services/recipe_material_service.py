@@ -5,8 +5,7 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session as forecast_session
-from app.db.hus_engine import hus_sync_session
+from app.db.engine import async_session, sync_session
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
 
 
@@ -16,7 +15,7 @@ async def get_daily_material_forecast(
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    async with forecast_session() as session:
+    async with async_session() as session:
         base_query = """
             SELECT f.date, i.name as item, f.quantity_predicted as quantity
             FROM forecasts f
@@ -68,7 +67,7 @@ async def get_daily_material_forecast(
 
 
 def _map_forecast_to_materials(forecast_df: pd.DataFrame) -> pd.DataFrame:
-    with hus_sync_session() as hus_session:
+    with sync_session() as session:
         recipe_query = text(
             """
             SELECT 
@@ -86,7 +85,7 @@ def _map_forecast_to_materials(forecast_df: pd.DataFrame) -> pd.DataFrame:
             WHERE p.is_active = true
             """
         )
-        recipe_result = hus_session.execute(recipe_query)
+        recipe_result = session.execute(recipe_query)
         recipe_rows = recipe_result.fetchall()
 
     recipe_df = pd.DataFrame(
@@ -164,7 +163,7 @@ def _map_forecast_to_materials(forecast_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _expand_condiment(condiment_name: str, quantity: float) -> dict:
-    with hus_sync_session() as session:
+    with sync_session() as session:
         cond_query = text(
             """
             SELECT m.name, cb.quantity, c.batch_quantity

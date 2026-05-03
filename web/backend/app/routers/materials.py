@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.engine import async_session
 from app.models.material import MaterialRequirementPage
 from app.services import material_service
-from app.services import hus_material_service
+from app.services import recipe_material_service
 
 router = APIRouter(prefix="/api/materials", tags=["materials"])
 
@@ -51,6 +51,6 @@ async def get_daily_material_forecast(
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=1000),
 ):
-    return await hus_material_service.get_daily_material_forecast(
+    return await recipe_material_service.get_daily_material_forecast(
         start_date, end_date, page, page_size
     )

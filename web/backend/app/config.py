@@ -34,16 +34,6 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/cafe_forecasting",
 )
 
-HUS_DB_URL = os.getenv(
-    "HUS_DB_URL",
-    "postgresql://user:password@host.docker.internal:5432/hus_db",
-)
-
-HUS_DB_SYNC_URL = os.getenv(
-    "HUS_DB_SYNC_URL",
-    "postgresql://user:password@host.docker.internal:5432/hus_db",
-)
-
 sys_path = str(ML_MODEL_DIR)
 if sys_path not in os.sys.path:
     os.sys.path.insert(0, sys_path)

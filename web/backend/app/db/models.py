@@ -335,3 +335,132 @@ class RawMaterialRequirement(Base):
     quantity_required: Mapped[float] = mapped_column(Float, nullable=False)
 
     __table_args__ = (Index("ix_raw_material_date_material", "date", "raw_material"),)
+
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    variants: Mapped[list["ProductVariant"]] = relationship(
+        back_populates="product", lazy="noload"
+    )
+    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
+        back_populates="product", lazy="noload"
+    )
+
+    __table_args__ = (Index("ix_products_name", "name"),)
+
+
+class ProductVariant(Base):
+    __tablename__ = "product_variants"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    product_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("products.id"), nullable=False
+    )
+
+    product: Mapped["Product"] = relationship(
+        back_populates="variants", lazy="noload"
+    )
+    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
+        back_populates="variant", lazy="noload"
+    )
+
+    __table_args__ = (Index("ix_product_variants_product_id", "product_id"),)
+
+
+class Material(Base):
+    __tablename__ = "materials"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    unit_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
+        back_populates="material", lazy="noload"
+    )
+    condiment_ingredients: Mapped[list["CondimentIngredient"]] = relationship(
+        back_populates="material", lazy="noload"
+    )
+
+    __table_args__ = (Index("ix_materials_name", "name"),)
+
+
+class Condiment(Base):
+    __tablename__ = "condiments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    batch_quantity: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
+        back_populates="condiment", lazy="noload"
+    )
+    ingredients: Mapped[list["CondimentIngredient"]] = relationship(
+        back_populates="condiment", lazy="noload"
+    )
+
+    __table_args__ = (Index("ix_condiments_name", "name"),)
+
+
+class ProductRecipeIngredient(Base):
+    __tablename__ = "product_recipe_ingredients"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("products.id"), nullable=False
+    )
+    variant_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("product_variants.id"), nullable=True
+    )
+    material_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("materials.id"), nullable=True
+    )
+    condiment_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("condiments.id"), nullable=True
+    )
+    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+
+    product: Mapped["Product"] = relationship(
+        back_populates="recipe_ingredients", lazy="noload"
+    )
+    variant: Mapped[Optional["ProductVariant"]] = relationship(
+        back_populates="recipe_ingredients", lazy="noload"
+    )
+    material: Mapped[Optional["Material"]] = relationship(
+        back_populates="recipe_ingredients", lazy="noload"
+    )
+    condiment: Mapped[Optional["Condiment"]] = relationship(
+        back_populates="recipe_ingredients", lazy="noload"
+    )
+
+    __table_args__ = (
+        Index("ix_product_recipe_product_id", "product_id"),
+        Index("ix_product_recipe_variant_id", "variant_id"),
+    )
+
+
+class CondimentIngredient(Base):
+    __tablename__ = "condiment_ingredients"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    condiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("condiments.id"), nullable=False
+    )
+    material_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("materials.id"), nullable=True
+    )
+    quantity: Mapped[float] = mapped_column(Float, nullable=False)
+
+    condiment: Mapped["Condiment"] = relationship(
+        back_populates="ingredients", lazy="noload"
+    )
+    material: Mapped[Optional["Material"]] = relationship(
+        back_populates="condiment_ingredients", lazy="noload"
+    )
+
+    __table_args__ = (Index("ix_condiment_ingredients_condiment_id", "condiment_id"),)
