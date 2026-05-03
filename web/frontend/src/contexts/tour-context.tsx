@@ -117,11 +117,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
       showButtons: ['next', 'previous', 'close'],
       disableActiveInteraction: true,
       onDestroyStarted: () => {
-        if (!driverObj.hasNextStep() || driverObj.isLastStep()) {
-          markCompleted(page)
-          setIsTourActive(false)
-          currentTourPage.current = null
-        }
+        markCompleted(page)
+        setIsTourActive(false)
+        currentTourPage.current = null
         driverObj.destroy()
       },
     } as Config)
