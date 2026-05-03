@@ -1,6 +1,7 @@
 .DS_Store
-data/raw/
-data/processed/
+**/data/raw/
+**/data/processed/
+**/data/predictions/
 .opencode
 *.pkl
 __pycache__/
