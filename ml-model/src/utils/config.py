@@ -5,6 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
+SALES_FORECASTING_DIR = PROCESSED_DIR / "sales_forecasting"
 PREDICTIONS_DIR = DATA_DIR / "predictions"
 MODELS_DIR = PROJECT_ROOT / "models"
 BOM_DIR = RAW_DIR / "bom"

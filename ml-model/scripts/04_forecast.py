@@ -4,11 +4,14 @@ Cafe Supply Forecasting CLI
 Unified entry point for model evaluation and training.
 
 Usage:
-    python scripts/05_forecast.py -f daily train           # Daily train + 3-month forecast
-    python scripts/05_forecast.py -f weekly train          # Weekly train + 3-month forecast
-    python scripts/05_forecast.py -f daily evaluate        # Daily evaluation only
-    python scripts/05_forecast.py train --no-forecast      # Train + save models only
-    python scripts/05_forecast.py --help
+    python scripts/04_forecast.py -f weekly train           # Weekly train + 3-month forecast
+    python scripts/04_forecast.py -f daily train            # Daily train + 3-month forecast
+    python scripts/04_forecast.py train --all               # Train both daily + weekly
+    python scripts/04_forecast.py -f weekly evaluate        # Weekly evaluation only
+    python scripts/04_forecast.py -f daily evaluate         # Daily evaluation only
+    python scripts/04_forecast.py evaluate --all            # Evaluate both daily + weekly
+    python scripts/04_forecast.py train --no-forecast       # Train + save models only
+    python scripts/04_forecast.py --help
 """
 
 import sys
@@ -28,7 +31,7 @@ from src.models.forecaster import (
     predict,
 )
 from src.evaluation.metrics import generate_abc_analysis, print_abc_report
-from src.utils.config import PROCESSED_DIR, PREDICTIONS_DIR, MODELS_DIR, get_feature_columns
+from src.utils.config import PROCESSED_DIR, SALES_FORECASTING_DIR, PREDICTIONS_DIR, MODELS_DIR, get_feature_columns
 
 
 def cmd_evaluate(args):
@@ -36,7 +39,7 @@ def cmd_evaluate(args):
     print(f"MODEL EVALUATION ({args.frequency.upper()})")
     print("=" * 80)
 
-    df_raw = load_and_prep_data(PROCESSED_DIR / "daily_item_sales.csv", frequency=args.frequency)
+    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv", frequency=args.frequency)
 
     print("\nCreating features...")
     df_feat = create_features(df_raw, frequency=args.frequency)
@@ -45,7 +48,7 @@ def cmd_evaluate(args):
     print(f"\nTraining & evaluating on last 12 {args.frequency} periods...")
     test_pred = train_and_predict(df_feat, frequency=args.frequency)
 
-    analysis = generate_abc_analysis(test_pred)
+    analysis = generate_abc_analysis(test_pred, frequency=args.frequency)
     print_abc_report(analysis)
 
 
@@ -58,7 +61,7 @@ def cmd_train(args):
     model_dir = MODELS_DIR / freq
     pred_file = PREDICTIONS_DIR / freq / "3_month_forecasts.csv"
 
-    df_raw = load_and_prep_data(PROCESSED_DIR / "daily_item_sales.csv", frequency=freq)
+    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv", frequency=freq)
 
     print("\nCreating features...")
     df_feat = create_features(df_raw, frequency=freq)
@@ -97,7 +100,7 @@ def cmd_train(args):
     print("=" * 80)
 
     test_pred = train_and_predict(df_feat, frequency=freq)
-    analysis = generate_abc_analysis(test_pred)
+    analysis = generate_abc_analysis(test_pred, frequency=freq)
     print_abc_report(analysis)
 
     print("\nTraining complete!")
@@ -116,9 +119,15 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command")
 
-    subparsers.add_parser(
+    eval_parser = subparsers.add_parser(
         "evaluate",
         help="Evaluate model metrics on last 12 periods (no model saving)",
+    )
+    eval_parser.add_argument(
+        "--all",
+        action="store_true",
+        dest="run_all",
+        help="Evaluate both daily and weekly frequencies",
     )
 
     train_parser = subparsers.add_parser(
@@ -130,13 +139,29 @@ def main():
         action="store_true",
         help="Skip 3-month forecast generation, only save models",
     )
+    train_parser.add_argument(
+        "--all",
+        action="store_true",
+        dest="run_all",
+        help="Train both daily and weekly frequencies",
+    )
 
     args = parser.parse_args()
 
     if args.command == "evaluate":
-        cmd_evaluate(args)
+        if args.run_all:
+            for freq in ["daily", "weekly"]:
+                args.frequency = freq
+                cmd_evaluate(args)
+        else:
+            cmd_evaluate(args)
     elif args.command == "train":
-        cmd_train(args)
+        if args.run_all:
+            for freq in ["daily", "weekly"]:
+                args.frequency = freq
+                cmd_train(args)
+        else:
+            cmd_train(args)
     else:
         parser.print_help()
         sys.exit(1)

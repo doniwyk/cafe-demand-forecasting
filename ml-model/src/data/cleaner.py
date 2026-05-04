@@ -23,6 +23,8 @@ RENAME_MAP = {
     "kopi susu hot": "Kopi Susu Husgendam Hot",
     "kopi susu ice": "Kopi Susu Husgendam Ice",
     "kopi susu bersemi": "Kopi Susu Husgendam Hot",
+    "kopi susu bersemi ice": "Kopi Susu Husgendam Ice",
+    "kopi susu bersemi hot": "Kopi Susu Husgendam Hot",
     "kopi susu husgendam": "Kopi Susu Husgendam Hot",
     "husgendam hot": "Kopi Susu Husgendam Hot",
     "husgendam ice": "Kopi Susu Husgendam Ice",
@@ -138,13 +140,18 @@ class SalesDataCleaner:
 
         hot_match = hot_key in self.active_items
         ice_match = ice_key in self.active_items
+        base_match = base in self.active_items
 
         if hot_match and not ice_match:
             return self.bom_name_map[hot_key]
         if ice_match and not hot_match:
             return self.bom_name_map[ice_key]
         if hot_match and ice_match:
+            if item_name.strip().lower().endswith(" ice"):
+                return self.bom_name_map[ice_key]
             return self.bom_name_map[hot_key]
+        if base_match:
+            return self.bom_name_map[base]
         return None
 
     def _normalize_item_name(self, item_name: str) -> str:
@@ -152,12 +159,40 @@ class SalesDataCleaner:
             return ""
         return str(item_name).strip().lower()
 
+    def _apply_modifiers(self, df: pd.DataFrame) -> pd.DataFrame:
+        if "Modifiers applied" not in df.columns:
+            return df
+
+        mod_col = df["Modifiers applied"].astype(str).str.strip()
+        has_hot = mod_col == "Hot"
+        has_ice = mod_col == "Ice"
+
+        item_lower = df["Item"].astype(str).str.lower().str.strip()
+        already_hot = item_lower.str.endswith(" hot")
+        already_ice = item_lower.str.endswith(" ice")
+
+        needs_hot = has_hot & ~already_hot & ~already_ice
+        needs_ice = has_ice & ~already_hot & ~already_ice
+
+        count_hot = needs_hot.sum()
+        count_ice = needs_ice.sum()
+
+        df.loc[needs_hot, "Item"] = df.loc[needs_hot, "Item"].str.strip() + " Hot"
+        df.loc[needs_ice, "Item"] = df.loc[needs_ice, "Item"].str.strip() + " Ice"
+
+        if count_hot or count_ice:
+            print(f"  Applied modifiers: {count_hot} Hot, {count_ice} Ice")
+
+        return df
+
     def standardize_names(self, df: pd.DataFrame) -> pd.DataFrame:
         print("\n" + "-" * 80)
         print("STEP 1: STANDARDIZING ITEM NAMES")
         print("-" * 80)
 
         standardized_df = df.copy()
+
+        standardized_df = self._apply_modifiers(standardized_df)
 
         renamed_count = 0
         for old_name, new_name in self.rename_map.items():

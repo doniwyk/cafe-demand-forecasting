@@ -18,7 +18,38 @@ from src.models.features import create_features
 FREQ_MAP = {"daily": "D", "weekly": "W-MON"}
 
 MIN_TRAIN_RECORDS_DAILY = 180
-MIN_TRAIN_RECORDS_WEEKLY = 40
+MIN_TRAIN_RECORDS_WEEKLY = 100
+
+_EARLY_STOPPING_ROUNDS = 15
+_BLEND_ALPHA = 0.15
+
+_BASE_GLOBAL_PARAMS = {
+    "objective": "reg:tweedie",
+    "tweedie_variance_power": 1.5,
+    "n_estimators": 300,
+    "learning_rate": 0.015,
+    "max_depth": 3,
+    "min_child_weight": 15,
+    "subsample": 0.6,
+    "colsample_bytree": 0.6,
+    "reg_alpha": 5.0,
+    "reg_lambda": 10.0,
+    "random_state": 42,
+}
+
+_BASE_ITEM_PARAMS = {
+    "objective": "reg:tweedie",
+    "tweedie_variance_power": 1.5,
+    "n_estimators": 150,
+    "learning_rate": 0.015,
+    "max_depth": 2,
+    "min_child_weight": 15,
+    "subsample": 0.5,
+    "colsample_bytree": 0.5,
+    "reg_alpha": 5.0,
+    "reg_lambda": 15.0,
+    "random_state": 42,
+}
 
 
 def load_and_prep_data(
@@ -53,31 +84,14 @@ def load_and_prep_data(
 def get_min_train_records(frequency: str) -> int:
     return MIN_TRAIN_RECORDS_DAILY if frequency == "daily" else MIN_TRAIN_RECORDS_WEEKLY
 
-_BASE_GLOBAL_PARAMS = {
-    "objective": "reg:tweedie",
-    "tweedie_variance_power": 1.5,
-    "n_estimators": 700,
-    "learning_rate": 0.03,
-    "max_depth": 7,
-    "subsample": 0.8,
-    "colsample_bytree": 0.8,
-    "random_state": 42,
-}
-
-_BASE_ITEM_PARAMS = {
-    "objective": "reg:tweedie",
-    "tweedie_variance_power": 1.5,
-    "n_estimators": 500,
-    "learning_rate": 0.04,
-    "max_depth": 6,
-    "subsample": 0.85,
-    "colsample_bytree": 0.85,
-    "random_state": 42,
-}
-
 
 def _xgboost_params(base: dict) -> dict:
     return {**base, **get_xgboost_params()}
+
+
+def _split_train_val(df: pd.DataFrame, val_ratio: float = 0.15):
+    val_size = max(1, int(len(df) * val_ratio))
+    return df.iloc[: len(df) - val_size], df.iloc[len(df) - val_size :]
 
 
 def train_and_predict(
@@ -115,14 +129,22 @@ def train_and_predict(
     )
 
     features = get_feature_columns(frequency)
+    train_core, train_val = _split_train_val(train)
 
-    print("Training global fallback model...")
+    print("Training global fallback model (with early stopping)...")
     t0 = time.time()
-    global_model = XGBRegressor(**_xgboost_params(_BASE_GLOBAL_PARAMS))
-    global_model.fit(train[features], train["Quantity_Sold"])
+    global_model = XGBRegressor(
+        **_xgboost_params(_BASE_GLOBAL_PARAMS),
+        early_stopping_rounds=_EARLY_STOPPING_ROUNDS,
+    )
+    global_model.fit(
+        train_core[features], train_core["Quantity_Sold"],
+        eval_set=[(train_val[features], train_val["Quantity_Sold"])],
+        verbose=False,
+    )
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
-    print("Training per-item models...")
+    print("Training per-item models (with early stopping)...")
     predictions = []
     items = list(test["Item"].unique())
     total_items = len(items)
@@ -131,13 +153,28 @@ def train_and_predict(
             print(
                 f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
             )
-        train_item = train[train["Item"] == item]
+        train_item = train_core[train_core["Item"] == item]
         test_item = test[test["Item"] == item].copy()
+        val_item = train_val[train_val["Item"] == item]
 
         if len(train_item) >= get_min_train_records(frequency):
-            model = XGBRegressor(**_xgboost_params(_BASE_ITEM_PARAMS))
-            model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
-            pred = model.predict(test_item[features])
+            has_val = len(val_item) >= 1
+            model_params = _xgboost_params(_BASE_ITEM_PARAMS)
+            if has_val:
+                model_params["early_stopping_rounds"] = _EARLY_STOPPING_ROUNDS
+            model = XGBRegressor(**model_params)
+            eval_set = (
+                [(val_item[features], val_item["Quantity_Sold"])]
+                if has_val
+                else None
+            )
+            model.fit(
+                train_item[features], train_item["Quantity_Sold"],
+                eval_set=eval_set, verbose=False,
+            )
+            pred_item = model.predict(test_item[features])
+            pred_global = global_model.predict(test_item[features])
+            pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
             model = None
             pred = global_model.predict(test_item[features])
@@ -167,27 +204,49 @@ def train_models(
 
     features = get_feature_columns(frequency)
 
-    print("Training global fallback model...")
+    train_data, val_data = _split_train_val(df_features)
+
+    print("Training global fallback model (with early stopping)...")
     t0 = time.time()
-    global_model = XGBRegressor(**_xgboost_params(_BASE_GLOBAL_PARAMS))
-    global_model.fit(df_features[features], df_features["Quantity_Sold"])
+    global_model = XGBRegressor(
+        **_xgboost_params(_BASE_GLOBAL_PARAMS),
+        early_stopping_rounds=_EARLY_STOPPING_ROUNDS,
+    )
+    global_model.fit(
+        train_data[features], train_data["Quantity_Sold"],
+        eval_set=[(val_data[features], val_data["Quantity_Sold"])],
+        verbose=False,
+    )
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
     item_models = {}
     items = list(df_features["Item"].unique())
     total_items = len(items)
-    print(f"Training per-item models... total items: {total_items}")
+    print(f"Training per-item models (with early stopping)... total items: {total_items}")
     for idx, item in enumerate(items):
         if (idx + 1) % 20 == 0 or idx == 0:
             print(
                 f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
             )
-        train_item = df_features[df_features["Item"] == item]
+        train_item = train_data[train_data["Item"] == item]
         if len(train_item) < get_min_train_records(frequency):
             continue
 
-        model = XGBRegressor(**_xgboost_params(_BASE_ITEM_PARAMS))
-        model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
+        val_item = val_data[val_data["Item"] == item]
+        has_val = len(val_item) >= 1
+        model_params = _xgboost_params(_BASE_ITEM_PARAMS)
+        if has_val:
+            model_params["early_stopping_rounds"] = _EARLY_STOPPING_ROUNDS
+        model = XGBRegressor(**model_params)
+        eval_set = (
+            [(val_item[features], val_item["Quantity_Sold"])]
+            if has_val
+            else None
+        )
+        model.fit(
+            train_item[features], train_item["Quantity_Sold"],
+            eval_set=eval_set, verbose=False,
+        )
         item_models[item] = model
 
     with open(output_dir / "global_model.pkl", "wb") as f:
@@ -276,7 +335,9 @@ def predict(
 
         if item in item_models:
             model = item_models[item]
-            pred = model.predict(test_item[features])
+            pred_item = model.predict(test_item[features])
+            pred_global = global_model.predict(test_item[features])
+            pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
             pred = global_model.predict(test_item[features])
 
