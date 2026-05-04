@@ -8,49 +8,95 @@ from src.utils.config import PROCESSED_DIR
 
 
 RENAME_MAP = {
-    "lemon tea hot": "Lemon Hot",
-    "lemon tea ice": "Lemon Ice",
-    "hot tea ajeng": "Ajeng Hot",
-    "ice tea ajeng": "Ajeng Ice",
-    "hot tea anindya": "Anindya Hot",
-    "ice tea anindya": "Anindya Ice",
-    "kopi susu panas": "Kopi Susu Hot",
-    "ice cappucino": "Cappucino Ice",
-    "latte": "Latte Hot",
-    "ice latte": "Latte Ice",
-    "picolo": "Piccolo",
+    "lemon tea hot": "Lemon Tea Hot",
+    "lemon tea ice": "Lemon Tea Ice",
+    "lemon ice": "Lemon Tea Ice",
+    "lemon hot": "Lemon Tea Hot",
+    "lemon tea": "Lemon Tea Hot",
+    "milk tea hot": "Mewangi Milk Tea Hot",
+    "milk tea ice": "Mewangi Milk Tea Ice",
+    "mewangi milk tea": "Mewangi Milk Tea Hot",
+    "lychee tea hot": "Lychee Tea Hot",
+    "lychee tea ice": "Lychee Tea Ice",
+    "lychee tea": "Lychee Tea Hot",
+    "kopi susu panas": "Kopi Susu Husgendam Hot",
+    "kopi susu hot": "Kopi Susu Husgendam Hot",
+    "kopi susu ice": "Kopi Susu Husgendam Ice",
+    "kopi susu bersemi": "Kopi Susu Husgendam Hot",
+    "kopi susu husgendam": "Kopi Susu Husgendam Hot",
+    "husgendam hot": "Kopi Susu Husgendam Hot",
+    "husgendam ice": "Kopi Susu Husgendam Ice",
+    "husgen platter": "Husgendam Platter",
+    "husgendam platter": "Husgendam Platter",
+    "husgendam toast": "Husgendam Platter",
+    "husgendam nugget": "Husgendam Platter",
     "long black hot": "Black Hot",
     "long black ice": "Black Ice",
     "americano hot": "Black Hot",
     "americano ice": "Black Ice",
-    "red velvet": "Red Velvet Ice",
-    "susu coklat": "Coklat Hot",
-    "v60 hacienda natural": "V60",
-    "v60 argopuro": "V60",
-    "v60 finca": "V60",
+    "ice cappucino": "Cappucino Ice",
+    "latte": "Latte Hot",
+    "ice latte": "Latte Ice",
+    "susu coklat": "Chocolate Hot",
+    "coklat hot": "Chocolate Hot",
+    "coklat ice": "Chocolate Ice",
+    "coklat": "Chocolate Hot",
+    "tubruk susu": "Tubruk",
+    "picolo": "Espresso",
+    "piccolo": "Espresso",
+    "v60 hacienda natural": "Filter",
+    "v60 argopuro": "Filter",
+    "v60 finca": "Filter",
+    "v60 - ijen classic washed hot": "Filter",
+    "v60 - ijen classic washed ice": "Filter",
+    "v60 - strawberry twist hot": "Filter",
+    "v60 - strawberry twist ice": "Filter",
+    "filter - ijen classic washed hot": "Filter",
+    "filter - ijen classic washed ice": "Filter",
+    "filter - semendo liberika hsn hot": "Filter",
+    "filter - semendo liberika hsn ice": "Filter",
+    "filter - sinapeul black honey hot": "Filter",
+    "filter - sinapeul black honey ice": "Filter",
+    "filter - strawberry twist hot": "Filter",
+    "filter - strawberry twist ice": "Filter",
     "mie goreng telur": "Mie Goreng",
     "mie rebus telur": "Mie Rebus",
     "nasi goreng djawa": "Nasi Goreng Jawa",
-    "nasi ayam daun jeruk": "Ayam Daun Jeruk",
-    "nasi ayam rempah": "Ayam Rempah",
-    "ayam mentega (paket)": "Ayam Mentega",
-    "ayam curry (paket)": "Ayam Curry",
-    "ayam dauh jeruk (paket)": "Ayam Daun Jeruk",
+    "nasi ayam daun jeruk": "Nasi Ayam Daun Jeruk",
+    "ayam daun jeruk": "Nasi Ayam Daun Jeruk",
+    "ayam mentega (paket)": "Nasi Ayam Mentega",
+    "ayam curry (paket)": "Nasi Ayam Curry",
+    "ayam dauh jeruk (paket)": "Nasi Ayam Daun Jeruk",
+    "ayam curry": "Nasi Ayam Curry",
+    "ayam mentega": "Nasi Ayam Mentega",
+    "ayam chili padi": "Nasi Ayam Chili Padi",
     "cireng isi": "Cireng",
-    "pannacotta": "Panacotta",
-    "add vanilla ice cream": "Add Ice Cream Vanilla",
-    "add telur ceplok": "Add Telur",
-    "add telur dadar": "Add Telur",
-    "add caramel topping": "Add Topping Caramel",
+    "kentang goreng": "Kentang",
+    "kentang": "Kentang",
+    "pisang goreng": "Pisang Goreng Madu",
+    "pisang goreng aren": "Pisang Goreng Madu",
+    "pisang goreng madu": "Pisang Goreng Madu",
+    "puspha matcha": "Puspa Matcha",
+    "puspa matcha": "Puspa Matcha",
+    "original cookie": "Cookies Original",
+    "cookies original": "Cookies Original",
+    "waffle vanilla": "Candana Vanilla",
+    "waffle strawberry": "Kirana Strawberry",
+    "waffle matcha": "Puspa Matcha",
+    "memukau (for him)": "Memukau",
+    "menawan (for her)": "Menawan",
+    "cheese cake": "New York Cheesecake",
+    "cheesecake": "New York Cheesecake",
+    "pannacotta": "New York Cheesecake",
+    "panacotta": "New York Cheesecake",
+    "air mineral besar": "Air Mineral",
+    "filter strw": "Filter",
+    "filter ethiopia": "Filter",
+    "filter kenya": "Filter",
+    "filter flores mewangi": "Filter",
+    "filter kamojang kembang": "Filter",
+    "filter coffe abhimanyu": "Filter",
 }
-
-PACKAGE_MAP = {
-    "mie goreng telur": [("Mie Goreng", 1.0), ("Add Telur", 1.0)],
-    "mie rebus telur": [("Mie Rebus", 1.0), ("Add Telur", 1.0)],
-    "paket ayam teriyaki + lemon tea": [("Ayam Teriyaki", 1.0), ("Lemon Ice", 1.0)],
-    "paket ayam curry + lemon tea": [("Ayam Curry", 1.0), ("Lemon Ice", 1.0)],
-}
-
 
 class SalesDataCleaner:
     def __init__(self, sales_path: str | Path, menu_bom_path: str | Path):
@@ -60,14 +106,12 @@ class SalesDataCleaner:
         self.menu_bom_df = pd.read_csv(self.menu_bom_path)
 
         self.rename_map = RENAME_MAP
-        self.package_items = PACKAGE_MAP
         self.active_items = self._get_active_items()
+        self.bom_name_map = self._get_bom_name_map()
 
         self.stats = {
             "original_records": len(self.sales_df),
             "renamed_records": 0,
-            "expanded_packages": 0,
-            "expanded_items": 0,
             "discontinued_items": 0,
             "removed_records": 0,
         }
@@ -78,6 +122,30 @@ class SalesDataCleaner:
             normalized = item_name.strip().lower()
             active_items.add(normalized)
         return active_items
+
+    def _get_bom_name_map(self) -> Dict[str, str]:
+        name_map = {}
+        for item_name in self.menu_bom_df["Item"].dropna().unique():
+            normalized = item_name.strip().lower()
+            name_map[normalized] = item_name.strip()
+        return name_map
+
+    def _try_suffix_match(self, item_name: str) -> Optional[str]:
+        base = item_name.strip().lower()
+
+        hot_key = base + " hot"
+        ice_key = base + " ice"
+
+        hot_match = hot_key in self.active_items
+        ice_match = ice_key in self.active_items
+
+        if hot_match and not ice_match:
+            return self.bom_name_map[hot_key]
+        if ice_match and not hot_match:
+            return self.bom_name_map[ice_key]
+        if hot_match and ice_match:
+            return self.bom_name_map[hot_key]
+        return None
 
     def _normalize_item_name(self, item_name: str) -> str:
         if pd.isna(item_name):
@@ -117,45 +185,37 @@ class SalesDataCleaner:
         if case_fixed:
             print(f"  Case-normalized: {case_fixed} records to match BOM names")
 
-        expanded_rows = []
-        rows_to_remove = []
-
-        for idx, row in standardized_df.iterrows():
-            item_lower = str(row["Item"]).lower()
-
-            if item_lower in self.package_items:
-                rows_to_remove.append(idx)
-                components = self.package_items[item_lower]
-                original_qty = row["Quantity"]
-
-                for component_item, qty_multiplier in components:
-                    new_row = row.copy()
-                    new_row["Item"] = component_item
-                    new_row["Quantity"] = original_qty * qty_multiplier
-                    expanded_rows.append(new_row)
-
-                print(
-                    f'  Expanded: "{row["Item"]}" -> {len(components)} items ({original_qty} qty each)'
-                )
-
-        if rows_to_remove:
-            standardized_df = standardized_df.drop(rows_to_remove)
-            self.stats["expanded_packages"] = len(rows_to_remove)
-
-        if expanded_rows:
-            expanded_df = pd.DataFrame(expanded_rows)
-            standardized_df = pd.concat(
-                [standardized_df, expanded_df], ignore_index=True
-            )
-            self.stats["expanded_items"] = len(expanded_rows)
-
         standardized_df = standardized_df.sort_values("Date").reset_index(drop=True)
+
+        v60_mask = standardized_df["Item"].str.lower().str.contains("v60")
+        v60_count = v60_mask.sum()
+        if v60_count:
+            standardized_df.loc[v60_mask, "Item"] = "Filter"
+            print(f"  V60/Filter normalized: {v60_count} records -> Filter")
+
+        suffix_map = {}
+        for item in standardized_df["Item"].dropna().unique():
+            item_str = str(item).strip()
+            if item_str.lower() not in self.active_items:
+                matched = self._try_suffix_match(item_str)
+                if matched:
+                    suffix_map[item_str] = matched
+
+        suffix_renamed = 0
+        if suffix_map:
+            mask = standardized_df["Item"].isin(suffix_map.keys())
+            suffix_renamed = mask.sum()
+            standardized_df["Item"] = standardized_df["Item"].replace(suffix_map)
+            print(f"  Suffix-matched: {suffix_renamed} records to BOM Hot/Ice variants")
+            for old, new in sorted(suffix_map.items()):
+                print(f'    "{old}" -> "{new}"')
 
         print(f"\nStandardization Summary:")
         print(f"  Simple renames: {renamed_count} records")
-        print(
-            f"  Package expansions: {len(rows_to_remove)} packages -> {len(expanded_rows)} items"
-        )
+        if v60_count:
+            print(f"  V60 normalized: {v60_count} records")
+        if suffix_renamed:
+            print(f"  Suffix-matched: {suffix_renamed} records")
         print(f"  Total records: {len(df)} -> {len(standardized_df)}")
 
         return standardized_df
@@ -258,16 +318,11 @@ def print_final_summary(stats: Dict):
     print(f"\nOriginal records: {stats['original_records']:,}")
     print(f"\nStandardization:")
     print(f"  - Renamed records: {stats['renamed_records']:,}")
-    print(
-        f"  - Expanded packages: {stats['expanded_packages']:,} -> {stats['expanded_items']:,} items"
-    )
 
     print(f"\nDiscontinued items:")
     print(f"  - Items found: {stats['discontinued_items']:,}")
     print(f"  - Records removed: {stats['removed_records']:,}")
 
-    final_records = (
-        stats["original_records"] + stats["expanded_items"] - stats["removed_records"]
-    )
+    final_records = stats["original_records"] - stats["removed_records"]
     print(f"\nFinal records: {final_records:,}")
     print("=" * 80)
