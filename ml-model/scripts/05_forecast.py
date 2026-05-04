@@ -4,10 +4,11 @@ Cafe Supply Forecasting CLI
 Unified entry point for model evaluation and training.
 
 Usage:
-    python scripts/forecast.py evaluate            # Evaluate model metrics (no saving)
-    python scripts/forecast.py train               # Train + save .pkl models + 3-month forecast
-    python scripts/forecast.py train --no-forecast # Train + save models only (skip forecast)
-    python scripts/forecast.py --help
+    python scripts/05_forecast.py -f daily train           # Daily train + 3-month forecast
+    python scripts/05_forecast.py -f weekly train          # Weekly train + 3-month forecast
+    python scripts/05_forecast.py -f daily evaluate        # Daily evaluation only
+    python scripts/05_forecast.py train --no-forecast      # Train + save models only
+    python scripts/05_forecast.py --help
 """
 
 import sys
@@ -20,49 +21,29 @@ import argparse
 
 from src.models.features import create_features
 from src.models.forecaster import (
+    load_and_prep_data,
     train_and_predict,
     train_models,
     generate_future_features,
     predict,
 )
 from src.evaluation.metrics import generate_abc_analysis, print_abc_report
-from src.utils.config import PROCESSED_DIR, PREDICTIONS_DIR, MODELS_DIR
-
-
-def load_and_prep_data():
-    filepath = PROCESSED_DIR / "daily_item_sales.csv"
-    print(f"Loading data from: {filepath}")
-    df = pd.read_csv(filepath)
-    df.columns = df.columns.str.strip()
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
-    df_weekly = (
-        df.set_index("Date")
-        .groupby("Item")
-        .resample("W-MON")["Quantity_Sold"]
-        .sum()
-        .reset_index()
-    )
-    print(f"Aggregated to weekly: {len(df_weekly)} observations")
-    print(
-        f"Date range: {df_weekly['Date'].min().date()} to {df_weekly['Date'].max().date()}"
-    )
-    return df_weekly
+from src.utils.config import PROCESSED_DIR, PREDICTIONS_DIR, MODELS_DIR, get_feature_columns
 
 
 def cmd_evaluate(args):
     print("=" * 80)
-    print("MODEL EVALUATION")
+    print(f"MODEL EVALUATION ({args.frequency.upper()})")
     print("=" * 80)
 
-    df_raw = load_and_prep_data()
+    df_raw = load_and_prep_data(PROCESSED_DIR / "daily_item_sales.csv", frequency=args.frequency)
 
     print("\nCreating features...")
-    df_feat = create_features(df_raw)
+    df_feat = create_features(df_raw, frequency=args.frequency)
     print(f"Features created: {df_feat.shape[1]} columns")
 
-    print("\nTraining & evaluating on last 12 weeks...")
-    test_pred = train_and_predict(df_feat)
+    print(f"\nTraining & evaluating on last 12 {args.frequency} periods...")
+    test_pred = train_and_predict(df_feat, frequency=args.frequency)
 
     analysis = generate_abc_analysis(test_pred)
     print_abc_report(analysis)
@@ -70,24 +51,28 @@ def cmd_evaluate(args):
 
 def cmd_train(args):
     print("=" * 80)
-    print("MODEL TRAINING")
+    print(f"MODEL TRAINING ({args.frequency.upper()})")
     print("=" * 80)
 
-    df_raw = load_and_prep_data()
+    freq = args.frequency
+    model_dir = MODELS_DIR / freq
+    pred_file = PREDICTIONS_DIR / freq / "3_month_forecasts.csv"
+
+    df_raw = load_and_prep_data(PROCESSED_DIR / "daily_item_sales.csv", frequency=freq)
 
     print("\nCreating features...")
-    df_feat = create_features(df_raw)
+    df_feat = create_features(df_raw, frequency=freq)
     print(f"Features created: {df_feat.shape[1]} columns")
 
-    print(f"\nSaving models to: {MODELS_DIR}")
-    item_models, global_model, dow_factors = train_models(df_feat, MODELS_DIR)
+    print(f"\nSaving models to: {model_dir}")
+    item_models, global_model, dow_factors = train_models(df_feat, model_dir, frequency=freq)
 
     if not args.no_forecast:
         print("\n" + "=" * 80)
         print("GENERATING 3-MONTH FORECAST")
         print("=" * 80)
 
-        future_features = generate_future_features(df_feat, future_weeks=12)
+        future_features = generate_future_features(df_feat, future_weeks=12, frequency=freq)
         print(f"Future feature rows: {len(future_features)}")
 
         future_predictions = predict(
@@ -95,14 +80,15 @@ def cmd_train(args):
             item_models=item_models,
             global_model=global_model,
             dow_factor_dict=dow_factors,
+            frequency=freq,
         )
         print(f"Predictions generated: {len(future_predictions)} rows")
 
-        PREDICTIONS_DIR.mkdir(parents=True, exist_ok=True)
+        pred_file.parent.mkdir(parents=True, exist_ok=True)
         future_predictions[["Date", "Item", "Predicted"]].rename(
             columns={"Predicted": "Quantity_Sold"}
-        ).to_csv(PREDICTIONS_DIR / "3_month_forecasts.csv", index=False)
-        print(f"Forecasts saved to: {PREDICTIONS_DIR / '3_month_forecasts.csv'}")
+        ).to_csv(pred_file, index=False)
+        print(f"Forecasts saved to: {pred_file}")
     else:
         print("\nSkipping forecast generation (--no-forecast)")
 
@@ -110,7 +96,7 @@ def cmd_train(args):
     print("MODEL EVALUATION")
     print("=" * 80)
 
-    test_pred = train_and_predict(df_feat)
+    test_pred = train_and_predict(df_feat, frequency=freq)
     analysis = generate_abc_analysis(test_pred)
     print_abc_report(analysis)
 
@@ -122,11 +108,17 @@ def main():
         prog="forecast.py",
         description="Cafe Supply Forecasting — evaluate or train XGBoost models",
     )
+    parser.add_argument(
+        "-f", "--frequency",
+        choices=["daily", "weekly"],
+        default="weekly",
+        help="Prediction frequency (default: weekly)",
+    )
     subparsers = parser.add_subparsers(dest="command")
 
-    eval_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "evaluate",
-        help="Evaluate model metrics on last 12 weeks (no model saving)",
+        help="Evaluate model metrics on last 12 periods (no model saving)",
     )
 
     train_parser = subparsers.add_parser(

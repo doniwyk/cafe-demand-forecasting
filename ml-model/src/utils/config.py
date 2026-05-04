@@ -74,3 +74,38 @@ FEATURE_COLUMNS = [
     "Diff_1",
     "Accel_2",
 ]
+
+FEATURE_COLUMNS_DAILY = [
+    "Item_Code",
+    "Month",
+    "Week",
+    "Year",
+    "DOY",
+    "DOW",
+    "Sin_Week",
+    "Cos_Week",
+    "Weeks_Since_Start",
+    "Is_Payday_Week",
+    "Is_Weekend_Before_Payday",
+    "Is_Holiday",
+    "Is_Ramadan",
+    "Is_Post_Rebranding",
+    "Weeks_Since_Rebrand",
+    "Post_Rebrand_Surge_Ratio",
+    "Recent_vs_Old_Trend",
+    "Lag_1",
+    "Lag_7",
+    "Lag_14",
+    "Roll_Mean_7",
+    "Roll_Mean_28",
+    "Roll_Std_7",
+    "Roll_Q95_7",
+    "EWMA_7",
+    "EWMA_28",
+    "Diff_1",
+    "Accel_2",
+]
+
+
+def get_feature_columns(frequency: str) -> list:
+    return FEATURE_COLUMNS_DAILY if frequency == "daily" else FEATURE_COLUMNS

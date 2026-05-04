@@ -1,3 +1,5 @@
+name: cafe-prod
+
 services:
   db:
     image: postgres:16-alpine
@@ -9,7 +11,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_prod:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d cafe_forecasting"]
       interval: 3s
@@ -27,7 +29,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
     volumes:
-      - modeldata:/app/ml-model/models
+      - modeldata_prod:/app/ml-model/models
     depends_on:
       db:
         condition: service_healthy
@@ -43,5 +45,5 @@ services:
       - backend
 
 volumes:
-  pgdata:
-  modeldata:
+  pgdata_prod:
+  modeldata_prod:

@@ -5,120 +5,31 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
-import warnings
+import time
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
 
-from prophet import Prophet
-
-from src.utils.config import MODELS_DIR
-
-logger = logging.getLogger("prophet")
-logger.setLevel(logging.WARNING)
-logger.propagate = False
-
+logging.getLogger("prophet").setLevel(logging.WARNING)
 logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
 
-MIN_TRAIN_WEEKS = 26
+from prophet import Prophet
 
 
-def train_and_predict_prophet(
-    df_weekly: pd.DataFrame,
-    n_test_weeks: int = 12,
-) -> pd.DataFrame:
-    split_date = df_weekly["Date"].max() - pd.Timedelta(weeks=n_test_weeks)
-    train = df_weekly[df_weekly["Date"] < split_date].copy()
-    test = df_weekly[df_weekly["Date"] >= split_date].copy()
+MIN_TRAIN_RECORDS = 40
 
-    print(f"Training: {train['Date'].min().date()} -> {train['Date'].max().date()}")
-    print(f"Testing : {test['Date'].min().date()} -> {test['Date'].max().date()}")
 
-    dow_pattern = (
-        train.groupby(["Item", train["Date"].dt.weekday])["Quantity_Sold"]
-        .mean()
-        .reset_index()
+def _fit_item_prophet(series: pd.Series) -> Prophet:
+    df = pd.DataFrame({"ds": series.index, "y": series.values})
+    model = Prophet(
+        yearly_seasonality=True,
+        weekly_seasonality=True,
+        daily_seasonality=False,
+        seasonality_mode="additive",
+        changepoint_prior_scale=0.05,
     )
-    item_avg = (
-        train.groupby("Item")["Quantity_Sold"]
-        .mean()
-        .reset_index()
-        .rename(columns={"Quantity_Sold": "item_avg"})
-    )
-    dow_pattern = dow_pattern.merge(item_avg, on="Item")
-    dow_pattern["dow_factor"] = dow_pattern["Quantity_Sold"] / dow_pattern["item_avg"]
-    dow_factor_dict = (
-        dow_pattern.pivot(index="Item", columns="Date", values="dow_factor")
-        .fillna(1.0)
-        .to_dict("index")
-    )
-
-    global_mean = train["Quantity_Sold"].mean()
-
-    print("Training per-item Prophet models...")
-    predictions = []
-    items = list(test["Item"].unique())
-    total_items = len(items)
-    for i, item in enumerate(items):
-        if (i + 1) % 10 == 0 or i == 0:
-            print(
-                f"  Progress: {i + 1}/{total_items} items ({((i + 1) / total_items * 100):.1f}%)"
-            )
-
-        train_item = train[train["Item"] == item].sort_values("Date")
-        test_item = test[test["Item"] == item].copy()
-
-        if len(train_item) >= MIN_TRAIN_WEEKS:
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    warnings.filterwarnings("ignore", category=FutureWarning)
-
-                m = Prophet(
-                    yearly_seasonality=True,
-                    weekly_seasonality=False,
-                    daily_seasonality=False,
-                    growth="linear",
-                    changepoint_prior_scale=0.05,
-                    seasonality_prior_scale=10.0,
-                    uncertainty_samples=0,
-                )
-                m.add_seasonality(
-                    name="weekly",
-                    period=7,
-                    fourier_order=3,
-                )
-
-                train_prophet = pd.DataFrame(
-                    {
-                        "ds": train_item["Date"].values,
-                        "y": train_item["Quantity_Sold"].values.astype(float),
-                    }
-                )
-                m.fit(train_prophet)
-
-                future_dates = test_item["Date"].values
-                future = pd.DataFrame({"ds": future_dates})
-                forecast = m.predict(future)
-                pred = forecast["yhat"].values
-            except Exception:
-                pred = np.full(len(test_item), global_mean)
-        else:
-            pred = np.full(len(test_item), global_mean)
-
-        test_item["Raw_Pred"] = np.maximum(0, pred)
-        test_item["DOW"] = test_item["Date"].dt.weekday
-
-        factors = dow_factor_dict.get(item, {j: 1.0 for j in range(7)})
-        test_item["dow_factor"] = test_item["DOW"].map(factors).fillna(1.0)
-        test_item["Predicted"] = (
-            test_item["Raw_Pred"] * test_item["dow_factor"]
-        ).round(0)
-        test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
-
-        predictions.append(test_item)
-
-    return pd.concat(predictions).sort_values(["Item", "Date"])
+    model.fit(df)
+    return model
 
 
 def _compute_dow_factors(df: pd.DataFrame) -> dict:
@@ -142,60 +53,90 @@ def _compute_dow_factors(df: pd.DataFrame) -> dict:
     )
 
 
+def _apply_dow_adjustment(df: pd.DataFrame, dow_factor_dict: dict) -> pd.DataFrame:
+    df = df.copy()
+    df["DOW"] = df["Date"].dt.weekday
+    for item in df["Item"].unique():
+        mask = df["Item"] == item
+        factors = dow_factor_dict.get(item, {i: 1.0 for i in range(7)})
+        df.loc[mask, "dow_factor"] = df.loc[mask, "DOW"].map(factors).fillna(1.0)
+    df["Predicted"] = (df["Raw_Pred"] * df["dow_factor"]).round(0)
+    df["Predicted"] = np.maximum(0, df["Predicted"])
+    return df
+
+
+def _get_global_avg(df: pd.DataFrame) -> float:
+    return df["Quantity_Sold"].mean()
+
+
+def train_and_predict_prophet(
+    df_weekly: pd.DataFrame,
+    n_test_periods: int = 12,
+) -> pd.DataFrame:
+    split_date = df_weekly["Date"].max() - pd.Timedelta(weeks=n_test_periods)
+    train = df_weekly[df_weekly["Date"] < split_date].copy()
+    test = df_weekly[df_weekly["Date"] >= split_date].copy()
+
+    dow_factor_dict = _compute_dow_factors(train)
+    global_avg = _get_global_avg(train)
+
+    print("[Prophet] Training per-item models...")
+    predictions = []
+    items = list(test["Item"].unique())
+    for idx, item in enumerate(items):
+        if (idx + 1) % 20 == 0 or idx == 0:
+            print(f"  Progress: {idx + 1}/{len(items)} items")
+        train_item = train[train["Item"] == item].set_index("Date").sort_index()
+        test_item = test[test["Item"] == item].copy()
+
+        if len(train_item) >= MIN_TRAIN_RECORDS:
+            try:
+                model = _fit_item_prophet(train_item["Quantity_Sold"])
+                future = pd.DataFrame({"ds": test_item["Date"].values})
+                forecast = model.predict(future)
+                pred = forecast["yhat"].values
+            except Exception:
+                pred = np.full(len(test_item), global_avg)
+        else:
+            pred = np.full(len(test_item), global_avg)
+
+        test_item["Raw_Pred"] = np.maximum(0, pred)
+        predictions.append(test_item)
+
+    result = pd.concat(predictions)
+    return _apply_dow_adjustment(result.sort_values(["Item", "Date"]), dow_factor_dict)
+
+
 def train_models_prophet(
     df_weekly: pd.DataFrame,
     output_dir: str | Path | None = None,
-) -> tuple[dict, None, dict]:
-    output_dir = Path(output_dir) if output_dir else MODELS_DIR
+) -> tuple[dict, float, dict]:
+    output_dir = Path(output_dir) if output_dir else Path("models")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print("Training per-item Prophet models...")
+    dow_factor_dict = _compute_dow_factors(df_weekly)
+    global_avg = _get_global_avg(df_weekly)
+
     item_models = {}
     items = list(df_weekly["Item"].unique())
-    total = len(items)
-    print(f"  Total items: {total}")
-    for i, item in enumerate(items):
-        print(f"  [{i + 1}/{total}] Training {item}...")
-
-        train_item = df_weekly[df_weekly["Item"] == item].sort_values("Date")
-        if len(train_item) < MIN_TRAIN_WEEKS:
+    print(f"[Prophet] Training per-item models... total items: {len(items)}")
+    for idx, item in enumerate(items):
+        if (idx + 1) % 20 == 0 or idx == 0:
+            print(f"  Progress: {idx + 1}/{len(items)} items")
+        train_item = df_weekly[df_weekly["Item"] == item].set_index("Date").sort_index()
+        if len(train_item) < MIN_TRAIN_RECORDS:
             continue
-
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                warnings.filterwarnings("ignore", category=FutureWarning)
-
-            m = Prophet(
-                yearly_seasonality=True,
-                weekly_seasonality=False,
-                daily_seasonality=False,
-                growth="linear",
-                changepoint_prior_scale=0.05,
-                seasonality_prior_scale=10.0,
-                uncertainty_samples=0,
-            )
-            m.add_seasonality(name="weekly", period=7, fourier_order=3)
-
-            train_prophet = pd.DataFrame(
-                {
-                    "ds": train_item["Date"].values,
-                    "y": train_item["Quantity_Sold"].values.astype(float),
-                }
-            )
-            m.fit(train_prophet)
-            item_models[item] = m
+            model = _fit_item_prophet(train_item["Quantity_Sold"])
+            item_models[item] = model
         except Exception:
-            continue
+            print(f"  [WARN] Prophet failed for {item}, skipping")
 
     with open(output_dir / "item_models_prophet.pkl", "wb") as f:
         pickle.dump(item_models, f)
-
-    dow_factor_dict = _compute_dow_factors(df_weekly)
     with open(output_dir / "dow_factors_prophet.json", "w") as f:
         json.dump(dow_factor_dict, f, indent=2)
 
-    global_mean = float(df_weekly["Quantity_Sold"].mean())
     metadata = {
         "model_type": "prophet",
         "trained_at": datetime.now().isoformat(),
@@ -203,81 +144,59 @@ def train_models_prophet(
         "items_with_models": sorted(item_models.keys()),
         "n_records": len(df_weekly),
         "date_range": [str(df_weekly["Date"].min()), str(df_weekly["Date"].max())],
-        "global_mean": global_mean,
+        "global_avg": global_avg,
     }
     with open(output_dir / "model_metadata_prophet.json", "w") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"Prophet Models saved to: {output_dir}")
-    print(f"  - Per-item models: {len(item_models)} items in item_models_prophet.pkl")
-    print(f"  Completed all {total} items")
-    return item_models, None, dow_factor_dict
+    print(f"[Prophet] Models saved to: {output_dir}")
+    return item_models, global_avg, dow_factor_dict
 
 
 def load_models_prophet(
     model_dir: str | Path | None = None,
-) -> tuple[dict, None, dict]:
-    model_dir = Path(model_dir) if model_dir else MODELS_DIR
-
+) -> tuple[dict, float, dict]:
+    model_dir = Path(model_dir) if model_dir else Path("models")
     with open(model_dir / "item_models_prophet.pkl", "rb") as f:
         item_models = pickle.load(f)
-
     with open(model_dir / "dow_factors_prophet.json", "r") as f:
         dow_factor_dict = json.load(f)
-
-    return item_models, None, dow_factor_dict
+    meta_path = model_dir / "model_metadata_prophet.json"
+    global_avg = 0.0
+    if meta_path.exists():
+        with open(meta_path) as f:
+            meta = json.load(f)
+            global_avg = meta.get("global_avg", 0.0)
+    return item_models, global_avg, dow_factor_dict
 
 
 def predict_prophet(
-    df_weekly: pd.DataFrame,
+    df_features: pd.DataFrame,
     item_models: dict | None = None,
-    global_model: None = None,
+    global_model: float | None = None,
     dow_factor_dict: dict | None = None,
     model_dir: str | Path | None = None,
 ) -> pd.DataFrame:
-    if item_models is None or dow_factor_dict is None:
-        item_models, _, dow_factor_dict = load_models_prophet(model_dir)
-
-    meta_path = (
-        Path(model_dir) if model_dir else MODELS_DIR
-    ) / "model_metadata_prophet.json"
-    global_mean = 0
-    if meta_path.exists():
-        with open(meta_path) as f:
-            global_mean = json.load(f).get("global_mean", 0)
+    if item_models is None or global_model is None or dow_factor_dict is None:
+        item_models, global_model, dow_factor_dict = load_models_prophet(model_dir)
 
     predictions = []
-    for item in df_weekly["Item"].unique():
-        test_item = df_weekly[df_weekly["Item"] == item].copy()
+    for item in df_features["Item"].unique():
+        test_item = df_features[df_features["Item"] == item].copy()
 
         if item in item_models:
             try:
+                model = item_models[item]
                 future = pd.DataFrame({"ds": test_item["Date"].values})
-                forecast = item_models[item].predict(future)
+                forecast = model.predict(future)
                 pred = forecast["yhat"].values
             except Exception:
-                pred = np.full(len(test_item), global_mean)
+                pred = np.full(len(test_item), global_model)
         else:
-            pred = np.full(len(test_item), global_mean)
+            pred = np.full(len(test_item), global_model)
 
         test_item["Raw_Pred"] = np.maximum(0, pred)
-        test_item["DOW"] = test_item["Date"].dt.weekday
-
-        factors = dow_factor_dict.get(item, {str(i): 1.0 for i in range(7)})
-        factors = {
-            int(k)
-            if isinstance(k, str) and k.isdigit()
-            else int(k)
-            if isinstance(k, (int, float))
-            else k: v
-            for k, v in factors.items()
-        }
-        test_item["dow_factor"] = test_item["DOW"].map(factors).fillna(1.0)
-        test_item["Predicted"] = (
-            test_item["Raw_Pred"] * test_item["dow_factor"]
-        ).round(0)
-        test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
-
         predictions.append(test_item)
 
-    return pd.concat(predictions).sort_values(["Item", "Date"])
+    result = pd.concat(predictions)
+    return _apply_dow_adjustment(result.sort_values(["Item", "Date"]), dow_factor_dict)

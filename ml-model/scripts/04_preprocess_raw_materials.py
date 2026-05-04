@@ -1,10 +1,11 @@
 """
-Sales Data Transformation for Forecasting
+Raw Material Requirements Processor
 
-Transforms raw sales data into daily aggregated format suitable for sales forecasting.
+Computes daily raw material requirements from cleaned sales data using the menu BOM
+and condiment BOM.
 
 Usage:
-    python scripts/03_preprocess_raw_materials.py
+    python scripts/04_preprocess_raw_materials.py
 """
 
 import sys

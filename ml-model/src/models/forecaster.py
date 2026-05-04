@@ -11,13 +11,49 @@ from datetime import datetime
 
 from xgboost import XGBRegressor
 
-from src.utils.config import FEATURE_COLUMNS, MODELS_DIR
+from src.utils.config import FEATURE_COLUMNS, MODELS_DIR, get_feature_columns
+from src.utils.gpu import get_xgboost_params
 from src.models.features import create_features
 
+FREQ_MAP = {"daily": "D", "weekly": "W-MON"}
 
-MIN_TRAIN_RECORDS = 40
+MIN_TRAIN_RECORDS_DAILY = 180
+MIN_TRAIN_RECORDS_WEEKLY = 40
 
-XGB_GLOBAL_PARAMS = {
+
+def load_and_prep_data(
+    filepath: str | Path,
+    frequency: str = "weekly",
+) -> pd.DataFrame:
+    print(f"Loading data from: {filepath}")
+    df = pd.read_csv(filepath)
+    df.columns = df.columns.str.strip()
+
+    date_col = "Date_Only" if "Date_Only" in df.columns else "Date"
+    qty_col = "Quantity" if "Quantity" in df.columns else "Quantity_Sold"
+    df["Date"] = pd.to_datetime(df[date_col])
+    df["Quantity_Sold"] = df[qty_col]
+
+    df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
+
+    freq_label = FREQ_MAP.get(frequency, "W-MON")
+    df_freq = (
+        df.set_index("Date")
+        .groupby("Item")
+        .resample(freq_label)["Quantity_Sold"]
+        .sum()
+        .reset_index()
+    )
+
+    print(f"Aggregated to {frequency}: {len(df_freq)} observations")
+    print(f"Date range: {df_freq['Date'].min().date()} to {df_freq['Date'].max().date()}")
+    return df_freq
+
+
+def get_min_train_records(frequency: str) -> int:
+    return MIN_TRAIN_RECORDS_DAILY if frequency == "daily" else MIN_TRAIN_RECORDS_WEEKLY
+
+_BASE_GLOBAL_PARAMS = {
     "objective": "reg:tweedie",
     "tweedie_variance_power": 1.5,
     "n_estimators": 700,
@@ -25,12 +61,10 @@ XGB_GLOBAL_PARAMS = {
     "max_depth": 7,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
-    "tree_method": "hist",
-    "n_jobs": -1,
     "random_state": 42,
 }
 
-XGB_ITEM_PARAMS = {
+_BASE_ITEM_PARAMS = {
     "objective": "reg:tweedie",
     "tweedie_variance_power": 1.5,
     "n_estimators": 500,
@@ -38,17 +72,23 @@ XGB_ITEM_PARAMS = {
     "max_depth": 6,
     "subsample": 0.85,
     "colsample_bytree": 0.85,
-    "tree_method": "hist",
-    "n_jobs": -1,
     "random_state": 42,
 }
 
 
+def _xgboost_params(base: dict) -> dict:
+    return {**base, **get_xgboost_params()}
+
+
 def train_and_predict(
     df_features: pd.DataFrame,
-    n_test_weeks: int = 12,
+    n_test_periods: int = 12,
+    frequency: str = "weekly",
 ) -> pd.DataFrame:
-    split_date = df_features["Date"].max() - pd.Timedelta(weeks=n_test_weeks)
+    if frequency == "daily":
+        split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
+    else:
+        split_date = df_features["Date"].max() - pd.Timedelta(weeks=n_test_periods)
     train = df_features[df_features["Date"] < split_date].copy()
     test = df_features[df_features["Date"] >= split_date].copy()
 
@@ -74,11 +114,11 @@ def train_and_predict(
         .to_dict("index")
     )
 
-    features = FEATURE_COLUMNS
+    features = get_feature_columns(frequency)
 
     print("Training global fallback model...")
     t0 = time.time()
-    global_model = XGBRegressor(**XGB_GLOBAL_PARAMS)
+    global_model = XGBRegressor(**_xgboost_params(_BASE_GLOBAL_PARAMS))
     global_model.fit(train[features], train["Quantity_Sold"])
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
@@ -94,8 +134,8 @@ def train_and_predict(
         train_item = train[train["Item"] == item]
         test_item = test[test["Item"] == item].copy()
 
-        if len(train_item) >= MIN_TRAIN_RECORDS:
-            model = XGBRegressor(**XGB_ITEM_PARAMS)
+        if len(train_item) >= get_min_train_records(frequency):
+            model = XGBRegressor(**_xgboost_params(_BASE_ITEM_PARAMS))
             model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
             pred = model.predict(test_item[features])
         else:
@@ -120,15 +160,16 @@ def train_and_predict(
 def train_models(
     df_features: pd.DataFrame,
     output_dir: str | Path | None = None,
+    frequency: str = "weekly",
 ) -> tuple[dict, XGBRegressor, dict]:
     output_dir = Path(output_dir) if output_dir else MODELS_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    features = FEATURE_COLUMNS
+    features = get_feature_columns(frequency)
 
     print("Training global fallback model...")
     t0 = time.time()
-    global_model = XGBRegressor(**XGB_GLOBAL_PARAMS)
+    global_model = XGBRegressor(**_xgboost_params(_BASE_GLOBAL_PARAMS))
     global_model.fit(df_features[features], df_features["Quantity_Sold"])
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
 
@@ -142,10 +183,10 @@ def train_models(
                 f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
             )
         train_item = df_features[df_features["Item"] == item]
-        if len(train_item) < MIN_TRAIN_RECORDS:
+        if len(train_item) < get_min_train_records(frequency):
             continue
 
-        model = XGBRegressor(**XGB_ITEM_PARAMS)
+        model = XGBRegressor(**_xgboost_params(_BASE_ITEM_PARAMS))
         model.fit(train_item[features], train_item["Quantity_Sold"], verbose=False)
         item_models[item] = model
 
@@ -222,11 +263,12 @@ def predict(
     global_model: XGBRegressor | None = None,
     dow_factor_dict: dict | None = None,
     model_dir: str | Path | None = None,
+    frequency: str = "weekly",
 ) -> pd.DataFrame:
     if item_models is None or global_model is None or dow_factor_dict is None:
         item_models, global_model, dow_factor_dict = load_models(model_dir)
 
-    features = FEATURE_COLUMNS
+    features = get_feature_columns(frequency)
     predictions = []
 
     for item in df_features["Item"].unique():
@@ -264,15 +306,23 @@ def predict(
 def generate_future_features(
     df_daily: pd.DataFrame,
     future_weeks: int = 12,
+    frequency: str = "weekly",
 ) -> pd.DataFrame:
     max_date = df_daily["Date"].max()
     items = df_daily["Item"].unique()
 
-    future_dates = pd.date_range(
-        start=max_date + pd.Timedelta(days=1),
-        periods=future_weeks * 7,
-        freq="D",
-    )
+    if frequency == "daily":
+        future_dates = pd.date_range(
+            start=max_date + pd.Timedelta(days=1),
+            periods=future_weeks * 7,
+            freq="D",
+        )
+    else:
+        future_dates = pd.date_range(
+            start=max_date + pd.Timedelta(weeks=1),
+            periods=future_weeks,
+            freq="W-MON",
+        )
 
     future_df = pd.DataFrame(
         {
@@ -283,7 +333,7 @@ def generate_future_features(
     future_df["Quantity_Sold"] = 0
 
     all_df = pd.concat([df_daily, future_df], ignore_index=True)
-    all_df = create_features(all_df)
+    all_df = create_features(all_df, frequency=frequency)
     future_features = all_df[all_df["Date"] > max_date]
 
     return future_features

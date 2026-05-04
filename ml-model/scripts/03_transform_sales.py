@@ -1,10 +1,10 @@
 """
 Sales Data Transformation for Forecasting
 
-Transforms raw sales data into daily aggregated format suitable for sales forecasting.
+Transforms cleaned sales data into daily aggregated format suitable for forecasting.
 
 Usage:
-    python scripts/001_data_transformation.py
+    python scripts/03_transform_sales.py
 """
 
 import sys

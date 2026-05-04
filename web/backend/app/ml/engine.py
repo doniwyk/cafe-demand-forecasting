@@ -84,33 +84,13 @@ def _ensure_models_loaded(model_type: str = "xgboost"):
 
 def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors):
     if model_type == "xgboost":
-        return predict(
-            df,
-            item_models=item_models,
-            global_model=global_model,
-            dow_factor_dict=dow_factors,
-        )
+        return predict(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
     elif model_type == "random_forest":
-        return predict_rf(
-            df,
-            item_models=item_models,
-            global_model=global_model,
-            dow_factor_dict=dow_factors,
-        )
+        return predict_rf(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
     elif model_type == "sarimax":
-        return predict_sarimax(
-            df,
-            item_models=item_models,
-            global_model=global_model,
-            dow_factor_dict=dow_factors,
-        )
+        return predict_sarimax(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
     elif model_type == "prophet":
-        return predict_prophet(
-            df,
-            item_models=item_models,
-            global_model=global_model,
-            dow_factor_dict=dow_factors,
-        )
+        return predict_prophet(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
 
 
 def run_predict(df: pd.DataFrame, model_type: str = "xgboost") -> pd.DataFrame:
@@ -137,11 +117,8 @@ def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
             train_models_rf(df_feat, ML_MODELS_DIR)
             test_pred = train_and_predict_rf(df_feat)
     elif model_type == "sarimax":
-        print("[SARIMAX] Training and saving per-item models...")
         train_models_sarimax(df_weekly, ML_MODELS_DIR)
-        print("[SARIMAX] Running backtest evaluation...")
         test_pred = train_and_predict_sarimax(df_weekly)
-        print("[SARIMAX] Backtest evaluation complete")
     elif model_type == "prophet":
         train_models_prophet(df_weekly, ML_MODELS_DIR)
         test_pred = train_and_predict_prophet(df_weekly)
@@ -188,7 +165,7 @@ def _to_weekly(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_model_metadata(model_type: str = "xgboost") -> dict | None:
-    meta_path = ML_MODELS_DIR / _METADATA_FILE.get(model_type, "model_metadata.json")
+    meta_path = ML_MODELS_DIR / METADATA_FILE.get(model_type, "model_metadata.json")
     if not meta_path.exists():
         return None
     with open(meta_path) as f:
@@ -203,10 +180,11 @@ def generate_forecast(
     if model_type in ("xgboost", "random_forest"):
         df_feat = create_features(df_weekly)
         future_features = generate_future_features(df_feat, future_weeks=weeks)
-    else:
-        from src.models.forecaster_sarimax import generate_future_weekly as _gen_fw
-
-        future_features = _gen_fw(df_weekly, future_weeks=weeks)
+    elif model_type == "sarimax":
+        future_features = generate_future_weekly_sarimax(df_weekly, future_weeks=weeks)
+    elif model_type == "prophet":
+        df_feat = create_features(df_weekly)
+        future_features = generate_future_features(df_feat, future_weeks=weeks)
 
     print(f"[{model_type}] Forecast inference started for {weeks} weeks")
     return run_predict(future_features, model_type)

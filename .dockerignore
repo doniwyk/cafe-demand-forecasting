@@ -14,8 +14,10 @@ frontend/dist
 venv
 .venv
 .venv/
+**/.venv/
+**/__pycache__/
 ml-model/data/raw/
 ml-model/data/processed/
-ml-model/models/*.pkl
+ml-model/models/example.pkl
 .opencode
 .ruff_cache

@@ -121,46 +121,47 @@ def clean_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def merge_sales_files(
-    file1_path: str | Path,
-    file2_path: str | Path,
+    file_paths: list[str | Path],
     output_path: str | Path,
 ) -> Optional[pd.DataFrame]:
-    print(f"Reading file 1: {file1_path}")
-    print(f"Reading file 2: {file2_path}")
-
-    try:
-        df1 = pd.read_csv(file1_path, sep=";")
-        print(f"File 1 loaded successfully. Shape: {df1.shape}")
-
-        df2 = pd.read_csv(file2_path, sep=",")
-        print(f"File 2 loaded successfully. Shape: {df2.shape}")
-    except Exception as e:
-        print(f"Error reading files: {e}")
+    if len(file_paths) < 2:
+        print("Error: At least 2 file paths are required")
         return None
 
-    print("Translating Indonesian file to English...")
-    df1_translated = translate_indonesian_to_english(df1)
+    dfs = []
+    for i, fp in enumerate(file_paths):
+        print(f"Reading file {i + 1}: {fp}")
+        try:
+            sep = ";" if i == 0 else ","
+            df = pd.read_csv(fp, sep=sep)
+            print(f"File {i + 1} loaded successfully. Shape: {df.shape}")
+            dfs.append(df)
+        except Exception as e:
+            print(f"Error reading file {i + 1}: {e}")
+            return None
+
+    print(f"Translating file 1 (Indonesian) to English...")
+    dfs[0] = translate_indonesian_to_english(dfs[0])
 
     print("Cleaning numeric columns...")
-    df1_translated = clean_numeric_columns(df1_translated)
-    df2 = clean_numeric_columns(df2)
+    dfs[0] = clean_numeric_columns(dfs[0])
+    for i in range(1, len(dfs)):
+        dfs[i] = clean_numeric_columns(dfs[i])
 
     print("Parsing dates...")
-    df1_translated["Date"] = df1_translated["Date"].apply(parse_date)
-    df2["Date"] = df2["Date"].apply(parse_date)
+    dfs[0]["Date"] = dfs[0]["Date"].apply(parse_date)
+    for i in range(1, len(dfs)):
+        dfs[i]["Date"] = dfs[i]["Date"].apply(parse_date)
 
-    all_columns = set(df1_translated.columns) | set(df2.columns)
-    for col in all_columns:
-        if col not in df1_translated.columns:
-            df1_translated[col] = np.nan
-        if col not in df2.columns:
-            df2[col] = np.nan
-
-    df1_translated = df1_translated[COLUMN_ORDER]
-    df2 = df2[COLUMN_ORDER]
+    all_columns = set().union(*[set(df.columns) for df in dfs])
+    for i in range(len(dfs)):
+        for col in all_columns:
+            if col not in dfs[i].columns:
+                dfs[i][col] = np.nan
+        dfs[i] = dfs[i][COLUMN_ORDER]
 
     print("Combining dataframes...")
-    combined_df = pd.concat([df1_translated, df2], ignore_index=True)
+    combined_df = pd.concat(dfs, ignore_index=True)
 
     print("Sorting by date...")
     combined_df = combined_df.sort_values("Date", na_position="last")

@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY web/backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN grep -v "^xgboost" requirements.txt > /tmp/requirements-base.txt && \
+    pip install --no-cache-dir -r /tmp/requirements-base.txt && \
+    pip install --no-cache-dir --no-deps xgboost
+
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+WORKDIR /app
 
 COPY web/backend/ web/backend/
 COPY ml-model/ ml-model/

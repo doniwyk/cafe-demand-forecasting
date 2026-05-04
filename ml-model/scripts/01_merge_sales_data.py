@@ -18,15 +18,18 @@ from src.utils.config import SALES_DIR, PROCESSED_DIR
 
 
 def main():
-    file1_path = SALES_DIR / "receipts-by-item-2022-01-01-2025-06-30.csv"
-    file2_path = SALES_DIR / "receipts-by-item-2025-05-01-2025-09-25.csv"
+    file_paths = [
+        SALES_DIR / "receipts-by-item-2022-01-01-2025-06-30.csv",
+        SALES_DIR / "receipts-by-item-2025-05-01-2025-09-25.csv",
+        SALES_DIR / "receipts-by-item-2025-09-26-2026-03-31.csv",
+    ]
     output_path = PROCESSED_DIR / "sales_data.csv"
 
     print("=" * 80)
     print("SALES DATA MERGER")
     print("=" * 80)
 
-    merged_data = merge_sales_files(file1_path, file2_path, output_path)
+    merged_data = merge_sales_files(file_paths, output_path)
 
     if merged_data is not None:
         print("\nFirst few rows of merged data:")
