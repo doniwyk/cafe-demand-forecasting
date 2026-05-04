@@ -10,15 +10,13 @@ from src.utils.config import PROCESSED_DIR
 class RawMaterialProcessor:
     def __init__(
         self,
-        sales_path: str | Path,
-        menu_bom_path: str | Path,
-        condiment_bom_path: str | Path,
+        sales_path: str | Path | None = None,
+        menu_bom_path: str | Path = "",
+        condiment_bom_path: str | Path = "",
     ):
-        self.sales_path = Path(sales_path)
         self.menu_bom_path = Path(menu_bom_path)
         self.condiment_bom_path = Path(condiment_bom_path)
 
-        self.sales_df = pd.read_csv(self.sales_path)
         self.menu_bom_df = pd.read_csv(self.menu_bom_path)
         self.condiment_bom_df = pd.read_csv(self.condiment_bom_path)
 
@@ -29,6 +27,11 @@ class RawMaterialProcessor:
         self.item_name_map = self._build_item_name_map()
         self.condiment_dict = self._build_condiment_dict()
         self.expansion_cache: Dict[Tuple[str, float], Dict[str, float]] = {}
+
+        if sales_path:
+            self.sales_df = pd.read_csv(sales_path)
+        else:
+            self.sales_df = pd.DataFrame()
 
     def _build_item_name_map(self) -> Dict[str, str]:
         name_map = {}

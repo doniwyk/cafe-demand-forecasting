@@ -27,9 +27,6 @@ dev = [
     "scipy>=1.11",
 ]
 
-[project.scripts]
-forecast = "scripts.forecast:main"
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*", "scripts*"]
