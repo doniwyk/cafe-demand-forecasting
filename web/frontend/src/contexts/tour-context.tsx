@@ -47,7 +47,6 @@ const TOUR_STEPS: Record<string, StepDef[]> = {
   '/analytics': [
     { titleKey: 'tour.modelPerformance.title', descKey: 'tour.modelPerformance.desc', element: '[data-tour="model-performance"]', side: 'bottom', align: 'start' },
     { titleKey: 'tour.abcClassification.title', descKey: 'tour.abcClassification.desc', element: '[data-tour="abc-classification"]', side: 'bottom', align: 'start' },
-    { titleKey: 'tour.associationRules.title', descKey: 'tour.associationRules.desc', element: '[data-tour="association-rules"]', side: 'top', align: 'start' },
   ],
   '/forecasts': [
     { titleKey: 'tour.itemSelector.title', descKey: 'tour.itemSelector.desc', element: '[data-tour="item-selector"]', side: 'bottom', align: 'start' },

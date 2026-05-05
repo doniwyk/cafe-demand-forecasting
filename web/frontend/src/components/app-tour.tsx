@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { useRouterState } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
@@ -27,17 +26,18 @@ export function AppTour() {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          onClick={() => startTour(pathname)}
-          disabled={isTourActive}
-        >
-          <CircleHelpIcon className="size-4" />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center justify-center size-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4"
+            onClick={() => startTour(pathname)}
+            disabled={isTourActive}
+          >
+            <CircleHelpIcon className="size-4" />
+          </button>
+        }
+      />
       <TooltipContent>
         <p>{t('tour.startTour')}</p>
       </TooltipContent>

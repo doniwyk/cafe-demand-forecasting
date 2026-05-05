@@ -86,8 +86,8 @@ function DashboardPage() {
           />
           <KpiCard
             title={t("dashboard.modelAccuracy")}
-            value={forecastSummary.data ? `${forecastSummary.data.global_metrics.volume_accuracy.toFixed(1)}%` : '-'}
-            description={t("dashboard.modelAccuracyDesc")}
+            value={forecastSummary.data ? `${forecastSummary.data.global_metrics.median_period_accuracy.toFixed(1)}%` : '-'}
+            description={t("dashboard.medianPeriodAccuracyDesc")}
             icon={<TargetIcon className="size-4" />}
           />
           <KpiCard
@@ -132,9 +132,9 @@ function DashboardPage() {
             <div className="flex flex-col gap-4 pt-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">{t("dashboard.volumeAccuracy")}</p>
+                  <p className="text-xs text-muted-foreground">{t("dashboard.medianPeriodAccuracy")}</p>
                   <p className="text-xl font-bold">
-                    {forecastSummary.data.global_metrics.volume_accuracy.toFixed(1)}%
+                    {forecastSummary.data.global_metrics.median_period_accuracy.toFixed(1)}%
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
@@ -163,7 +163,7 @@ function DashboardPage() {
                       <span className="text-sm font-medium">{cls}</span>
                       <div className="flex gap-4 text-sm">
                         <span className="text-muted-foreground">{m.n_items} {t("dashboard.items")}</span>
-                        <span className="font-medium">{m.volume_accuracy.toFixed(1)}% {t("dashboard.accuracy")}</span>
+                        <span className="font-medium">{m.median_period_accuracy.toFixed(1)}% {t("dashboard.accuracy")}</span>
                       </div>
                     </div>
                   ))}

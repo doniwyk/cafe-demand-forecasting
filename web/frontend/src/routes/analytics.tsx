@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useABCAnalysis, useModelMetrics, useAssociationRules } from "@/hooks/use-analytics";
+import { useABCAnalysis, useModelMetrics } from "@/hooks/use-analytics";
 import { useForecastSummary } from "@/hooks/use-forecasts";
 import { useModelType } from "@/contexts/model-context";
 import {
@@ -42,7 +42,7 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
 
   if (!metrics) {
     return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <Skeleton className="h-20" />
         <Skeleton className="h-20" />
         <Skeleton className="h-20" />
@@ -64,9 +64,14 @@ function MetricsGrid({ metrics }: { metrics: Record<string, number> | undefined 
     },
     { label: t("analytics.mae"), value: metrics["mae"]?.toFixed(1) ?? "-", description: t("analytics.maeDesc") },
     {
-      label: t("analytics.volumeAccuracy"),
-      value: `${(metrics["volume_accuracy"] ?? 0).toFixed(1)}%`,
-      description: t("analytics.volumeAccuracyDesc"),
+      label: t("analytics.medianPeriodAccuracy"),
+      value: `${(metrics["median_period_accuracy"] ?? 0).toFixed(1)}%`,
+      description: t("analytics.medianPeriodAccuracyDesc"),
+    },
+    {
+      label: t("analytics.periodsWithin20pct"),
+      value: `${(metrics["periods_within_20pct"] ?? 0).toFixed(1)}%`,
+      description: t("analytics.periodsWithin20pctDesc"),
     },
   ];
 
@@ -87,7 +92,6 @@ function AnalyticsPage() {
   const { modelType } = useModelType();
   const abc = useABCAnalysis(modelType);
   const metrics = useModelMetrics(modelType);
-  const rules = useAssociationRules(modelType, { min_confidence: 0.3, min_lift: 1.0 });
   const forecastSummary = useForecastSummary(modelType);
   const { t } = useTranslation();
 
@@ -96,7 +100,7 @@ function AnalyticsPage() {
     return Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => ({
       class: cls,
       items: m.n_items,
-      accuracy: +m.volume_accuracy.toFixed(1),
+      accuracy: +m.median_period_accuracy.toFixed(1),
     }));
   }, [forecastSummary.data]);
 
@@ -211,55 +215,6 @@ function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card data-tour="association-rules">
-        <CardHeader>
-          <CardTitle>{t("analytics.associationRules")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {rules.data && rules.data.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("analytics.ifCustomerBuys")}</TableHead>
-                  <TableHead>{t("analytics.theyAlsoBuy")}</TableHead>
-                  <TableHead className="text-right">{t("analytics.support")}</TableHead>
-                  <TableHead className="text-right">{t("analytics.confidence")}</TableHead>
-                  <TableHead className="text-right">{t("analytics.lift")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules.data.slice(0, 30).map((rule, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Badge variant="outline">{rule.antecedents}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{rule.consequents}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{(rule.support * 100).toFixed(1)}%</TableCell>
-                    <TableCell className="text-right">
-                      {(rule.confidence * 100).toFixed(1)}%
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={rule.lift >= 1.5 ? "default" : "secondary"}>
-                        {rule.lift.toFixed(2)}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex h-50 items-center justify-center text-muted-foreground">
-              {rules.isLoading ? (
-                <Skeleton className="h-full w-full" />
-              ) : (
-                t("analytics.noStrongRules")
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -10,7 +10,7 @@ Usage:
     python scripts/04_forecast.py -f weekly evaluate        # Weekly evaluation only
     python scripts/04_forecast.py -f daily evaluate         # Daily evaluation only
     python scripts/04_forecast.py evaluate --all            # Evaluate both daily + weekly
-    python scripts/04_forecast.py train --no-forecast       # Train + save models only
+    python scripts/04_forecast.py train --no-forecast       # Train + save both daily & weekly models
     python scripts/04_forecast.py --help
 """
 
@@ -156,7 +156,7 @@ def main():
         else:
             cmd_evaluate(args)
     elif args.command == "train":
-        if args.run_all:
+        if args.run_all or args.no_forecast:
             for freq in ["daily", "weekly"]:
                 args.frequency = freq
                 cmd_train(args)

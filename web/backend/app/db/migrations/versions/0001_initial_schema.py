@@ -119,6 +119,9 @@ def upgrade() -> None:
         sa.Column("wmape", sa.Float(), nullable=True),
         sa.Column("mae", sa.Float(), nullable=True),
         sa.Column("volume_accuracy", sa.Float(), nullable=True),
+        sa.Column("median_period_accuracy", sa.Float(), nullable=True),
+        sa.Column("periods_within_20pct", sa.Float(), nullable=True),
+        sa.Column("periods_within_50pct", sa.Float(), nullable=True),
         sa.Column("features", sa.Text(), nullable=True),
         sa.Column("items_with_models", sa.Text(), nullable=True),
         sa.Column("params", sa.Text(), nullable=True),
@@ -153,6 +156,7 @@ def upgrade() -> None:
         sa.Column("n_items", sa.Integer(), nullable=False),
         sa.Column("wmape", sa.Float(), nullable=False),
         sa.Column("volume_accuracy", sa.Float(), nullable=False),
+        sa.Column("median_period_accuracy", sa.Float(), nullable=True),
         sa.ForeignKeyConstraint(["model_run_id"], ["model_runs.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("model_run_id", "abc_class", name="uq_model_run_class"),
@@ -246,20 +250,129 @@ def upgrade() -> None:
         ["date", "raw_material"],
     )
 
+    op.create_table(
+        "products",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("name", sa.String(200), nullable=False),
+        sa.Column("is_active", sa.Boolean(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_products_name", "products", ["name"])
+
+    op.create_table(
+        "product_variants",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("name", sa.String(200), nullable=False),
+        sa.Column("product_id", sa.Integer(), nullable=False),
+        sa.ForeignKeyConstraint(["product_id"], ["products.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_product_variants_product_id", "product_variants", ["product_id"])
+
+    op.create_table(
+        "materials",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("name", sa.String(200), nullable=False),
+        sa.Column("unit_id", sa.Integer(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_materials_name", "materials", ["name"])
+
+    op.create_table(
+        "condiments",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("name", sa.String(200), nullable=False),
+        sa.Column("batch_quantity", sa.Float(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_condiments_name", "condiments", ["name"])
+
+    op.create_table(
+        "product_recipe_ingredients",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("product_id", sa.Integer(), nullable=False),
+        sa.Column("variant_id", sa.Integer(), nullable=True),
+        sa.Column("material_id", sa.Integer(), nullable=True),
+        sa.Column("condiment_id", sa.Integer(), nullable=True),
+        sa.Column("quantity", sa.Float(), nullable=False),
+        sa.ForeignKeyConstraint(["condiment_id"], ["condiments.id"]),
+        sa.ForeignKeyConstraint(["material_id"], ["materials.id"]),
+        sa.ForeignKeyConstraint(["product_id"], ["products.id"]),
+        sa.ForeignKeyConstraint(["variant_id"], ["product_variants.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_product_recipe_product_id", "product_recipe_ingredients", ["product_id"])
+    op.create_index("ix_product_recipe_variant_id", "product_recipe_ingredients", ["variant_id"])
+
+    op.create_table(
+        "condiment_ingredients",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("condiment_id", sa.Integer(), nullable=False),
+        sa.Column("material_id", sa.Integer(), nullable=True),
+        sa.Column("quantity", sa.Float(), nullable=False),
+        sa.ForeignKeyConstraint(["condiment_id"], ["condiments.id"]),
+        sa.ForeignKeyConstraint(["material_id"], ["materials.id"]),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_condiment_ingredients_condiment_id", "condiment_ingredients", ["condiment_id"])
+
+    op.create_table(
+        "users",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("email", sa.String(255), nullable=False),
+        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("hashed_password", sa.String(255), nullable=False),
+        sa.Column("avatar", sa.String(500), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("email"),
+    )
+
 
 def downgrade() -> None:
+    op.drop_table("users")
+    op.drop_index("ix_condiment_ingredients_condiment_id", table_name="condiment_ingredients")
+    op.drop_table("condiment_ingredients")
+    op.drop_index("ix_product_recipe_variant_id", table_name="product_recipe_ingredients")
+    op.drop_index("ix_product_recipe_product_id", table_name="product_recipe_ingredients")
+    op.drop_table("product_recipe_ingredients")
+    op.drop_index("ix_condiments_name", table_name="condiments")
+    op.drop_table("condiments")
+    op.drop_index("ix_materials_name", table_name="materials")
+    op.drop_table("materials")
+    op.drop_index("ix_product_variants_product_id", table_name="product_variants")
+    op.drop_table("product_variants")
+    op.drop_index("ix_products_name", table_name="products")
+    op.drop_table("products")
+    op.drop_index("ix_raw_material_date_material", table_name="raw_material_requirements")
     op.drop_table("raw_material_requirements")
     op.drop_table("item_abc")
+    op.drop_index("ix_forecasts_item", table_name="forecasts")
+    op.drop_index("ix_forecasts_date", table_name="forecasts")
     op.drop_table("forecasts")
+    op.drop_index("ix_daily_item_sales_date", table_name="daily_item_sales")
     op.drop_table("daily_item_sales")
+    op.drop_index("ix_assoc_rules_lift", table_name="association_rules")
+    op.drop_index("ix_assoc_rules_confidence", table_name="association_rules")
     op.drop_table("association_rules")
     op.drop_table("model_run_top_items")
     op.drop_table("model_run_class_metrics")
+    op.drop_index("ix_daily_category_sales_date", table_name="daily_category_sales")
     op.drop_table("daily_category_sales")
+    op.drop_index("ix_model_runs_type_active", table_name="model_runs")
     op.drop_table("model_runs")
+    op.drop_index("ix_sales_cleaned_date", table_name="sales_cleaned")
+    op.drop_index("ix_sales_cleaned_date_item", table_name="sales_cleaned")
     op.drop_table("sales_cleaned")
     op.drop_table("daily_total_sales")
+    op.drop_index("ix_condiment_sub", table_name="condiment_recipes")
+    op.drop_index("ix_condiment", table_name="condiment_recipes")
     op.drop_table("condiment_recipes")
+    op.drop_index("ix_bom_ingredient", table_name="bom_recipes")
+    op.drop_index("ix_bom_item", table_name="bom_recipes")
     op.drop_table("bom_recipes")
+    op.drop_index("ix_items_category_id", table_name="items")
     op.drop_table("items")
     op.drop_table("categories")

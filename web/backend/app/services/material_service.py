@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 
-from sqlalchemy import select, func
+import pandas as pd
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import RawMaterialRequirement
@@ -61,29 +63,36 @@ async def get_material_forecast(
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    import pandas as pd
-    from sqlalchemy import text
-
-    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH, CLEANED_SALES_PATH
+    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
+    from app.ml.engine import generate_forecast
     from src.models.raw_materials import RawMaterialProcessor
 
-    forecast_q = text(
-        "SELECT f.date, i.name as item, f.quantity_predicted as quantity "
-        "FROM forecasts f JOIN items i ON f.item_id = i.id "
-        "JOIN model_runs mr ON f.model_run_id = mr.id "
-        "WHERE mr.is_active = TRUE"
+    sales_q = text(
+        "SELECT dis.date, i.name as item, dis.quantity_sold "
+        "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
     )
-    result = await session.execute(forecast_q)
+    result = await session.execute(sales_q)
     rows = result.fetchall()
 
     if not rows:
         return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
 
-    forecast_df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity"])
+    df = pd.DataFrame(
+        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
+    )
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    def _run_forecast():
+        return generate_forecast(df, weeks=12)
+
+    item_forecast_df = await asyncio.to_thread(_run_forecast)
+
+    forecast_df = item_forecast_df[["Date", "Item", "Predicted"]].rename(
+        columns={"Predicted": "Quantity"}
+    )
     forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
 
     processor = RawMaterialProcessor(
-        sales_path=CLEANED_SALES_PATH,
         menu_bom_path=MENU_BOM_PATH,
         condiment_bom_path=CONDIMENT_BOM_PATH,
     )

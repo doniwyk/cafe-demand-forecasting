@@ -186,7 +186,7 @@ function SettingsPage() {
                           )}
                         </Button>
                         {expandedLogs[mt] && (
-                          <pre className="mt-2 max-h-60 overflow-auto rounded-lg bg-muted p-2 text-xs font-mono">
+                          <pre className="mt-2 max-h-60 overflow-x-auto rounded-lg bg-muted p-2 text-xs font-mono whitespace-pre-wrap break-words">
                             {logs.join("\n")}
                           </pre>
                         )}

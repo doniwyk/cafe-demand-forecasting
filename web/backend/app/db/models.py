@@ -205,6 +205,9 @@ class ModelRun(Base):
     wmape: Mapped[Optional[float]] = mapped_column(Float)
     mae: Mapped[Optional[float]] = mapped_column(Float)
     volume_accuracy: Mapped[Optional[float]] = mapped_column(Float)
+    median_period_accuracy: Mapped[Optional[float]] = mapped_column(Float)
+    periods_within_20pct: Mapped[Optional[float]] = mapped_column(Float)
+    periods_within_50pct: Mapped[Optional[float]] = mapped_column(Float)
     features: Mapped[Optional[str]] = mapped_column(Text)
     items_with_models: Mapped[Optional[str]] = mapped_column(Text)
     params: Mapped[Optional[str]] = mapped_column(Text)
@@ -234,6 +237,7 @@ class ModelRunClassMetric(Base):
     n_items: Mapped[int] = mapped_column(Integer, nullable=False)
     wmape: Mapped[float] = mapped_column(Float, nullable=False)
     volume_accuracy: Mapped[float] = mapped_column(Float, nullable=False)
+    median_period_accuracy: Mapped[Optional[float]] = mapped_column(Float)
 
     model_run: Mapped["ModelRun"] = relationship(
         back_populates="class_metrics", lazy="noload"

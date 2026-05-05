@@ -102,12 +102,14 @@ async def get_metrics(session: AsyncSession, model_type: str | None = None) -> d
     run_q = run_q.order_by(ModelRun.trained_at.desc()).limit(1)
     run = (await session.execute(run_q)).scalar_one_or_none()
     if run is None:
-        return {"r2": 0, "wmape": 0, "mae": 0, "volume_accuracy": 0}
+        return {"r2": 0, "wmape": 0, "mae": 0, "median_period_accuracy": 0, "periods_within_20pct": 0, "periods_within_50pct": 0}
     return {
         "r2": run.r2 or 0,
         "wmape": run.wmape or 0,
         "mae": run.mae or 0,
-        "volume_accuracy": run.volume_accuracy or 0,
+        "median_period_accuracy": run.median_period_accuracy or 0,
+        "periods_within_20pct": run.periods_within_20pct or 0,
+        "periods_within_50pct": run.periods_within_50pct or 0,
     }
 
 

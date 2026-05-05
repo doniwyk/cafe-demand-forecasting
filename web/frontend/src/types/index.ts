@@ -52,13 +52,15 @@ export interface ModelMetrics {
   r2: number;
   wmape: number;
   mae: number;
-  volume_accuracy: number;
+  median_period_accuracy: number;
+  periods_within_20pct: number;
+  periods_within_50pct: number;
 }
 
 export interface ClassMetrics {
   n_items: number;
   wmape: number;
-  volume_accuracy: number;
+  median_period_accuracy: number;
 }
 
 export interface PredictResponse {

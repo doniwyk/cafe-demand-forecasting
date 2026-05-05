@@ -209,7 +209,10 @@ async def retrain_models(
                 )
                 result = session.execute(query)
                 rows = result.fetchall()
-                df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity_Sold"])
+                df = pd.DataFrame(
+                    [tuple(row) for row in rows],
+                    columns=["Date", "Item", "Quantity_Sold"],
+                )
                 df["Date"] = pd.to_datetime(df["Date"])
 
                 _append_log(model, "Loading data from DB...")
@@ -285,7 +288,10 @@ async def retrain_models(
                     r2=_as_float(gm.get("r2")),
                     wmape=_as_float(gm.get("wmape")),
                     mae=_as_float(gm.get("mae")),
-                    volume_accuracy=_as_float(gm.get("volume_accuracy")),
+                    volume_accuracy=_as_float(gm.get("median_period_accuracy")),
+                    median_period_accuracy=_as_float(gm.get("median_period_accuracy")),
+                    periods_within_20pct=_as_float(gm.get("periods_within_20pct")),
+                    periods_within_50pct=_as_float(gm.get("periods_within_50pct")),
                     features=_json.dumps(meta.get("features", [])),
                     items_with_models=_json.dumps(meta.get("items_with_models", [])),
                     params=_json.dumps({"max_items": max_items}) if max_items else None,
@@ -299,9 +305,10 @@ async def retrain_models(
                         ModelRunClassMetric(
                             model_run_id=run.id,
                             abc_class=cls,
-                            n_items=_as_int(cm["n_items"]) or 0,
-                            wmape=_as_float(cm["wmape"]) or 0.0,
-                            volume_accuracy=_as_float(cm["volume_accuracy"]) or 0.0,
+                            n_items=_as_int(cm.get("n_items")) or 0,
+                            wmape=_as_float(cm.get("wmape")) or 0.0,
+                            volume_accuracy=_as_float(cm.get("median_period_acc")) or 0.0,
+                            median_period_accuracy=_as_float(cm.get("median_period_acc")) or 0.0,
                         )
                     )
 

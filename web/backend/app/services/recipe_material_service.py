@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import pandas as pd
 from datetime import date
 from sqlalchemy import text
@@ -15,34 +16,41 @@ async def get_daily_material_forecast(
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
+    from app.ml.engine import generate_forecast
+
     async with async_session() as session:
-        base_query = """
-            SELECT f.date, i.name as item, f.quantity_predicted as quantity
-            FROM forecasts f
-            JOIN items i ON f.item_id = i.id
-            JOIN model_runs mr ON f.model_run_id = mr.id
-            WHERE mr.is_active = TRUE
-        """
-
-        params = {}
-        if start_date:
-            base_query += " AND f.date >= :start_date"
-            params["start_date"] = date.fromisoformat(start_date)
-        if end_date:
-            base_query += " AND f.date <= :end_date"
-            params["end_date"] = date.fromisoformat(end_date)
-
-        result = await session.execute(text(base_query), params)
+        sales_q = text(
+            "SELECT dis.date, i.name as item, dis.quantity_sold "
+            "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
+        )
+        result = await session.execute(sales_q)
         rows = result.fetchall()
 
     if not rows:
         return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
 
-    forecast_df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity"])
+    df = pd.DataFrame(
+        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
+    )
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    def _run_forecast():
+        return generate_forecast(df, weeks=12)
+
+    item_forecast_df = await asyncio.to_thread(_run_forecast)
+
+    forecast_df = item_forecast_df[["Date", "Item", "Predicted"]].rename(
+        columns={"Predicted": "Quantity"}
+    )
     forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
     forecast_df["Quantity"] = pd.to_numeric(
         forecast_df["Quantity"], errors="coerce"
     ).fillna(0)
+
+    if start_date:
+        forecast_df = forecast_df[forecast_df["Date"] >= date.fromisoformat(start_date)]
+    if end_date:
+        forecast_df = forecast_df[forecast_df["Date"] <= date.fromisoformat(end_date)]
 
     material_requirements = _map_forecast_to_materials(forecast_df)
 

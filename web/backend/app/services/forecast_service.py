@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 
-from sqlalchemy import select, func, update
+import pandas as pd
+from sqlalchemy import select, func, update, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
@@ -37,40 +39,52 @@ async def get_forecasts(
     page_size: int = 100,
     model_type: str | None = None,
 ) -> ForecastPage:
-    query = (
-        select(Forecast, Item.name)
-        .join(Item)
-        .join(ModelRun, onclause=Forecast.model_run_id == ModelRun.id)
-        .where(ModelRun.is_active == True)
-    )
+    model_type = model_type or "xgboost"
 
-    if model_type:
-        query = query.where(ModelRun.model_type == model_type)
+    query = text(
+        "SELECT dis.date, i.name as item, dis.quantity_sold "
+        "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
+    )
+    result = await session.execute(query)
+    rows = result.fetchall()
+
+    if not rows:
+        return ForecastPage(data=[], total=0, page=page, page_size=page_size)
+
+    df = pd.DataFrame(
+        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
+    )
+    df["Date"] = pd.to_datetime(df["Date"])
 
     if item:
-        query = query.where(Item.name == item)
+        df = df[df["Item"] == item]
+
+    if df.empty:
+        return ForecastPage(data=[], total=0, page=page, page_size=page_size)
+
+    def _run_forecast():
+        return generate_forecast(df, weeks=12, model_type=model_type)
+
+    result_df = await asyncio.to_thread(_run_forecast)
+
     if start_date:
-        query = query.where(Forecast.date >= date.fromisoformat(start_date))
+        result_df = result_df[pd.to_datetime(result_df["Date"]) >= pd.to_datetime(start_date)]
     if end_date:
-        query = query.where(Forecast.date <= date.fromisoformat(end_date))
+        result_df = result_df[pd.to_datetime(result_df["Date"]) <= pd.to_datetime(end_date)]
 
-    count_q = select(func.count()).select_from(query.subquery())
-    total = (await session.execute(count_q)).scalar() or 0
+    result_df = result_df.sort_values(["Date", "Item"])
+    total = len(result_df)
 
-    query = query.order_by(Forecast.date, Item.name)
-    query = query.offset((page - 1) * page_size).limit(page_size)
-
-    result = await session.execute(query)
-    rows = result.all()
+    result_df = result_df.iloc[(page - 1) * page_size : page * page_size]
 
     return ForecastPage(
         data=[
             ForecastRecord(
-                date=str(row.Forecast.date),
-                item=row.name,
-                quantity_sold=row.Forecast.quantity_predicted,
+                date=str(pd.to_datetime(row["Date"]).date()),
+                item=str(row["Item"]),
+                quantity_sold=float(row["Predicted"]),
             )
-            for row in rows
+            for _, row in result_df.iterrows()
         ],
         total=total,
         page=page,
@@ -88,7 +102,7 @@ async def get_forecast_summary(
     run = (await session.execute(run_q)).scalar_one_or_none()
     if run is None:
         return ForecastSummary(
-            global_metrics=ModelMetrics(r2=0, wmape=0, mae=0, volume_accuracy=0),
+            global_metrics=ModelMetrics(r2=0, wmape=0, mae=0),
             class_metrics={},
             top_items=[],
         )
@@ -99,7 +113,9 @@ async def get_forecast_summary(
     class_rows = (await session.execute(class_q)).scalars().all()
     class_metrics = {
         row.abc_class: ClassMetrics(
-            n_items=row.n_items, wmape=row.wmape, volume_accuracy=row.volume_accuracy
+            n_items=row.n_items,
+            wmape=row.wmape,
+            median_period_accuracy=row.median_period_accuracy or row.volume_accuracy or 0,
         )
         for row in class_rows
     }
@@ -121,7 +137,9 @@ async def get_forecast_summary(
             r2=run.r2 or 0,
             wmape=run.wmape or 0,
             mae=run.mae or 0,
-            volume_accuracy=run.volume_accuracy or 0,
+            median_period_accuracy=run.median_period_accuracy or run.volume_accuracy or 0,
+            periods_within_20pct=run.periods_within_20pct or 0,
+            periods_within_50pct=run.periods_within_50pct or 0,
         ),
         class_metrics=class_metrics,
         top_items=top_items,
@@ -149,13 +167,19 @@ async def predict_items(request: PredictRequest) -> PredictResponse:
             result = await session.execute(query)
         rows = result.fetchall()
 
-    df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity_Sold"])
+    df = pd.DataFrame(
+        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
+    )
     df["Date"] = pd.to_datetime(df["Date"])
-    result = generate_forecast(df, weeks=request.weeks, model_type=request.model_type)
+
+    def _run_forecast():
+        return generate_forecast(df, weeks=request.weeks, model_type=request.model_type)
+
+    result = await asyncio.to_thread(_run_forecast)
     return PredictResponse(
         data=[
             ForecastRecord(
-                date=str(row["Date"]),
+                date=str(pd.to_datetime(row["Date"]).date()),
                 item=str(row["Item"]),
                 quantity_sold=float(row["Predicted"]),
             )
@@ -183,7 +207,9 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
     )
     result = await session.execute(query)
     rows = result.fetchall()
-    df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity_Sold"])
+    df = pd.DataFrame(
+        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
+    )
     df["Date"] = pd.to_datetime(df["Date"])
 
     from app.ml.engine import (
@@ -222,7 +248,9 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
         r2=gm.get("r2"),
         wmape=gm.get("wmape"),
         mae=gm.get("mae"),
-        volume_accuracy=gm.get("volume_accuracy"),
+        median_period_accuracy=gm.get("median_period_accuracy"),
+        periods_within_20pct=gm.get("periods_within_20pct"),
+        periods_within_50pct=gm.get("periods_within_50pct"),
         features=_json.dumps(meta.get("features", [])),
         items_with_models=_json.dumps(meta.get("items_with_models", [])),
         is_active=True,
@@ -235,9 +263,9 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
             ModelRunClassMetric(
                 model_run_id=run.id,
                 abc_class=cls,
-                n_items=cm["n_items"],
-                wmape=cm["wmape"],
-                volume_accuracy=cm["volume_accuracy"],
+                n_items=cm.get("n_items", 0),
+                wmape=cm.get("wmape", 0),
+                median_period_accuracy=cm.get("median_period_acc", 0),
             )
         )
 
