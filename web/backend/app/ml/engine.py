@@ -233,21 +233,79 @@ def get_model_metadata(model_type: str = "xgboost") -> dict | None:
 def generate_forecast(
     df_daily: pd.DataFrame, weeks: int = 12, model_type: str = "xgboost"
 ) -> pd.DataFrame:
+    import numpy as np
     df_weekly = _to_weekly(df_daily)
 
     if model_type in ("xgboost", "random_forest"):
-        df_feat = create_features(df_weekly)
-        future_features = generate_future_features(df_feat, future_weeks=weeks)
+        max_date = df_weekly["Date"].max()
+        items = df_weekly["Item"].unique()
+        future_dates = pd.date_range(
+            start=max_date + pd.Timedelta(weeks=1), periods=weeks, freq="W-MON"
+        )
+
+        if len(future_dates) == 0:
+            return pd.DataFrame()
+
+        _ensure_models_loaded(model_type)
+        cache = _models_cache[model_type]
+
+        last_known = (
+            df_weekly.sort_values("Date")
+            .groupby("Item")
+            .last()["Quantity_Sold"]
+            .reset_index()
+        )
+        last_map = dict(zip(last_known["Item"], last_known["Quantity_Sold"]))
+
+        all_predictions = []
+        current = df_weekly.copy()
+
+        for next_date in future_dates:
+            next_df = pd.DataFrame(
+                {"Date": [next_date] * len(items), "Item": np.array(items)}
+            )
+            next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
+
+            temp = pd.concat([current, next_df], ignore_index=True)
+            feat = create_features(temp)
+            future_rows = feat[feat["Date"] == next_date]
+
+            pred_result = _predict_dispatch(
+                model_type,
+                future_rows,
+                cache["item_models"],
+                cache["global_model"],
+                cache["dow_factors"],
+            )
+
+            pred_df = future_rows.copy()
+            pred_df["Predicted"] = pred_result["Predicted"].values
+            all_predictions.append(pred_df)
+
+            next_df["Quantity_Sold"] = pd.Series(
+                pred_result["Predicted"].values, index=next_df.index
+            )
+            current = pd.concat([current, next_df], ignore_index=True)
+
+        print(f"[{model_type}] Recursive forecast for {weeks} weeks")
+        return pd.concat(all_predictions, ignore_index=True)
+
     elif model_type == "prophet":
+        df_feat = create_features(df_weekly)
         _, _, _, _, generate_future_weekly_prophet = _try_import_prophet()
         if generate_future_weekly_prophet is None:
             raise ImportError("forecaster_prophet module missing required functions")
-        future_features = generate_future_weekly_prophet(df_weekly, future_weeks=weeks)
+        future_features = generate_future_weekly_prophet(df_feat, future_weeks=weeks)
+        print(f"[{model_type}] Forecast inference started for {weeks} weeks")
+        return run_predict(future_features, model_type)
+
     elif model_type == "sarimax":
+        df_feat = create_features(df_weekly)
         _, _, _, _, generate_future_weekly_sarimax = _try_import_sarimax()
         if generate_future_weekly_sarimax is None:
             raise ImportError("forecaster_sarimax module missing required functions")
-        future_features = generate_future_weekly_sarimax(df_weekly, future_weeks=weeks)
+        future_features = generate_future_weekly_sarimax(df_feat, future_weeks=weeks)
+        print(f"[{model_type}] Forecast inference started for {weeks} weeks")
+        return run_predict(future_features, model_type)
 
-    print(f"[{model_type}] Forecast inference started for {weeks} weeks")
-    return run_predict(future_features, model_type)
+    return pd.DataFrame()

@@ -17,9 +17,13 @@ def add_calendar_features(df: pd.DataFrame) -> pd.DataFrame:
     data["Year"] = data["Date"].dt.year
     data["DOY"] = data["Date"].dt.dayofyear
     data["DOW"] = data["Date"].dt.weekday
+    data["DayOfMonth"] = data["Date"].dt.day
+    data["IsWeekend"] = (data["DOW"] >= 5).astype(int)
 
     data["Sin_Week"] = np.sin(2 * np.pi * data["Week"] / 52)
     data["Cos_Week"] = np.cos(2 * np.pi * data["Week"] / 52)
+    data["Sin_DOW"] = np.sin(2 * np.pi * data["DOW"] / 7)
+    data["Cos_DOW"] = np.cos(2 * np.pi * data["DOW"] / 7)
 
     data["Weeks_Since_Start"] = (data["Date"] - data["Date"].min()).dt.days // 7
 
@@ -57,11 +61,15 @@ def create_features(df: pd.DataFrame, frequency: str = "weekly") -> pd.DataFrame
         roll_short, roll_long = 7, 28
         roll_std = 7
         ewma_short, ewma_long = 7, 28
+        extra_lags = [3, 28]
     else:
         lag_steps = [1, 2, 4]
         roll_short, roll_long = 4, 12
         roll_std = 4
         ewma_short, ewma_long = 4, 12
+        extra_lags = [8, 13]
+
+    all_lags = [lag for lag in lag_steps + extra_lags if lag not in lag_steps]
 
     for item in data["Item"].unique():
         mask = data["Item"] == item
@@ -70,10 +78,13 @@ def create_features(df: pd.DataFrame, frequency: str = "weekly") -> pd.DataFrame
         for lag_n in lag_steps:
             data.loc[mask, f"Lag_{lag_n}"] = g.shift(lag_n)
 
+        for lag_n in all_lags:
+            data.loc[mask, f"Lag_{lag_n}"] = g.shift(lag_n)
+
         shifted = g.shift(1)
         data.loc[mask, f"Roll_Mean_{roll_short}"] = shifted.rolling(roll_short, min_periods=1).mean()
         data.loc[mask, f"Roll_Mean_{roll_long}"] = shifted.rolling(roll_long, min_periods=1).mean()
-        data.loc[mask, f"Roll_Std_{roll_std}"] = shifted.rolling(roll_std, min_periods=1).std()
+        data.loc[mask, f"Roll_Std_{roll_short}"] = shifted.rolling(roll_short, min_periods=1).std()
         data.loc[mask, f"Roll_Q95_{roll_short}"] = shifted.rolling(roll_short, min_periods=1).quantile(0.95)
 
         data.loc[mask, f"EWMA_{ewma_short}"] = shifted.ewm(span=ewma_short, adjust=False).mean()
@@ -82,9 +93,16 @@ def create_features(df: pd.DataFrame, frequency: str = "weekly") -> pd.DataFrame
         data.loc[mask, "Diff_1"] = g.diff(1)
         data.loc[mask, "Accel_2"] = data.loc[mask, "Diff_1"].diff(1)
 
+        g_lag1 = g.shift(1)
+        g_lag2 = g.shift(2)
+        data.loc[mask, "Momentum"] = g_lag1 - g_lag2
+
         recent = shifted.rolling(roll_short).mean()
         older = g.shift(roll_short + 1).rolling(roll_long).mean()
         data.loc[mask, "Recent_vs_Old_Trend"] = (recent / (older + 1)).clip(0, 10)
+
+        g_lag4 = g.shift(4)
+        data.loc[mask, "Seasonal_Strength"] = g_lag1 / (g_lag4 + 1) - 1
 
         pre_mean = g[data.loc[mask, "Date"] < REBRANDING_DATE].mean()
         post_mean = g[data.loc[mask, "Date"] >= REBRANDING_DATE].mean()

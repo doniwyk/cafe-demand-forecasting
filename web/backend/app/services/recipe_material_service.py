@@ -15,9 +15,11 @@ async def get_daily_material_forecast(
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
+    model_type: str | None = None,
 ) -> MaterialRequirementPage:
     from app.ml.engine import generate_forecast
 
+    model_type = model_type or "xgboost"
     async with async_session() as session:
         sales_q = text(
             "SELECT dis.date, i.name as item, dis.quantity_sold "
@@ -35,7 +37,7 @@ async def get_daily_material_forecast(
     df["Date"] = pd.to_datetime(df["Date"])
 
     def _run_forecast():
-        return generate_forecast(df, weeks=12)
+        return generate_forecast(df, weeks=12, model_type=model_type)
 
     item_forecast_df = await asyncio.to_thread(_run_forecast)
 
@@ -120,12 +122,15 @@ def _map_forecast_to_materials(forecast_df: pd.DataFrame) -> pd.DataFrame:
         ),
         axis=1,
     )
+    recipe_df = recipe_df.dropna(subset=["Item_Name", "Product"])
+    recipe_df["Item_Name"] = recipe_df["Item_Name"].astype(str)
+    recipe_df["Product"] = recipe_df["Product"].astype(str)
 
     material_requirements = []
 
     for _, forecast_row in forecast_df.iterrows():
         date = forecast_row["Date"]
-        item = forecast_row["Item"]
+        item = str(forecast_row["Item"])
         qty = forecast_row["Quantity"]
 
         matching_recipes = recipe_df[recipe_df["Item_Name"].str.lower() == item.lower()]

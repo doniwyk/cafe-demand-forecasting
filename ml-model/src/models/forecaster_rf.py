@@ -12,24 +12,24 @@ from sklearn.ensemble import RandomForestRegressor
 from src.utils.config import get_feature_columns
 
 
-MIN_TRAIN_RECORDS_DAILY = 180
-MIN_TRAIN_RECORDS_WEEKLY = 100
-_BLEND_ALPHA = 0.15
+MIN_TRAIN_RECORDS_DAILY = 60
+MIN_TRAIN_RECORDS_WEEKLY = 24
+_BLEND_ALPHA = 0.5
 
 _RF_GLOBAL_PARAMS = {
-    "n_estimators": 300,
-    "max_depth": 4,
-    "min_samples_split": 10,
-    "min_samples_leaf": 5,
+    "n_estimators": 500,
+    "max_depth": 6,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
     "random_state": 42,
     "n_jobs": -1,
 }
 
 _RF_ITEM_PARAMS = {
-    "n_estimators": 200,
-    "max_depth": 3,
-    "min_samples_split": 10,
-    "min_samples_leaf": 5,
+    "n_estimators": 400,
+    "max_depth": 5,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
     "random_state": 42,
     "n_jobs": -1,
 }

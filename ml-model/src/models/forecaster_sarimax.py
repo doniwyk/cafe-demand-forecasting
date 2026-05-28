@@ -13,13 +13,13 @@ warnings.filterwarnings("ignore")
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
-MIN_TRAIN_RECORDS_DAILY = 180
-MIN_TRAIN_RECORDS_WEEKLY = 200
+MIN_TRAIN_RECORDS_DAILY = 60
+MIN_TRAIN_RECORDS_WEEKLY = 24
 
 _DEFAULT_ORDER = (1, 1, 1)
 _DEFAULT_SEASONAL_ORDER_WEEKLY = (0, 0, 0, 0)
 _DEFAULT_SEASONAL_ORDER_DAILY = (0, 0, 0, 0)
-_FIT_KWARGS = {"maxiter": 5, "disp": False}
+_FIT_KWARGS = {"maxiter": 20, "disp": False}
 
 
 def get_min_train_records(frequency: str) -> int:

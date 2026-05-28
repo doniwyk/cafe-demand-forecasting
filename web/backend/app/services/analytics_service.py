@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
+import pandas as pd
 from sqlalchemy import select, func, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +13,7 @@ from app.models.analytics import (
     ABCAnalysisResponse,
     AssociationRule as AssociationRuleResponse,
 )
+from app.ml.engine import generate_forecast
 
 
 async def get_abc_analysis(
@@ -18,30 +21,34 @@ async def get_abc_analysis(
     model_type: str | None = None,
 ) -> ABCAnalysisResponse:
     if model_type:
-        from app.db.models import ModelRun, Forecast
-
-        run_q = (
-            select(ModelRun)
-            .where(ModelRun.is_active == True)
-            .where(ModelRun.model_type == model_type)
-            .order_by(ModelRun.trained_at.desc())
-            .limit(1)
+        sales_q = text(
+            "SELECT dis.date, i.name as item, dis.quantity_sold "
+            "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
         )
-        run = (await session.execute(run_q)).scalar_one_or_none()
-        if run is None:
+        result = await session.execute(sales_q)
+        rows = result.fetchall()
+        if not rows:
             return ABCAnalysisResponse(class_metrics={}, classifications=[])
-
-        # For a selected model, derive ABC from its active forecast output.
-        item_vol_q = (
-            select(
-                Item.name,
-                func.sum(Forecast.quantity_predicted).label("total_vol"),
-            )
-            .join(Forecast, Item.id == Forecast.item_id)
-            .where(Forecast.model_run_id == run.id)
-            .group_by(Item.id, Item.name)
-            .order_by(text("total_vol DESC"))
+        df = pd.DataFrame(
+            [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
         )
+        df["Date"] = pd.to_datetime(df["Date"])
+
+        def _run_forecast():
+            return generate_forecast(df, weeks=12, model_type=model_type)
+
+        forecast_df = await asyncio.to_thread(_run_forecast)
+
+        item_vol = (
+            forecast_df.groupby("Item")["Predicted"]
+            .sum()
+            .reset_index()
+            .sort_values("Predicted", ascending=False)
+        )
+        rows = [
+            type("Row", (), {"name": row["Item"], "total_vol": row["Predicted"]})
+            for _, row in item_vol.iterrows()
+        ]
     else:
         item_vol_q = (
             select(
@@ -52,9 +59,8 @@ async def get_abc_analysis(
             .group_by(Item.id, Item.name)
             .order_by(text("total_vol DESC"))
         )
-
-    result = await session.execute(item_vol_q)
-    rows = result.all()
+        result = await session.execute(item_vol_q)
+        rows = result.all()
 
     if not rows:
         return ABCAnalysisResponse(class_metrics={}, classifications=[])

@@ -11,8 +11,6 @@ from app.db.models import (
     ModelRun,
     ModelRunClassMetric,
     ModelRunTopItem,
-    Forecast,
-    Item,
 )
 from app.models.forecast import (
     ForecastRecord,
@@ -199,7 +197,6 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
         ModelRun,
         ModelRunClassMetric,
         ModelRunTopItem,
-        Forecast,
     )
 
     query = text(
@@ -214,7 +211,6 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
 
     from app.ml.engine import (
         run_train_and_evaluate,
-        generate_forecast,
         _METADATA_FILE,
         ML_MODELS_DIR,
     )
@@ -277,25 +273,6 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
                 quantity_sold=t["Quantity_Sold"],
                 predicted=t["Predicted"],
                 accuracy_pct=t["accuracy_pct"],
-            )
-        )
-
-    forecast_result = generate_forecast(df, weeks=12, model_type=model_type)
-
-    item_rows = await session.execute(text("SELECT id, name FROM items"))
-    item_name_to_id = {row[1]: row[0] for row in item_rows.fetchall()}
-
-    for _, row in forecast_result.iterrows():
-        item_name = str(row["Item"])
-        item_id = item_name_to_id.get(item_name)
-        if item_id is None:
-            continue
-        session.add(
-            Forecast(
-                model_run_id=run.id,
-                item_id=item_id,
-                date=pd.to_datetime(row["Date"]).date(),
-                quantity_predicted=float(row["Predicted"]),
             )
         )
 

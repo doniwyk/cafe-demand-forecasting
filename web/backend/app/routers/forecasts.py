@@ -168,7 +168,6 @@ async def retrain_models(
                 from app.db.engine import sync_session
                 from app.ml.engine import (
                     run_train_and_evaluate,
-                    generate_forecast,
                     _METADATA_FILE,
                     ML_MODELS_DIR,
                 )
@@ -239,16 +238,6 @@ async def retrain_models(
                 if _is_cancelled(model):
                     return {"status": "cancelled"}
 
-                _append_log(model, "Generating forecasts...")
-                forecast_result = generate_forecast(df, weeks=12, model_type=model)
-                _append_log(
-                    model,
-                    f"Generated {len(forecast_result)} forecast records"
-                )
-
-                if _is_cancelled(model):
-                    return {"status": "cancelled"}
-
                 from datetime import datetime as _dt
                 import json as _json
                 from sqlalchemy import update as sa_update
@@ -256,10 +245,9 @@ async def retrain_models(
                     ModelRun,
                     ModelRunClassMetric,
                     ModelRunTopItem,
-                    Forecast,
                 )
 
-                _append_log(model, "Saving model run and forecasts to DB...")
+                _append_log(model, "Saving model run to DB...")
 
                 session.execute(
                     sa_update(ModelRun)
@@ -323,35 +311,15 @@ async def retrain_models(
                         )
                     )
 
-                item_rows = session.execute(text("SELECT id, name FROM items"))
-                item_name_to_id = {row[1]: row[0] for row in item_rows.fetchall()}
-
-                saved_forecasts = 0
-                for _, row in forecast_result.iterrows():
-                    item_name = str(row["Item"])
-                    item_id = item_name_to_id.get(item_name)
-                    if item_id is None:
-                        continue
-                    session.add(
-                        Forecast(
-                            model_run_id=run.id,
-                            item_id=item_id,
-                            date=pd.to_datetime(row["Date"]).date(),
-                            quantity_predicted=float(row["Predicted"]),
-                        )
-                    )
-                    saved_forecasts += 1
-
                 session.commit()
                 _append_log(
                     model,
-                    f"Model run saved to DB (id={run.id}, forecasts={saved_forecasts})",
+                    f"Model run saved to DB (id={run.id})",
                 )
 
                 return {
                     "status": "success",
                     "model_run_id": run.id,
-                    "saved_forecasts": saved_forecasts,
                     "global_metrics": analysis.get("global_metrics", {}),
                     "class_metrics": analysis.get("class_metrics", {}),
                 }

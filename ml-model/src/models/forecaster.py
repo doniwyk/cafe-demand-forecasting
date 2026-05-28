@@ -17,37 +17,37 @@ from src.models.features import create_features
 
 FREQ_MAP = {"daily": "D", "weekly": "W-MON"}
 
-MIN_TRAIN_RECORDS_DAILY = 180
-MIN_TRAIN_RECORDS_WEEKLY = 100
+MIN_TRAIN_RECORDS_DAILY = 60
+MIN_TRAIN_RECORDS_WEEKLY = 24
 
-_EARLY_STOPPING_ROUNDS = 15
-_BLEND_ALPHA = 0.15
+_EARLY_STOPPING_ROUNDS = 30
+_BLEND_ALPHA = 0.5
 
 _BASE_GLOBAL_PARAMS = {
     "objective": "reg:tweedie",
     "tweedie_variance_power": 1.5,
-    "n_estimators": 300,
-    "learning_rate": 0.015,
-    "max_depth": 3,
-    "min_child_weight": 15,
-    "subsample": 0.6,
-    "colsample_bytree": 0.6,
-    "reg_alpha": 5.0,
-    "reg_lambda": 10.0,
+    "n_estimators": 600,
+    "learning_rate": 0.03,
+    "max_depth": 5,
+    "min_child_weight": 3,
+    "subsample": 0.8,
+    "colsample_bytree": 0.7,
+    "reg_alpha": 0.5,
+    "reg_lambda": 1.0,
     "random_state": 42,
 }
 
 _BASE_ITEM_PARAMS = {
     "objective": "reg:tweedie",
     "tweedie_variance_power": 1.5,
-    "n_estimators": 150,
-    "learning_rate": 0.015,
-    "max_depth": 2,
-    "min_child_weight": 15,
-    "subsample": 0.5,
-    "colsample_bytree": 0.5,
-    "reg_alpha": 5.0,
-    "reg_lambda": 15.0,
+    "n_estimators": 400,
+    "learning_rate": 0.03,
+    "max_depth": 4,
+    "min_child_weight": 3,
+    "subsample": 0.8,
+    "colsample_bytree": 0.7,
+    "reg_alpha": 0.5,
+    "reg_lambda": 1.0,
     "random_state": 42,
 }
 
@@ -385,16 +385,28 @@ def generate_future_features(
             freq="W-MON",
         )
 
-    future_df = pd.DataFrame(
-        {
-            "Date": np.repeat(future_dates, len(items)),
-            "Item": np.tile(items, len(future_dates)),
-        }
+    last_known = (
+        df_daily.sort_values("Date")
+        .groupby("Item")
+        .last()["Quantity_Sold"]
+        .reset_index()
     )
-    future_df["Quantity_Sold"] = 0
+    last_map = dict(zip(last_known["Item"], last_known["Quantity_Sold"]))
 
-    all_df = pd.concat([df_daily, future_df], ignore_index=True)
-    all_df = create_features(all_df, frequency=frequency)
-    future_features = all_df[all_df["Date"] > max_date]
+    all_features = []
+    current = df_daily.copy()
 
-    return future_features
+    for _, next_date in enumerate(future_dates):
+        next_df = pd.DataFrame(
+            {"Date": [next_date] * len(items), "Item": np.array(items)}
+        )
+        next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
+
+        temp = pd.concat([current, next_df], ignore_index=True)
+        feat = create_features(temp, frequency=frequency)
+        future_rows = feat[feat["Date"] == next_date]
+        all_features.append(future_rows)
+
+        current = pd.concat([current, next_df], ignore_index=True)
+
+    return pd.concat(all_features, ignore_index=True)

@@ -52,8 +52,12 @@ FEATURE_COLUMNS = [
     "Year",
     "DOY",
     "DOW",
+    "DayOfMonth",
+    "IsWeekend",
     "Sin_Week",
     "Cos_Week",
+    "Sin_DOW",
+    "Cos_DOW",
     "Weeks_Since_Start",
     "Is_Payday_Week",
     "Is_Weekend_Before_Payday",
@@ -66,6 +70,8 @@ FEATURE_COLUMNS = [
     "Lag_1",
     "Lag_2",
     "Lag_4",
+    "Lag_8",
+    "Lag_13",
     "Roll_Mean_4",
     "Roll_Mean_12",
     "Roll_Std_4",
@@ -74,6 +80,8 @@ FEATURE_COLUMNS = [
     "EWMA_12",
     "Diff_1",
     "Accel_2",
+    "Momentum",
+    "Seasonal_Strength",
 ]
 
 FEATURE_COLUMNS_DAILY = [
@@ -83,8 +91,12 @@ FEATURE_COLUMNS_DAILY = [
     "Year",
     "DOY",
     "DOW",
+    "DayOfMonth",
+    "IsWeekend",
     "Sin_Week",
     "Cos_Week",
+    "Sin_DOW",
+    "Cos_DOW",
     "Weeks_Since_Start",
     "Is_Payday_Week",
     "Is_Weekend_Before_Payday",
@@ -97,6 +109,8 @@ FEATURE_COLUMNS_DAILY = [
     "Lag_1",
     "Lag_7",
     "Lag_14",
+    "Lag_3",
+    "Lag_28",
     "Roll_Mean_7",
     "Roll_Mean_28",
     "Roll_Std_7",
@@ -105,6 +119,8 @@ FEATURE_COLUMNS_DAILY = [
     "EWMA_28",
     "Diff_1",
     "Accel_2",
+    "Momentum",
+    "Seasonal_Strength",
 ]
 
 

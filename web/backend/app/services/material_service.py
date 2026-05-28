@@ -62,11 +62,13 @@ async def get_material_forecast(
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
+    model_type: str | None = None,
 ) -> MaterialRequirementPage:
     from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
     from app.ml.engine import generate_forecast
     from src.models.raw_materials import RawMaterialProcessor
 
+    model_type = model_type or "xgboost"
     sales_q = text(
         "SELECT dis.date, i.name as item, dis.quantity_sold "
         "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
@@ -83,7 +85,7 @@ async def get_material_forecast(
     df["Date"] = pd.to_datetime(df["Date"])
 
     def _run_forecast():
-        return generate_forecast(df, weeks=12)
+        return generate_forecast(df, weeks=12, model_type=model_type)
 
     item_forecast_df = await asyncio.to_thread(_run_forecast)
 

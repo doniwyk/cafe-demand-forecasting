@@ -14,8 +14,8 @@ logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
 from prophet import Prophet
 
 
-MIN_TRAIN_RECORDS_DAILY = 180
-MIN_TRAIN_RECORDS_WEEKLY = 100
+MIN_TRAIN_RECORDS_DAILY = 60
+MIN_TRAIN_RECORDS_WEEKLY = 24
 
 
 def get_min_train_records(frequency: str) -> int:

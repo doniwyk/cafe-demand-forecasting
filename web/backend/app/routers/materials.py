@@ -38,9 +38,10 @@ async def get_material_forecast(
     end_date: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=1000),
+    model_type: str | None = Query(None),
 ):
     return await material_service.get_material_forecast(
-        session, material, start_date, end_date, page, page_size
+        session, material, start_date, end_date, page, page_size, model_type
     )
 
 
@@ -50,7 +51,8 @@ async def get_daily_material_forecast(
     end_date: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=1000),
+    model_type: str | None = Query(None),
 ):
     return await recipe_material_service.get_daily_material_forecast(
-        start_date, end_date, page, page_size
+        start_date, end_date, page, page_size, model_type
     )

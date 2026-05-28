@@ -7,7 +7,7 @@ import sys
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-sys.path.insert(0, str(__file__).rsplit("/", 3)[0])
+sys.path.insert(0, str(__file__).rsplit("/", 1)[0])
 
 from app.db.engine import async_session  # noqa: E402
 from app.models.user import User  # noqa: E402

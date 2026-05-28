@@ -172,6 +172,7 @@ export const api = {
       end_date?: string
       page?: number
       page_size?: number
+      model_type?: string
     }) {
       const q = new URLSearchParams(params as Record<string, string>)
       return request<import("@/types").MaterialRequirementPage>(`/materials/forecast?${q}`)
@@ -181,6 +182,7 @@ export const api = {
       end_date?: string
       page?: number
       page_size?: number
+      model_type?: string
     }) {
       const q = new URLSearchParams(params as Record<string, string>)
       return request<import("@/types").MaterialRequirementPage>(`/materials/daily-forecast?${q}`)
