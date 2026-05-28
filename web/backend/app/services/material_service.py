@@ -66,6 +66,7 @@ async def get_material_forecast(
 ) -> MaterialRequirementPage:
     from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
     from app.ml.engine import generate_forecast
+    from app.services.forecast_service import _forecast_cache
     from src.models.raw_materials import RawMaterialProcessor
 
     model_type = model_type or "xgboost"
@@ -84,10 +85,16 @@ async def get_material_forecast(
     )
     df["Date"] = pd.to_datetime(df["Date"])
 
-    def _run_forecast():
-        return generate_forecast(df, weeks=12, model_type=model_type)
+    cache_key = model_type
+    cached = _forecast_cache.get(cache_key)
 
-    item_forecast_df = await asyncio.to_thread(_run_forecast)
+    if cached is not None:
+        item_forecast_df = cached.copy()
+    else:
+        def _run_forecast():
+            return generate_forecast(df, weeks=12, model_type=model_type)
+        item_forecast_df = await asyncio.to_thread(_run_forecast)
+        _forecast_cache[cache_key] = item_forecast_df.copy()
 
     forecast_df = item_forecast_df[["Date", "Item", "Predicted"]].rename(
         columns={"Predicted": "Quantity"}
@@ -100,26 +107,43 @@ async def get_material_forecast(
     )
     requirements = processor.compute_material_requirements(forecast_df)
 
+    unit_map = {}
+    try:
+        menu = pd.read_csv(MENU_BOM_PATH)
+        for _, row in menu.iterrows():
+            unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
+        cond = pd.read_csv(CONDIMENT_BOM_PATH)
+        for _, row in cond.iterrows():
+            unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
+    except Exception:
+        pass
+
     if material:
         requirements = requirements[
             requirements["Raw_Material"].str.contains(material, case=False, na=False)
         ]
     if start_date:
-        requirements = requirements[requirements["Date"] >= start_date]
+        requirements = requirements[requirements["Date"] >= date.fromisoformat(start_date)]
     if end_date:
-        requirements = requirements[requirements["Date"] <= end_date]
+        requirements = requirements[requirements["Date"] <= date.fromisoformat(end_date)]
 
-    total = len(requirements)
-    requirements = requirements.iloc[(page - 1) * page_size : page * page_size]
+    aggregated = (
+        requirements.groupby("Raw_Material", as_index=False)["Quantity_Required"]
+        .sum()
+        .sort_values("Quantity_Required", ascending=False)
+    )
+    total = len(aggregated)
+    paginated = aggregated.iloc[(page - 1) * page_size : page * page_size]
 
     return MaterialRequirementPage(
         data=[
             DailyMaterialRequirement(
-                date=str(row["Date"]),
+                date="",
                 raw_material=str(row["Raw_Material"]),
                 quantity_required=float(row["Quantity_Required"]),
+                unit=unit_map.get(str(row["Raw_Material"]).strip().lower(), ""),
             )
-            for _, row in requirements.iterrows()
+            for _, row in paginated.iterrows()
         ],
         total=total,
         page=page,

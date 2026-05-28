@@ -2,18 +2,22 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
 import { useDailyNeed } from '@/hooks/use-materials'
-import { format, parseISO } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
-import { ChevronsUpDownIcon, DownloadIcon, CalendarIcon } from 'lucide-react'
+import { ChevronsUpDownIcon, DownloadIcon, CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+
+const PAGE_SIZES = [10, 25, 50, 100]
 
 export const Route = createFileRoute('/materials/daily-need')({
   component: DailyNeedPage,
@@ -21,17 +25,26 @@ export const Route = createFileRoute('/materials/daily-need')({
 
 function DailyNeedPage() {
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: new Date(),
+    to: addDays(new Date(), 14),
+  })
   const [materialOpen, setMaterialOpen] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const { t } = useTranslation()
 
   const dateParams = useMemo(() => {
-    const p: { start_date?: string; end_date?: string; page_size: number } = { page_size: 100 }
-    if (dateRange.from) p.start_date = format(dateRange.from, 'yyyy-MM-dd')
-    if (dateRange.to) p.end_date = format(dateRange.to, 'yyyy-MM-dd')
+    const p: { start_date: string; end_date: string; page: number; page_size: number; material?: string } = {
+      start_date: format(dateRange.from ?? new Date(), 'yyyy-MM-dd'),
+      end_date: format(dateRange.to ?? addDays(new Date(), 14), 'yyyy-MM-dd'),
+      page,
+      page_size: pageSize,
+    }
+    if (selectedMaterial) p.material = selectedMaterial
     return p
-  }, [dateRange.from, dateRange.to])
+  }, [dateRange.from, dateRange.to, page, pageSize, selectedMaterial])
 
   const dailyNeed = useDailyNeed(dateParams)
 
@@ -40,28 +53,20 @@ function DailyNeedPage() {
     return [...new Set(dailyNeed.data.data.map(d => d.raw_material))].sort()
   }, [dailyNeed.data])
 
-  const filteredData = useMemo(() => {
+  const aggregatedData = useMemo(() => {
     if (!dailyNeed.data) return []
-    let data = dailyNeed.data.data
-    
-    if (selectedMaterial) {
-      data = data.filter(d => d.raw_material === selectedMaterial)
-    }
-    
-    return data.sort((a, b) => {
-      const dateCmp = a.date.localeCompare(b.date)
-      if (dateCmp !== 0) return dateCmp
-      return a.raw_material.localeCompare(b.raw_material)
-    })
-  }, [dailyNeed.data, selectedMaterial])
+    return dailyNeed.data.data.map(d => ({
+      material: d.raw_material,
+      quantity_required: d.quantity_required,
+      unit: d.unit ?? '',
+    }))
+  }, [dailyNeed.data])
+
+  const totalPages = dailyNeed.data ? Math.ceil(dailyNeed.data.total / pageSize) : 0
 
   const exportCsv = useCallback(() => {
-    const headers = ['Date', 'Material', 'Quantity Required']
-    const rows = filteredData.map(d => [
-      d.date,
-      d.raw_material,
-      d.quantity_required,
-    ])
+    const headers = ['Material', 'Total Quantity Required']
+    const rows = aggregatedData.map(d => [d.material, d.quantity_required])
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -70,7 +75,7 @@ function DailyNeedPage() {
     a.download = `material-requirements-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }, [filteredData])
+  }, [aggregatedData])
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
@@ -81,39 +86,6 @@ function DailyNeedPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 flex-wrap items-end">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Material</label>
-              <Popover open={materialOpen} onOpenChange={setMaterialOpen}>
-                <PopoverTrigger
-                  render={<Button variant="outline" role="combobox" aria-expanded={open} className="w-[280px] justify-between" />}
-                >
-                  {selectedMaterial || t("materials.selectMaterial")}
-                  <ChevronsUpDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
-                </PopoverTrigger>
-                <PopoverContent className="w-[280px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder={t("materials.searchMaterials")} />
-                    <CommandList>
-                      <CommandEmpty>{t("materials.noMaterialsFound")}</CommandEmpty>
-                      <CommandGroup>
-                        {materials.map((mat) => (
-                          <CommandItem
-                            key={mat}
-                            value={mat}
-                            onSelect={(value) => {
-                              setSelectedMaterial(value === selectedMaterial ? null : value)
-                              setOpen(false)
-                            }}
-                          >
-                            {mat}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">{t("materials.dateRange")}</label>
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
@@ -137,14 +109,47 @@ function DailyNeedPage() {
                   <Calendar
                     mode="range"
                     selected={dateRange}
-                    onSelect={(range) => setDateRange(range ?? {})}
+                    onSelect={(range) => setDateRange(range ?? { from: new Date(), to: addDays(new Date(), 7) })}
                     numberOfMonths={2}
                   />
                 </PopoverContent>
               </Popover>
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">{t("materials.material")}</label>
+              <Popover open={materialOpen} onOpenChange={setMaterialOpen}>
+                <PopoverTrigger
+                  render={<Button variant="outline" role="combobox" aria-expanded={open} className="w-[280px] justify-between" />}
+                >
+                  {selectedMaterial || t("materials.selectMaterial")}
+                  <ChevronsUpDownIcon className="ml-auto size-4 shrink-0 opacity-50" />
+                </PopoverTrigger>
+                <PopoverContent className="w-[280px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t("materials.searchMaterials")} />
+                    <CommandList>
+                      <CommandEmpty>{t("materials.noMaterialsFound")}</CommandEmpty>
+                      <CommandGroup>
+                        {materials.map((mat) => (
+                          <CommandItem
+                            key={mat}
+                            value={mat}
+                            onSelect={(value) => {
+                              setSelectedMaterial(value === selectedMaterial ? null : value)
+                              setMaterialOpen(false)
+                            }}
+                          >
+                            {mat}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             {(selectedMaterial || dateRange.from || dateRange.to) && (
-              <Button variant="ghost" size="sm" onClick={() => { setSelectedMaterial(null); setDateRange({}) }}>
+              <Button variant="ghost" size="sm" onClick={() => { setSelectedMaterial(null); setDateRange({ from: new Date(), to: addDays(new Date(), 7) }) }}>
                 {t("common.clear")}
               </Button>
             )}
@@ -153,11 +158,18 @@ function DailyNeedPage() {
       </Card>
 
       <Card data-tour="daily-requirements">
-        <CardHeader>
-          <CardTitle>{t("materials.dailyMaterialRequirements")}</CardTitle>
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={filteredData.length === 0}>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>{t("materials.dailyMaterialRequirements")}</CardTitle>
+            {aggregatedData.length > 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {dateRange.from && format(dateRange.from, 'MMM dd')} — {dateRange.to && format(dateRange.to, 'MMM dd, yyyy')} · {aggregatedData.length} materials
+              </p>
+            )}
+          </div>
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={aggregatedData.length === 0}>
             <DownloadIcon className="size-4" />
-            Export Excel
+            Export CSV
           </Button>
         </CardHeader>
         <CardContent>
@@ -167,29 +179,51 @@ function DailyNeedPage() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : filteredData.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("materials.date")}</TableHead>
-                  <TableHead>{t("materials.material")}</TableHead>
-                  <TableHead className="text-right">{t("materials.quantityRequired")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                  {filteredData.slice(0, 50).map((row, idx) => (
-                  <TableRow key={`${row.date}-${row.raw_material}-${idx}`}>
-                    <TableCell className="font-medium">
-                      {format(parseISO(row.date), 'MMM dd, yyyy')}
-                    </TableCell>
-                    <TableCell>{row.raw_material}</TableCell>
-                    <TableCell className="text-right">
-                      {Math.round(row.quantity_required * 100) / 100}
-                    </TableCell>
+          ) : aggregatedData.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("materials.material")}</TableHead>
+                    <TableHead className="text-right">{t("materials.quantityRequired")}</TableHead>
+                    <TableHead className="text-right w-24">Unit</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {aggregatedData.map((row, idx) => (
+                    <TableRow key={`${row.material}-${idx}`}>
+                      <TableCell className="font-medium">{row.material}</TableCell>
+                      <TableCell className="text-right tabular-nums">{row.quantity_required.toLocaleString()}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{row.unit}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex items-center justify-between pt-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Rows per page</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(1) }}>
+                    <SelectTrigger className="w-18 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZES.map(s => (
+                        <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <span>Page {page} of {totalPages || 1}</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                    <ChevronLeftIcon className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                    <ChevronRightIcon className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               {t("materials.noMaterialData")}
@@ -197,7 +231,6 @@ function DailyNeedPage() {
           )}
         </CardContent>
       </Card>
-
 
     </div>
   )

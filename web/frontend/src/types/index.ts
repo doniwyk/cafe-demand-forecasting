@@ -98,6 +98,7 @@ export interface DailyMaterialRequirement {
   date: string;
   raw_material: string;
   quantity_required: number;
+  unit?: string;
 }
 
 export interface MaterialRequirementPage {
