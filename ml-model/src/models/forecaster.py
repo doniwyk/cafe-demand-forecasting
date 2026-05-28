@@ -24,8 +24,7 @@ _EARLY_STOPPING_ROUNDS = 30
 _BLEND_ALPHA = 0.5
 
 _BASE_GLOBAL_PARAMS = {
-    "objective": "reg:tweedie",
-    "tweedie_variance_power": 1.5,
+    "objective": "count:poisson",
     "n_estimators": 600,
     "learning_rate": 0.03,
     "max_depth": 5,
@@ -38,8 +37,7 @@ _BASE_GLOBAL_PARAMS = {
 }
 
 _BASE_ITEM_PARAMS = {
-    "objective": "reg:tweedie",
-    "tweedie_variance_power": 1.5,
+    "objective": "count:poisson",
     "n_estimators": 400,
     "learning_rate": 0.03,
     "max_depth": 4,
@@ -184,9 +182,9 @@ def train_and_predict(
 
         factors = dow_factor_dict.get(item, {i: 1.0 for i in range(7)})
         test_item["dow_factor"] = test_item["DOW"].map(factors).fillna(1.0)
-        test_item["Predicted"] = (
-            test_item["Raw_Pred"] * test_item["dow_factor"]
-        ).round(0)
+        raw_adj = test_item["Raw_Pred"] * test_item["dow_factor"]
+        test_item["Predicted"] = raw_adj.round(0)
+        test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
         test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
 
         predictions.append(test_item)
@@ -354,9 +352,9 @@ def predict(
             for k, v in factors.items()
         }
         test_item["dow_factor"] = test_item["DOW"].map(factors).fillna(1.0)
-        test_item["Predicted"] = (
-            test_item["Raw_Pred"] * test_item["dow_factor"]
-        ).round(0)
+        raw_adj = test_item["Raw_Pred"] * test_item["dow_factor"]
+        test_item["Predicted"] = raw_adj.round(0)
+        test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
         test_item["Predicted"] = np.maximum(0, test_item["Predicted"])
 
         predictions.append(test_item)

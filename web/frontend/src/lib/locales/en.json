@@ -74,7 +74,11 @@
     "actualQty": "Actual Qty",
     "predictedQty": "Predicted Qty",
     "accuracy": "Accuracy",
-    "noForecastData": "No forecast data for this item"
+    "noForecastData": "No forecast data for this item",
+    "item": "Item",
+    "date": "Date",
+    "dateRange": "Date Range",
+    "selectDateRange": "Select date range"
   },
   "materials": {
     "materialFilter": "Material Filter",

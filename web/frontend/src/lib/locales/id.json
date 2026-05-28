@@ -74,7 +74,11 @@
     "actualQty": "Qty Aktual",
     "predictedQty": "Qty Diprediksi",
     "accuracy": "Akurasi",
-    "noForecastData": "Tidak ada data prakiraan untuk item ini"
+    "noForecastData": "Tidak ada data prakiraan untuk item ini",
+    "item": "Item",
+    "date": "Tanggal",
+    "dateRange": "Rentang Tanggal",
+    "selectDateRange": "Pilih rentang tanggal"
   },
   "materials": {
     "materialFilter": "Filter Material",

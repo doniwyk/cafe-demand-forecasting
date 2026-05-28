@@ -32,7 +32,7 @@ async def get_forecasts(
     end_date: str | None = Query(None),
     model_type: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(100, ge=1, le=1000),
+    page_size: int = Query(10000, ge=1, le=100000),
 ):
     return await forecast_service.get_forecasts(
         session, item, start_date, end_date, page, page_size, model_type
@@ -111,6 +111,18 @@ async def retrain_models(
         )
 
     _retrain_logs[model_type] = []
+
+    if body.sync_hus:
+        try:
+            from scripts.sync_hus_sales import sync_sales
+            sync_result = sync_sales(include_new=body.include_new_products)
+            _append_log(model_type, f"[sync] {sync_result['inserted']} rows synced from hus_db")
+            if sync_result.get("new_products"):
+                _append_log(model_type, f"[sync] Added {sync_result['new_products']} new products")
+            if sync_result.get("skipped_units"):
+                _append_log(model_type, f"[sync] Skipped {sync_result['skipped_units']} units ({sync_result['skipped_products']} products)")
+        except Exception as e:
+            _append_log(model_type, f"[sync] Error: {e}")
 
     async def _run_retrain():
         model = model_type
@@ -312,6 +324,8 @@ async def retrain_models(
                     )
 
                 session.commit()
+                from app.services.forecast_service import invalidate_forecast_cache
+                invalidate_forecast_cache(model)
                 _append_log(
                     model,
                     f"Model run saved to DB (id={run.id})",

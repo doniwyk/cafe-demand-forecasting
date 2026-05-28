@@ -51,6 +51,8 @@ class PredictRequest(BaseModel):
 class RetrainRequest(BaseModel):
     model_type: str = "xgboost"
     max_items: int | None = None
+    sync_hus: bool = False
+    include_new_products: bool = False
 
 
 class PredictResponse(BaseModel):

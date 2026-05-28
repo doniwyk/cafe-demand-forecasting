@@ -69,6 +69,7 @@ def _apply_dow_adjustment(df: pd.DataFrame, dow_factor_dict: dict) -> pd.DataFra
         df.loc[mask, "dow_factor"] = df.loc[mask, "DOW"].map(factors).fillna(1.0)
     df["Predicted"] = (df["Raw_Pred"] * df["dow_factor"]).round(0)
     df["Predicted"] = np.maximum(0, df["Predicted"])
+    df["Predicted"] = np.maximum(0, df["Predicted"])
     return df
 
 

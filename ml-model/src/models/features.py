@@ -43,6 +43,18 @@ def add_calendar_features(df: pd.DataFrame) -> pd.DataFrame:
         mask = (data["Date"] >= start) & (data["Date"] <= end)
         data.loc[mask, "Is_Ramadan"] = 1
 
+    data["Days_Post_Ramadan"] = 9999
+    for start, end in RAMADAN_RANGES:
+        post_mask = data["Date"] > end
+        days_since = (data.loc[post_mask, "Date"] - pd.to_datetime(end)).dt.days
+        data.loc[post_mask, "Days_Post_Ramadan"] = data.loc[post_mask, "Days_Post_Ramadan"].clip(upper=9999)
+        data.loc[post_mask, "Days_Post_Ramadan"] = np.minimum(
+            data.loc[post_mask, "Days_Post_Ramadan"], days_since
+        )
+    data["Days_Post_Ramadan"] = np.where(
+        data["Days_Post_Ramadan"] == 9999, 0, data["Days_Post_Ramadan"]
+    ).clip(0, 60)
+
     data["Is_Post_Rebranding"] = (data["Date"] >= REBRANDING_DATE).astype(int)
     data["Weeks_Since_Rebrand"] = (
         (data["Date"] - pd.to_datetime(REBRANDING_DATE)).dt.days / 7

@@ -27,6 +27,15 @@ from app.ml.engine import (
     run_train_and_evaluate,
 )
 
+_forecast_cache: dict[str, pd.DataFrame] = {}
+
+
+def invalidate_forecast_cache(model_type: str | None = None):
+    if model_type:
+        _forecast_cache.pop(model_type, None)
+    else:
+        _forecast_cache.clear()
+
 
 async def get_forecasts(
     session: AsyncSession,
@@ -54,21 +63,72 @@ async def get_forecasts(
     )
     df["Date"] = pd.to_datetime(df["Date"])
 
-    if item:
-        df = df[df["Item"] == item]
+    df = (
+        df.set_index("Date")
+        .groupby("Item")
+        .resample("D")["Quantity_Sold"]
+        .sum()
+        .fillna(0)
+        .reset_index()
+    )
 
     if df.empty:
         return ForecastPage(data=[], total=0, page=page, page_size=page_size)
 
-    def _run_forecast():
-        return generate_forecast(df, weeks=12, model_type=model_type)
-
-    result_df = await asyncio.to_thread(_run_forecast)
-
-    if start_date:
-        result_df = result_df[pd.to_datetime(result_df["Date"]) >= pd.to_datetime(start_date)]
     if end_date:
-        result_df = result_df[pd.to_datetime(result_df["Date"]) <= pd.to_datetime(end_date)]
+        end_dt = pd.to_datetime(end_date)
+        days_needed = max(14, (end_dt - df["Date"].max()).days + 7)
+        forecast_weeks = int(days_needed / 7) + 1
+    else:
+        forecast_weeks = 4
+
+    cache_key = model_type
+    cached = _forecast_cache.get(cache_key)
+
+    if cached is not None:
+        cache_max = cached["Date"].max()
+        needed_max = df["Date"].max() + pd.Timedelta(weeks=forecast_weeks)
+        if cache_max >= needed_max:
+            result_df = cached.copy()
+        else:
+            cached = None
+
+    if cached is None:
+        def _run_forecast():
+            return generate_forecast(df, weeks=max(forecast_weeks, 8), model_type=model_type)
+
+        result_df = await asyncio.to_thread(_run_forecast)
+        _forecast_cache[cache_key] = result_df.copy()
+    else:
+        result_df = cached.copy()
+
+    forecast_first = result_df["Date"].min() if len(result_df) > 0 else None
+
+    if start_date and end_date:
+        start_dt = pd.to_datetime(start_date)
+        end_dt = pd.to_datetime(end_date)
+        if forecast_first and end_dt < forecast_first:
+            actual = df[
+                (df["Date"] >= start_dt) & (df["Date"] <= end_dt)
+            ].copy()
+            if item:
+                actual = actual[actual["Item"] == item]
+            actual["Predicted"] = actual["Quantity_Sold"]
+            result_df = actual
+        else:
+            result_df = result_df[
+                (pd.to_datetime(result_df["Date"]) >= start_dt)
+                & (pd.to_datetime(result_df["Date"]) <= end_dt)
+            ]
+    elif start_date:
+        start_dt = pd.to_datetime(start_date)
+        result_df = result_df[pd.to_datetime(result_df["Date"]) >= start_dt]
+    elif end_date:
+        end_dt = pd.to_datetime(end_date)
+        result_df = result_df[pd.to_datetime(result_df["Date"]) <= end_dt]
+
+    if item:
+        result_df = result_df[result_df["Item"] == item]
 
     result_df = result_df.sort_values(["Date", "Item"])
     total = len(result_df)
@@ -277,6 +337,7 @@ async def retrain(session: AsyncSession, model_type: str = "xgboost") -> dict:
         )
 
     await session.commit()
+    invalidate_forecast_cache(model_type)
     print(f"Model run saved to DB (type={model_type}, id={run.id})")
 
     return {

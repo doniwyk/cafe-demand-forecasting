@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -71,6 +73,8 @@ function SettingsPage() {
   const cleanup = useCleanup();
   const queryClient = useQueryClient();
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
+  const [syncHus, setSyncHus] = useState(true);
+  const [includeNew, setIncludeNew] = useState(false);
   const { t, i18n } = useTranslation();
 
   const statuses = retrainStatus.data ?? {};
@@ -79,7 +83,7 @@ function SettingsPage() {
 
   const handleTrain = (modelType: string) => {
     retrain.mutate(
-      { model_type: modelType },
+      { model_type: modelType, sync_hus: syncHus, include_new_products: includeNew },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["forecasts", "retrain-status"] });
@@ -91,7 +95,7 @@ function SettingsPage() {
   const handleTrainAll = async () => {
     for (const mt of MODEL_TYPES) {
       if (statuses[mt]?.status === "training") continue;
-      await retrain.mutateAsync({ model_type: mt });
+      await retrain.mutateAsync({ model_type: mt, sync_hus: syncHus, include_new_products: includeNew });
       await queryClient.invalidateQueries({ queryKey: ["forecasts", "retrain-status"] });
     }
   };
@@ -105,6 +109,19 @@ function SettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Checkbox id="sync-hus" checked={syncHus} onCheckedChange={(v) => setSyncHus(!!v)} />
+                <Label htmlFor="sync-hus" className="text-sm">Sync from hus_db before training</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="include-new" checked={includeNew} onCheckedChange={(v) => setIncludeNew(!!v)} disabled={!syncHus} />
+                <Label htmlFor="include-new" className="text-sm">Include new products</Label>
+              </div>
+            </div>
+
+            <Separator />
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{t("settings.trainAllModels")}</span>

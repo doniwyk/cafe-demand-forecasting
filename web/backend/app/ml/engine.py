@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 from app.config import ML_MODELS_DIR
@@ -11,7 +12,6 @@ from src.models.forecaster import (
     train_models,
     load_models,
     predict,
-    generate_future_features,
     train_and_predict,
 )
 from src.models.features import create_features
@@ -19,6 +19,7 @@ from src.evaluation.metrics import generate_abc_analysis
 
 
 VALID_MODEL_TYPES = {"xgboost", "random_forest", "sarimax", "prophet"}
+_FREQUENCY = "daily"
 
 _METADATA_FILE = {
     "xgboost": "model_metadata.json",
@@ -113,113 +114,112 @@ def _ensure_models_loaded(model_type: str = "xgboost"):
     cache["loaded"] = True
 
 
-def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors):
+def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors, frequency: str = _FREQUENCY):
     if model_type == "xgboost":
-        return predict(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
+        return predict(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors, frequency=frequency)
     elif model_type == "random_forest":
         _, _, _, predict_rf = _try_import_rf()
         if predict_rf is None:
             raise ImportError("forecaster_rf module missing required functions")
-        return predict_rf(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
+        return predict_rf(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors, frequency=frequency)
     elif model_type == "sarimax":
         _, _, _, predict_sarimax, _ = _try_import_sarimax()
         if predict_sarimax is None:
             raise ImportError("forecaster_sarimax module missing required functions")
-        return predict_sarimax(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
+        return predict_sarimax(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors, frequency=frequency)
     elif model_type == "prophet":
         _, _, _, predict_prophet, _ = _try_import_prophet()
         if predict_prophet is None:
             raise ImportError("forecaster_prophet module missing required functions")
-        return predict_prophet(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
+        return predict_prophet(df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors, frequency=frequency)
 
 
 def run_predict(df: pd.DataFrame, model_type: str = "xgboost") -> pd.DataFrame:
     _ensure_models_loaded(model_type)
     cache = _models_cache[model_type]
     return _predict_dispatch(
-        model_type,
-        df,
-        cache["item_models"],
-        cache["global_model"],
-        cache["dow_factors"],
+        model_type, df,
+        cache["item_models"], cache["global_model"], cache["dow_factors"],
+        frequency=_FREQUENCY,
     )
 
 
 def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
-    df_weekly = _to_weekly(df_daily)
+    data = _clean_data(df_daily)
 
     if model_type == "xgboost":
-        df_feat = create_features(df_weekly)
-        train_models(df_feat, ML_MODELS_DIR)
-        test_pred = train_and_predict(df_feat)
+        df_feat = create_features(data, frequency=_FREQUENCY)
+        train_models(df_feat, ML_MODELS_DIR, frequency=_FREQUENCY)
+        test_pred = train_and_predict(df_feat, frequency=_FREQUENCY)
     elif model_type == "random_forest":
         train_and_predict_rf, train_models_rf, _, _ = _try_import_rf()
         if train_models_rf is None:
             raise ImportError("forecaster_rf module missing required functions")
-        df_feat = create_features(df_weekly)
-        train_models_rf(df_feat, ML_MODELS_DIR)
-        test_pred = train_and_predict_rf(df_feat)
+        df_feat = create_features(data, frequency=_FREQUENCY)
+        train_models_rf(df_feat, ML_MODELS_DIR, frequency=_FREQUENCY)
+        test_pred = train_and_predict_rf(df_feat, frequency=_FREQUENCY)
     elif model_type == "sarimax":
         train_and_predict_sarimax, train_models_sarimax, _, _, _ = _try_import_sarimax()
         if train_models_sarimax is None:
             raise ImportError("forecaster_sarimax module missing required functions")
-        train_models_sarimax(df_weekly, ML_MODELS_DIR)
-        test_pred = train_and_predict_sarimax(df_weekly)
+        train_models_sarimax(data, ML_MODELS_DIR, frequency=_FREQUENCY)
+        test_pred = train_and_predict_sarimax(data, frequency=_FREQUENCY)
     elif model_type == "prophet":
         train_and_predict_prophet, train_models_prophet, _, _, _ = _try_import_prophet()
         if train_models_prophet is None:
             raise ImportError("forecaster_prophet module missing required functions")
-        train_models_prophet(df_weekly, ML_MODELS_DIR)
-        test_pred = train_and_predict_prophet(df_weekly)
+        train_models_prophet(data, ML_MODELS_DIR, frequency=_FREQUENCY)
+        test_pred = train_and_predict_prophet(data, frequency=_FREQUENCY)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
-    analysis = generate_abc_analysis(test_pred)
-
+    analysis = generate_abc_analysis(test_pred, frequency=_FREQUENCY)
     _models_cache[model_type]["loaded"] = False
     return analysis
 
 
 def run_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
-    df_weekly = _to_weekly(df_daily)
+    data = _clean_data(df_daily)
 
     if model_type == "xgboost":
-        df_feat = create_features(df_weekly)
-        test_pred = train_and_predict(df_feat)
+        df_feat = create_features(data, frequency=_FREQUENCY)
+        test_pred = train_and_predict(df_feat, frequency=_FREQUENCY)
     elif model_type == "random_forest":
         train_and_predict_rf, _, _, _ = _try_import_rf()
         if train_and_predict_rf is None:
             raise ImportError("forecaster_rf module missing required functions")
-        df_feat = create_features(df_weekly)
-        test_pred = train_and_predict_rf(df_feat)
+        df_feat = create_features(data, frequency=_FREQUENCY)
+        test_pred = train_and_predict_rf(df_feat, frequency=_FREQUENCY)
     elif model_type == "sarimax":
         train_and_predict_sarimax, _, _, _, _ = _try_import_sarimax()
         if train_and_predict_sarimax is None:
             raise ImportError("forecaster_sarimax module missing required functions")
-        test_pred = train_and_predict_sarimax(df_weekly)
+        test_pred = train_and_predict_sarimax(data, frequency=_FREQUENCY)
     elif model_type == "prophet":
         train_and_predict_prophet, _, _, _, _ = _try_import_prophet()
         if train_and_predict_prophet is None:
             raise ImportError("forecaster_prophet module missing required functions")
-        test_pred = train_and_predict_prophet(df_weekly)
+        test_pred = train_and_predict_prophet(data, frequency=_FREQUENCY)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
-    return generate_abc_analysis(test_pred)
+    return generate_abc_analysis(test_pred, frequency=_FREQUENCY)
 
 
-def _to_weekly(df: pd.DataFrame) -> pd.DataFrame:
+def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"])
     df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
-    return (
+    df = (
         df.set_index("Date")
         .groupby("Item")
-        .resample("W-MON")["Quantity_Sold"]
+        .resample("D")["Quantity_Sold"]
         .sum()
+        .fillna(0)
         .reset_index()
     )
+    return df
 
 
 def get_model_metadata(model_type: str = "xgboost") -> dict | None:
@@ -233,16 +233,17 @@ def get_model_metadata(model_type: str = "xgboost") -> dict | None:
 def generate_forecast(
     df_daily: pd.DataFrame, weeks: int = 12, model_type: str = "xgboost"
 ) -> pd.DataFrame:
-    import numpy as np
-    df_weekly = _to_weekly(df_daily)
+    data = _clean_data(df_daily)
+    frequency = _FREQUENCY
 
     if model_type in ("xgboost", "random_forest"):
-        max_date = df_weekly["Date"].max()
-        items = df_weekly["Item"].unique()
+        max_date = data["Date"].max()
+        items = data["Item"].unique()
         future_dates = pd.date_range(
-            start=max_date + pd.Timedelta(weeks=1), periods=weeks, freq="W-MON"
+            start=max_date + pd.Timedelta(days=1),
+            periods=weeks * 7,
+            freq="D",
         )
-
         if len(future_dates) == 0:
             return pd.DataFrame()
 
@@ -250,7 +251,7 @@ def generate_forecast(
         cache = _models_cache[model_type]
 
         last_known = (
-            df_weekly.sort_values("Date")
+            data.sort_values("Date")
             .groupby("Item")
             .last()["Quantity_Sold"]
             .reset_index()
@@ -258,54 +259,96 @@ def generate_forecast(
         last_map = dict(zip(last_known["Item"], last_known["Quantity_Sold"]))
 
         all_predictions = []
-        current = df_weekly.copy()
+        current = data.copy()
+        days = list(future_dates)
+
+        for batch_start in range(0, len(days), 7):
+            batch_dates = days[batch_start:batch_start + 7]
+            batch_rows = []
+            for d in batch_dates:
+                df = pd.DataFrame(
+                    {"Date": [d] * len(items), "Item": np.array(items)}
+                )
+                df["Quantity_Sold"] = df["Item"].map(last_map).fillna(1)
+                batch_rows.append(df)
+
+            batch_df = pd.concat(batch_rows, ignore_index=True)
+            temp = pd.concat([current, batch_df], ignore_index=True)
+            feat = create_features(temp, frequency=frequency)
+            batch_features = feat[feat["Date"].isin(batch_dates)]
+
+            pred_result = _predict_dispatch(
+                model_type,
+                batch_features, cache["item_models"],
+                cache["global_model"], cache["dow_factors"],
+                frequency=frequency,
+            )
+
+            pred_df = batch_features.copy()
+            pred_df["Predicted"] = pred_result["Predicted"].values
+            all_predictions.append(pred_df)
+
+            for _, row in pred_df.iterrows():
+                batch_df.loc[
+                    (batch_df["Date"] == row["Date"]) & (batch_df["Item"] == row["Item"]),
+                    "Quantity_Sold",
+                ] = row["Predicted"]
+
+            current = pd.concat([current, batch_df], ignore_index=True)
+
+        result = pd.concat(all_predictions, ignore_index=True)
+        print(f"[{model_type}] Daily recursive forecast for {weeks * 7} days ({len(range(0, len(days), 7))} batches)")
+        return result
+
+    elif model_type in ("sarimax", "prophet"):
+        max_date = data["Date"].max()
+        items = data["Item"].unique()
+        future_dates = pd.date_range(
+            start=max_date + pd.Timedelta(days=1),
+            periods=weeks * 7,
+            freq="D",
+        )
+        if len(future_dates) == 0:
+            return pd.DataFrame()
+
+        _ensure_models_loaded(model_type)
+        cache = _models_cache[model_type]
+
+        last_known = (
+            data.sort_values("Date")
+            .groupby("Item")
+            .last()["Quantity_Sold"]
+            .reset_index()
+        )
+        last_map = dict(zip(last_known["Item"], last_known["Quantity_Sold"]))
+
+        all_predictions = []
+        current = data.copy()
 
         for next_date in future_dates:
             next_df = pd.DataFrame(
                 {"Date": [next_date] * len(items), "Item": np.array(items)}
             )
             next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
-
             temp = pd.concat([current, next_df], ignore_index=True)
-            feat = create_features(temp)
-            future_rows = feat[feat["Date"] == next_date]
 
+            future_row = temp[temp["Date"] == next_date].copy()
             pred_result = _predict_dispatch(
                 model_type,
-                future_rows,
-                cache["item_models"],
-                cache["global_model"],
-                cache["dow_factors"],
+                future_row, cache["item_models"],
+                cache["global_model"], cache["dow_factors"],
+                frequency=_FREQUENCY,
             )
-
-            pred_df = future_rows.copy()
-            pred_df["Predicted"] = pred_result["Predicted"].values
-            all_predictions.append(pred_df)
+            pred_result["Date"] = next_date
+            pred_result["Item"] = future_row["Item"].values
+            all_predictions.append(pred_result[["Date", "Item", "Predicted"]])
 
             next_df["Quantity_Sold"] = pd.Series(
                 pred_result["Predicted"].values, index=next_df.index
             )
             current = pd.concat([current, next_df], ignore_index=True)
 
-        print(f"[{model_type}] Recursive forecast for {weeks} weeks")
+        print(f"[{model_type}] Daily recursive forecast for {weeks * 7} days")
         return pd.concat(all_predictions, ignore_index=True)
-
-    elif model_type == "prophet":
-        df_feat = create_features(df_weekly)
-        _, _, _, _, generate_future_weekly_prophet = _try_import_prophet()
-        if generate_future_weekly_prophet is None:
-            raise ImportError("forecaster_prophet module missing required functions")
-        future_features = generate_future_weekly_prophet(df_feat, future_weeks=weeks)
-        print(f"[{model_type}] Forecast inference started for {weeks} weeks")
-        return run_predict(future_features, model_type)
-
-    elif model_type == "sarimax":
-        df_feat = create_features(df_weekly)
-        _, _, _, _, generate_future_weekly_sarimax = _try_import_sarimax()
-        if generate_future_weekly_sarimax is None:
-            raise ImportError("forecaster_sarimax module missing required functions")
-        future_features = generate_future_weekly_sarimax(df_feat, future_weeks=weeks)
-        print(f"[{model_type}] Forecast inference started for {weeks} weeks")
-        return run_predict(future_features, model_type)
 
     return pd.DataFrame()

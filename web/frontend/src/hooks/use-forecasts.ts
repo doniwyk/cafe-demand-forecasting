@@ -35,7 +35,7 @@ export function usePredict() {
 }
 
 export function useRetrain() {
-  return useMutation<RetrainResponse, Error, { model_type: string; max_items?: number }>({
+  return useMutation<RetrainResponse, Error, { model_type: string; max_items?: number; sync_hus?: boolean; include_new_products?: boolean }>({
     mutationFn: (params) => api.forecasts.retrain(params),
   });
 }
