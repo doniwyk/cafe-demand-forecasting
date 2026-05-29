@@ -37,6 +37,7 @@
     "medianPeriodAccuracy": "Akurasi Median Periode",
     "wmape": "wMAPE",
     "rSquared": "R-kuadrat",
+    "rmse": "RMSE",
     "items": "Item",
     "accuracy": "Akurasi",
     "accuracyByClass": "Akurasi berdasarkan Kelas"
@@ -49,6 +50,8 @@
     "wmapeDesc": "Semakin rendah semakin baik",
     "mae": "MAE",
     "maeDesc": "Rata-rata kesalahan absolut",
+    "rmse": "RMSE",
+    "rmseDesc": "Akar kuadrat rata-rata kesalahan",
     "medianPeriodAccuracy": "Akurasi Median Periode",
     "medianPeriodAccuracyDesc": "Akurasi prediksi median",
     "periodsWithin20pct": "Periode dalam +/-20%",

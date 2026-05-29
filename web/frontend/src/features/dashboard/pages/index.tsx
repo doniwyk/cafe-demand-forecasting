@@ -123,8 +123,8 @@ export function DashboardPage() {
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">{t("dashboard.itemsForecasted")}</p>
-                  <p className="text-xl font-bold">{forecastItemCount}</p>
+                  <p className="text-xs text-muted-foreground">{t("dashboard.rmse")}</p>
+                  <p className="text-xl font-bold">{forecastSummary.data.global_metrics.rmse.toFixed(2)}</p>
                 </div>
               </div>
 

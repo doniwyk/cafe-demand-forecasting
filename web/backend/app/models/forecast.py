@@ -18,6 +18,7 @@ class ModelMetrics(BaseModel):
     r2: float
     wmape: float
     mae: float
+    rmse: float = 0.0
     median_period_accuracy: float = 0.0
     periods_within_20pct: float = 0.0
     periods_within_50pct: float = 0.0

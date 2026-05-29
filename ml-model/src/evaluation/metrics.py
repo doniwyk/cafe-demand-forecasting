@@ -1,5 +1,6 @@
 import pandas as pd
-from sklearn.metrics import mean_absolute_error, r2_score
+import math
+from sklearn.metrics import mean_absolute_error, r2_score, mean_squared_error
 from typing import Dict, Any
 
 
@@ -26,18 +27,22 @@ def per_period_within_threshold(y_true: pd.Series, y_pred: pd.Series, item_col: 
 
 
 def compute_metrics(y_true, y_pred) -> Dict[str, float]:
+    mse = mean_squared_error(y_true, y_pred)
     return {
         "r2": round(r2_score(y_true, y_pred), 4),
         "wmape": round(weighted_mape(y_true, y_pred), 2),
         "mae": round(mean_absolute_error(y_true, y_pred), 2),
+        "rmse": round(float(math.sqrt(mse)), 2),
     }
 
 
 def compute_item_metrics(y_true, y_pred, item_col) -> Dict[str, float]:
+    mse = mean_squared_error(y_true, y_pred)
     return {
         "r2": round(r2_score(y_true, y_pred), 4),
         "wmape": round(weighted_mape(y_true, y_pred), 2),
         "mae": round(mean_absolute_error(y_true, y_pred), 2),
+        "rmse": round(float(math.sqrt(mse)), 2),
         "median_period_accuracy": per_period_median_accuracy(y_true, y_pred, item_col),
         "periods_within_20pct": per_period_within_threshold(y_true, y_pred, item_col, 0.2),
         "periods_within_50pct": per_period_within_threshold(y_true, y_pred, item_col, 0.5),

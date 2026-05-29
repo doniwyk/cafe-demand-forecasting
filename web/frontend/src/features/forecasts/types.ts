@@ -15,6 +15,7 @@ export interface ModelMetrics {
   r2: number;
   wmape: number;
   mae: number;
+  rmse: number;
   median_period_accuracy: number;
   periods_within_20pct: number;
   periods_within_50pct: number;

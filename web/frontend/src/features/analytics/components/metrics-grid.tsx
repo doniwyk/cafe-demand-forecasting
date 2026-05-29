@@ -31,6 +31,11 @@ export function MetricsGrid({ metrics }: { metrics: Record<string, number> | und
       description: t("analytics.maeDesc"),
     },
     {
+      label: t("analytics.rmse"),
+      value: metrics["rmse"]?.toFixed(2) ?? "-",
+      description: t("analytics.rmseDesc"),
+    },
+    {
       label: t("analytics.medianPeriodAccuracy"),
       value: `${(metrics["median_period_accuracy"] ?? 0).toFixed(1)}%`,
       description: t("analytics.medianPeriodAccuracyDesc"),

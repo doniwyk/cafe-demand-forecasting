@@ -37,6 +37,7 @@
     "medianPeriodAccuracy": "Median Period Accuracy",
     "wmape": "wMAPE",
     "rSquared": "R-squared",
+    "rmse": "RMSE",
     "items": "Items",
     "accuracy": "Accuracy",
     "accuracyByClass": "Accuracy by Class"
@@ -49,6 +50,8 @@
     "wmapeDesc": "Lower is better",
     "mae": "MAE",
     "maeDesc": "Mean absolute error",
+    "rmse": "RMSE",
+    "rmseDesc": "Root mean squared error",
     "medianPeriodAccuracy": "Median Period Accuracy",
     "medianPeriodAccuracyDesc": "Median prediction accuracy",
     "periodsWithin20pct": "Periods within +/-20%",

@@ -204,6 +204,7 @@ class ModelRun(Base):
     r2: Mapped[Optional[float]] = mapped_column(Float)
     wmape: Mapped[Optional[float]] = mapped_column(Float)
     mae: Mapped[Optional[float]] = mapped_column(Float)
+    rmse: Mapped[Optional[float]] = mapped_column(Float)
     volume_accuracy: Mapped[Optional[float]] = mapped_column(Float)
     median_period_accuracy: Mapped[Optional[float]] = mapped_column(Float)
     periods_within_20pct: Mapped[Optional[float]] = mapped_column(Float)

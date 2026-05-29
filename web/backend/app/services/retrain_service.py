@@ -220,6 +220,7 @@ def _run_training_sync(model_type: str, max_items: int | None) -> dict[str, Any]
             r2=_as_float(gm.get("r2")),
             wmape=_as_float(gm.get("wmape")),
             mae=_as_float(gm.get("mae")),
+            rmse=_as_float(gm.get("rmse")),
             volume_accuracy=_as_float(gm.get("median_period_accuracy")),
             median_period_accuracy=_as_float(gm.get("median_period_accuracy")),
             periods_within_20pct=_as_float(gm.get("periods_within_20pct")),
