@@ -4,7 +4,9 @@
     "cancel": "Batal",
     "clear": "Hapus",
     "close": "Tutup",
-    "noData": "Data tidak tersedia"
+    "noData": "Data tidak tersedia",
+    "rowsPerPage": "Baris per halaman",
+    "pageOf": "Halaman {{page}} dari {{total}}"
   },
   "sidebar": {
     "navigation": "Navigasi",

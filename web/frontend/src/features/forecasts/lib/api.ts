@@ -1,0 +1,52 @@
+import { http } from "@/lib/request";
+import type {
+  ForecastPage,
+  ForecastSummary,
+  PredictResponse,
+  RetrainResponse,
+  RetrainStatusMap,
+} from "@/features/forecasts/types";
+
+export const forecastsApi = {
+  list(params?: {
+    item?: string;
+    start_date?: string;
+    end_date?: string;
+    model_type?: string;
+    page?: number;
+    page_size?: number;
+  }) {
+    return http.get<ForecastPage>("/forecasts", params);
+  },
+  summary(model_type?: string) {
+    return http.get<ForecastSummary>("/forecasts/summary", { model_type });
+  },
+  predict(data: { items: string[]; weeks?: number; model_type?: string }) {
+    return http.post<PredictResponse>("/forecasts/predict", data);
+  },
+  retrain(params: {
+    model_type: string;
+    max_items?: number;
+    sync_hus?: boolean;
+    include_new_products?: boolean;
+  }) {
+    return http.post<RetrainResponse>("/forecasts/retrain", params);
+  },
+  retrainCancel(model_type: string) {
+    return http.post<{ status: string; model_type?: string; message?: string }>(
+      "/forecasts/retrain/cancel",
+      { model_type },
+    );
+  },
+  retrainStatus() {
+    return http.get<RetrainStatusMap>("/forecasts/retrain/status", { tail: 200 });
+  },
+  cleanup() {
+    return http.post<{
+      deleted_runs: number;
+      deleted_forecasts: number;
+      deleted_class_metrics: number;
+      deleted_top_items: number;
+    }>("/forecasts/cleanup");
+  },
+};

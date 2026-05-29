@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { analyticsApi } from "@/features/analytics/lib/api";
 
 export function useABCAnalysis(modelType?: string) {
   return useQuery({
     queryKey: ["analytics", "abc", modelType],
-    queryFn: () => api.analytics.abc(modelType),
+    queryFn: () => analyticsApi.abc(modelType),
   });
 }
 
 export function useModelMetrics(modelType?: string) {
   return useQuery({
     queryKey: ["analytics", "metrics", modelType],
-    queryFn: () => api.analytics.metrics(modelType),
+    queryFn: () => analyticsApi.metrics(modelType),
   });
 }
 
@@ -26,6 +26,6 @@ export function useAssociationRules(
 
   return useQuery({
     queryKey: ["analytics", "association-rules", modelType, params],
-    queryFn: () => api.analytics.associationRules(queryParams),
+    queryFn: () => analyticsApi.associationRules(queryParams),
   });
 }

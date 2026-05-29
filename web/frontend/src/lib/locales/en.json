@@ -4,7 +4,9 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
-    "noData": "No data available"
+    "noData": "No data available",
+    "rowsPerPage": "Rows per page",
+    "pageOf": "Page {{page}} of {{total}}"
   },
   "sidebar": {
     "navigation": "Navigation",

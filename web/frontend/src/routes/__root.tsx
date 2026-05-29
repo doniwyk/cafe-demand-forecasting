@@ -51,7 +51,7 @@ function ModelSelector() {
     <div className="flex items-center gap-2" data-tour="model-selector">
       <BrainCircuitIcon className="size-4 text-muted-foreground" />
       <Select value={modelType} onValueChange={(v) => setModelType(v as ModelType)}>
-        <SelectTrigger size="sm" className="w-[160px]">
+        <SelectTrigger size="sm" className="w-40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
