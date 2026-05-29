@@ -3,17 +3,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session
+from app.core.deps import get_session
 from app.models.material import MaterialRequirementPage
 from app.services import material_service
 from app.services import recipe_material_service
 
 router = APIRouter(prefix="/api/materials", tags=["materials"])
-
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 
 @router.get("/daily", response_model=MaterialRequirementPage)
@@ -25,9 +20,7 @@ async def get_daily_materials(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):
-    return await material_service.get_daily_materials(
-        session, material, start_date, end_date, page, page_size
-    )
+    return await material_service.get_daily_materials(session, material, start_date, end_date, page, page_size)
 
 
 @router.get("/forecast", response_model=MaterialRequirementPage)

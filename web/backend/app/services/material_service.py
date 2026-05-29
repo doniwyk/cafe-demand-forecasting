@@ -4,11 +4,15 @@ import asyncio
 from datetime import date
 
 import pandas as pd
-from sqlalchemy import select, func, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import RawMaterialRequirement
+from app.db.engine import async_session
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
+from app.repositories.material_repository import MaterialRepository
+from app.ml.engine import generate_forecast
+from app.repositories.forecast_repository import ForecastRepository
+from app.services.forecast_service import _forecast_cache
 
 
 async def get_daily_materials(
@@ -19,26 +23,10 @@ async def get_daily_materials(
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    query = select(RawMaterialRequirement)
-    if material:
-        query = query.where(RawMaterialRequirement.raw_material.ilike(f"%{material}%"))
-    if start_date:
-        query = query.where(
-            RawMaterialRequirement.date >= date.fromisoformat(start_date)
-        )
-    if end_date:
-        query = query.where(RawMaterialRequirement.date <= date.fromisoformat(end_date))
-
-    count_q = select(func.count()).select_from(query.subquery())
-    total = (await session.execute(count_q)).scalar() or 0
-
-    query = query.order_by(
-        RawMaterialRequirement.date, RawMaterialRequirement.raw_material
+    repo = MaterialRepository(session)
+    rows, total = await repo.get_daily_materials(
+        material, start_date, end_date, page, page_size
     )
-    query = query.offset((page - 1) * page_size).limit(page_size)
-
-    result = await session.execute(query)
-    rows = result.scalars().all()
 
     return MaterialRequirementPage(
         data=[
@@ -65,25 +53,14 @@ async def get_material_forecast(
     model_type: str | None = None,
 ) -> MaterialRequirementPage:
     from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
-    from app.ml.engine import generate_forecast
-    from app.services.forecast_service import _forecast_cache
     from src.models.raw_materials import RawMaterialProcessor
 
     model_type = model_type or "xgboost"
-    sales_q = text(
-        "SELECT dis.date, i.name as item, dis.quantity_sold "
-        "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
-    )
-    result = await session.execute(sales_q)
-    rows = result.fetchall()
+    repo = ForecastRepository(session)
+    df = await repo.get_sales_dataframe()
 
-    if not rows:
+    if df.empty:
         return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
-
-    df = pd.DataFrame(
-        [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
-    )
-    df["Date"] = pd.to_datetime(df["Date"])
 
     cache_key = model_type
     cached = _forecast_cache.get(cache_key)
@@ -107,16 +84,7 @@ async def get_material_forecast(
     )
     requirements = processor.compute_material_requirements(forecast_df)
 
-    unit_map = {}
-    try:
-        menu = pd.read_csv(MENU_BOM_PATH)
-        for _, row in menu.iterrows():
-            unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
-        cond = pd.read_csv(CONDIMENT_BOM_PATH)
-        for _, row in cond.iterrows():
-            unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
-    except Exception:
-        pass
+    unit_map = _build_unit_map(MENU_BOM_PATH, CONDIMENT_BOM_PATH)
 
     if material:
         requirements = requirements[
@@ -149,3 +117,17 @@ async def get_material_forecast(
         page=page,
         page_size=page_size,
     )
+
+
+def _build_unit_map(menu_bom_path, condiment_bom_path) -> dict[str, str]:
+    unit_map = {}
+    try:
+        menu = pd.read_csv(menu_bom_path)
+        for _, row in menu.iterrows():
+            unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
+        cond = pd.read_csv(condiment_bom_path)
+        for _, row in cond.iterrows():
+            unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
+    except Exception:
+        pass
+    return unit_map

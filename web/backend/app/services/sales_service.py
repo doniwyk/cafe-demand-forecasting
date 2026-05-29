@@ -1,17 +1,5 @@
 from __future__ import annotations
 
-from datetime import date
-
-from sqlalchemy import select, func, distinct
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.models import (
-    Category,
-    Item,
-    DailyItemSale,
-    DailyCategorySale,
-    DailyTotalSale,
-)
 from app.models.sales import (
     DailySale,
     DailySalePage,
@@ -19,32 +7,20 @@ from app.models.sales import (
     DailyCategorySale as DailyCategorySaleSchema,
     ItemInfo,
 )
+from app.repositories.sales_repository import SalesRepository
+from app.core.deps import get_session
 
 
 async def get_daily_sales(
-    session: AsyncSession,
+    session,
     item: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> DailySalePage:
-    query = select(DailyItemSale, Item.name).join(Item)
-    if item:
-        query = query.where(Item.name == item)
-    if start_date:
-        query = query.where(DailyItemSale.date >= date.fromisoformat(start_date))
-    if end_date:
-        query = query.where(DailyItemSale.date <= date.fromisoformat(end_date))
-
-    count_q = select(func.count()).select_from(query.subquery())
-    total = (await session.execute(count_q)).scalar() or 0
-
-    query = query.order_by(DailyItemSale.date, Item.name)
-    query = query.offset((page - 1) * page_size).limit(page_size)
-
-    result = await session.execute(query)
-    rows = result.all()
+    repo = SalesRepository(session)
+    rows, total = await repo.get_daily_sales(item, start_date, end_date, page, page_size)
 
     return DailySalePage(
         data=[
@@ -62,23 +38,14 @@ async def get_daily_sales(
 
 
 async def get_daily_total_sales(
-    session: AsyncSession,
+    session,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> list[DailyTotalSaleSchema]:
-    query = select(DailyTotalSale)
-    if start_date:
-        query = query.where(DailyTotalSale.date >= date.fromisoformat(start_date))
-    if end_date:
-        query = query.where(DailyTotalSale.date <= date.fromisoformat(end_date))
-
-    query = query.order_by(DailyTotalSale.date)
-    query = query.offset((page - 1) * page_size).limit(page_size)
-
-    result = await session.execute(query)
-    rows = result.scalars().all()
+    repo = SalesRepository(session)
+    rows = await repo.get_daily_total_sales(start_date, end_date, page, page_size)
 
     return [
         DailyTotalSaleSchema(
@@ -93,26 +60,15 @@ async def get_daily_total_sales(
 
 
 async def get_daily_category_sales(
-    session: AsyncSession,
+    session,
     category: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
 ) -> list[DailyCategorySaleSchema]:
-    query = select(DailyCategorySale)
-    if category:
-        query = query.where(DailyCategorySale.category == category)
-    if start_date:
-        query = query.where(DailyCategorySale.date >= date.fromisoformat(start_date))
-    if end_date:
-        query = query.where(DailyCategorySale.date <= date.fromisoformat(end_date))
-
-    query = query.order_by(DailyCategorySale.date)
-    query = query.offset((page - 1) * page_size).limit(page_size)
-
-    result = await session.execute(query)
-    rows = result.scalars().all()
+    repo = SalesRepository(session)
+    rows = await repo.get_daily_category_sales(category, start_date, end_date, page, page_size)
 
     return [
         DailyCategorySaleSchema(
@@ -127,17 +83,12 @@ async def get_daily_category_sales(
     ]
 
 
-async def get_items(session: AsyncSession) -> list[ItemInfo]:
-    query = select(Item.name, Category.name).outerjoin(Category).order_by(Item.name)
-    result = await session.execute(query)
-    return [ItemInfo(name=row[0], category=row[1]) for row in result.all()]
+async def get_items(session) -> list[ItemInfo]:
+    repo = SalesRepository(session)
+    rows = await repo.get_items()
+    return [ItemInfo(name=row[0], category=row[1]) for row in rows]
 
 
-async def get_categories(session: AsyncSession) -> list[str]:
-    query = (
-        select(DailyCategorySale.category)
-        .distinct()
-        .order_by(DailyCategorySale.category)
-    )
-    result = await session.execute(query)
-    return [row[0] for row in result.all()]
+async def get_categories(session) -> list[str]:
+    repo = SalesRepository(session)
+    return await repo.get_categories()

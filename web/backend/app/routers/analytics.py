@@ -1,16 +1,11 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session
+from app.core.deps import get_session
 from app.models.analytics import ABCAnalysisResponse, AssociationRule
 from app.services import analytics_service
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
-
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 
 @router.get("/abc", response_model=ABCAnalysisResponse)
@@ -44,6 +39,4 @@ async def get_association_rules(
     min_lift: float = Query(1.0, ge=0),
     model_type: str | None = Query(None),
 ):
-    return await analytics_service.get_association_rules(
-        session, min_confidence, min_lift, model_type
-    )
+    return await analytics_service.get_association_rules(session, min_confidence, min_lift, model_type)

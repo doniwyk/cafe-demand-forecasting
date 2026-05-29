@@ -1,20 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session
+from app.core.deps import get_session, get_current_user
 from app.services.auth import auth_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-security = HTTPBearer(auto_error=False)
-
-
-async def get_session():
-    async with async_session() as session:
-        yield session
 
 
 class LoginRequest(BaseModel):
@@ -39,10 +32,8 @@ class UserResponse(BaseModel):
 async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)):
     user = await auth_service.authenticate(session, body.email, body.password)
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     token = auth_service.create_access_token(user.id)
     return LoginResponse(
         access_token=token,
@@ -51,16 +42,5 @@ async def login(body: LoginRequest, session: AsyncSession = Depends(get_session)
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-    session: AsyncSession = Depends(get_session),
-):
-    if credentials is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    user_id = auth_service.decode_access_token(credentials.credentials)
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user = await auth_service.get_user_by_id(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+async def get_me(user=Depends(get_current_user)):
     return user

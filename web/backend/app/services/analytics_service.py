@@ -4,15 +4,16 @@ import asyncio
 import json
 
 import pandas as pd
-from sqlalchemy import select, func, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import ItemABC, AssociationRule as DBAssociationRule, Item, DailyItemSale
+from app.db.models import AssociationRule as DBAssociationRule
 from app.models.analytics import (
     ABCItem,
     ABCAnalysisResponse,
     AssociationRule as AssociationRuleResponse,
 )
+from app.repositories.sales_repository import SalesRepository
+from app.repositories.forecast_repository import ForecastRepository
 from app.ml.engine import generate_forecast
 
 
@@ -21,23 +22,15 @@ async def get_abc_analysis(
     model_type: str | None = None,
 ) -> ABCAnalysisResponse:
     if model_type:
-        sales_q = text(
-            "SELECT dis.date, i.name as item, dis.quantity_sold "
-            "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
-        )
-        result = await session.execute(sales_q)
-        rows = result.fetchall()
-        if not rows:
+        repo = ForecastRepository(session)
+        df = await repo.get_sales_dataframe()
+        if df.empty:
             return ABCAnalysisResponse(class_metrics={}, classifications=[])
-        df = pd.DataFrame(
-            [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
-        )
-        df["Date"] = pd.to_datetime(df["Date"])
 
-        def _run_forecast():
+        def _run():
             return generate_forecast(df, weeks=12, model_type=model_type)
 
-        forecast_df = await asyncio.to_thread(_run_forecast)
+        forecast_df = await asyncio.to_thread(_run)
 
         item_vol = (
             forecast_df.groupby("Item")["Predicted"]
@@ -50,21 +43,101 @@ async def get_abc_analysis(
             for _, row in item_vol.iterrows()
         ]
     else:
-        item_vol_q = (
-            select(
-                Item.name,
-                func.sum(DailyItemSale.quantity_sold).label("total_vol"),
-            )
-            .join(DailyItemSale, Item.id == DailyItemSale.item_id)
-            .group_by(Item.id, Item.name)
-            .order_by(text("total_vol DESC"))
-        )
-        result = await session.execute(item_vol_q)
-        rows = result.all()
+        repo = SalesRepository(session)
+        rows = await repo.get_item_volumes()
 
     if not rows:
         return ABCAnalysisResponse(class_metrics={}, classifications=[])
 
+    return _compute_abc_classification(rows)
+
+
+async def get_metrics(
+    session: AsyncSession, model_type: str | None = None
+) -> dict:
+    repo = ForecastRepository(session)
+    run = await repo.get_active_run(model_type)
+    if run is None:
+        return {
+            "r2": 0, "wmape": 0, "mae": 0,
+            "median_period_accuracy": 0, "periods_within_20pct": 0, "periods_within_50pct": 0,
+        }
+    return {
+        "r2": run.r2 or 0,
+        "wmape": run.wmape or 0,
+        "mae": run.mae or 0,
+        "median_period_accuracy": run.median_period_accuracy or 0,
+        "periods_within_20pct": run.periods_within_20pct or 0,
+        "periods_within_50pct": run.periods_within_50pct or 0,
+    }
+
+
+async def get_top_items(session: AsyncSession, n: int = 20) -> list[dict]:
+    repo = SalesRepository(session)
+    rows = await repo.get_top_items(n)
+    return [
+        {"item": row.name, "total_quantity": float(row.total_qty)}
+        for row in rows
+    ]
+
+
+async def get_association_rules(
+    session: AsyncSession,
+    min_confidence: float = 0.3,
+    min_lift: float = 1.0,
+    model_type: str | None = None,
+) -> list[AssociationRuleResponse]:
+    repo = ForecastRepository(session)
+    items_with_models: set[str] = set()
+
+    if model_type:
+        run = await repo.get_active_run(model_type)
+        if run is None:
+            return []
+        items_with_models = await repo.get_items_with_models(run.id)
+        if not items_with_models:
+            return []
+
+    rows = await repo.get_association_rules(min_confidence, min_lift)
+    results: list[AssociationRuleResponse] = []
+
+    for row in rows:
+        if items_with_models:
+            con_items = _parse_rule_items(row.consequents)
+            if con_items and con_items.isdisjoint(items_with_models):
+                continue
+
+        results.append(
+            AssociationRuleResponse(
+                antecedents=row.antecedents,
+                consequents=row.consequents,
+                support=row.support,
+                confidence=row.confidence,
+                lift=row.lift,
+            )
+        )
+
+    return results
+
+
+def _parse_rule_items(raw: str) -> set[str]:
+    text_value = (raw or "").strip()
+    if not text_value:
+        return set()
+    cleaned = (
+        text_value.replace("{", "").replace("}", "")
+        .replace("[", "").replace("]", "")
+        .replace("(", "").replace(")", "")
+        .replace("'", "").replace('"', "")
+    )
+    return {
+        part.strip().lower()
+        for part in cleaned.split(",")
+        if part.strip()
+    }
+
+
+def _compute_abc_classification(rows) -> ABCAnalysisResponse:
     total = sum(r.total_vol for r in rows)
     cumulative = 0
     class_metrics = {
@@ -97,124 +170,3 @@ async def get_abc_analysis(
         class_metrics=class_metrics,
         classifications=classifications,
     )
-
-
-async def get_metrics(session: AsyncSession, model_type: str | None = None) -> dict:
-    from app.db.models import ModelRun
-
-    run_q = select(ModelRun).where(ModelRun.is_active == True)
-    if model_type:
-        run_q = run_q.where(ModelRun.model_type == model_type)
-    run_q = run_q.order_by(ModelRun.trained_at.desc()).limit(1)
-    run = (await session.execute(run_q)).scalar_one_or_none()
-    if run is None:
-        return {"r2": 0, "wmape": 0, "mae": 0, "median_period_accuracy": 0, "periods_within_20pct": 0, "periods_within_50pct": 0}
-    return {
-        "r2": run.r2 or 0,
-        "wmape": run.wmape or 0,
-        "mae": run.mae or 0,
-        "median_period_accuracy": run.median_period_accuracy or 0,
-        "periods_within_20pct": run.periods_within_20pct or 0,
-        "periods_within_50pct": run.periods_within_50pct or 0,
-    }
-
-
-async def get_top_items(session: AsyncSession, n: int = 20) -> list[dict]:
-    query = (
-        select(
-            Item.name,
-            func.sum(DailyItemSale.quantity_sold).label("total_qty"),
-        )
-        .join(DailyItemSale, Item.id == DailyItemSale.item_id)
-        .group_by(Item.id, Item.name)
-        .order_by(text("total_qty DESC"))
-        .limit(n)
-    )
-    result = await session.execute(query)
-    return [
-        {"item": row.name, "total_quantity": float(row.total_qty)}
-        for row in result.all()
-    ]
-
-
-async def get_association_rules(
-    session: AsyncSession,
-    min_confidence: float = 0.3,
-    min_lift: float = 1.0,
-    model_type: str | None = None,
-) -> list[AssociationRuleResponse]:
-    items_with_models: set[str] = set()
-    if model_type:
-        from app.db.models import ModelRun
-
-        run_q = (
-            select(ModelRun)
-            .where(ModelRun.is_active == True)
-            .where(ModelRun.model_type == model_type)
-            .order_by(ModelRun.trained_at.desc())
-            .limit(1)
-        )
-        run = (await session.execute(run_q)).scalar_one_or_none()
-        if run is None:
-            return []
-
-        try:
-            items_with_models = {
-                str(item).strip().lower()
-                for item in json.loads(run.items_with_models or "[]")
-                if str(item).strip()
-            }
-        except (TypeError, json.JSONDecodeError):
-            items_with_models = set()
-
-        if not items_with_models:
-            return []
-
-    def _parse_rule_items(raw: str) -> set[str]:
-        text_value = (raw or "").strip()
-        if not text_value:
-            return set()
-        cleaned = (
-            text_value.replace("{", "")
-            .replace("}", "")
-            .replace("[", "")
-            .replace("]", "")
-            .replace("(", "")
-            .replace(")", "")
-            .replace("'", "")
-            .replace('"', "")
-        )
-        return {
-            part.strip().lower()
-            for part in cleaned.split(",")
-            if part.strip()
-        }
-
-    query = (
-        select(DBAssociationRule)
-        .where(DBAssociationRule.confidence >= min_confidence)
-        .where(DBAssociationRule.lift >= min_lift)
-        .order_by(DBAssociationRule.lift.desc())
-        .limit(100)
-    )
-    result = await session.execute(query)
-    rows = result.scalars().all()
-    results: list[AssociationRuleResponse] = []
-    for row in rows:
-        if items_with_models:
-            con_items = _parse_rule_items(row.consequents)
-            # Keep rules whose predicted basket consequence belongs to the selected model's item set.
-            if con_items and con_items.isdisjoint(items_with_models):
-                continue
-
-        results.append(
-            AssociationRuleResponse(
-                antecedents=row.antecedents,
-                consequents=row.consequents,
-                support=row.support,
-                confidence=row.confidence,
-                lift=row.lift,
-            )
-        )
-
-    return results
