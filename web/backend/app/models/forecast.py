@@ -54,6 +54,7 @@ class RetrainRequest(BaseModel):
     max_items: int | None = None
     sync_hus: bool = False
     include_new_products: bool = False
+    end_date: str | None = None
 
 
 class PredictResponse(BaseModel):

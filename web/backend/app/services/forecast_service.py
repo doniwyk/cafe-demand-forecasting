@@ -23,6 +23,19 @@ from app.repositories.forecast_repository import ForecastRepository
 _forecast_cache: dict[str, pd.DataFrame] = {}
 
 
+async def filter_sales_to_training_cutoff(
+    session: AsyncSession, df: pd.DataFrame, model_type: str
+) -> pd.DataFrame:
+    from app.repositories.forecast_repository import ForecastRepository
+
+    repo = ForecastRepository(session)
+    run = await repo.get_active_run(model_type)
+    if run and run.date_range_end:
+        cutoff = pd.to_datetime(run.date_range_end)
+        df = df[df["Date"] <= cutoff]
+    return df
+
+
 def invalidate_forecast_cache(model_type: str | None = None):
     if model_type:
         _forecast_cache.pop(model_type, None)
@@ -45,6 +58,8 @@ async def get_forecasts(
 
     if df.empty:
         return ForecastPage(data=[], total=0, page=page, page_size=page_size)
+
+    df = await filter_sales_to_training_cutoff(session, df, model_type)
 
     df = _resample_daily(df)
 

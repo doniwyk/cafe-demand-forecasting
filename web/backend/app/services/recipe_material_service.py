@@ -21,11 +21,28 @@ async def get_daily_material_forecast(
 
     model_type = model_type or "xgboost"
     async with async_session() as session:
+        from app.db.models import ModelRun
+        from sqlalchemy import select as sa_select
+        run = (await session.execute(
+            sa_select(ModelRun.date_range_end)
+            .where(ModelRun.is_active == True, ModelRun.model_type == model_type)
+            .order_by(ModelRun.trained_at.desc())
+            .limit(1)
+        )).scalar_one_or_none()
+
         sales_q = text(
             "SELECT dis.date, i.name as item, dis.quantity_sold "
             "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
         )
-        result = await session.execute(sales_q)
+        if run:
+            sales_q = text(
+                "SELECT dis.date, i.name as item, dis.quantity_sold "
+                "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id "
+                "WHERE dis.date <= :cutoff"
+            )
+            result = await session.execute(sales_q, {"cutoff": run.isoformat()})
+        else:
+            result = await session.execute(sales_q)
         rows = result.fetchall()
 
     if not rows:

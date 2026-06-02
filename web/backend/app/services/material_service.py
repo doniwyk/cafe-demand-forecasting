@@ -62,6 +62,9 @@ async def get_material_forecast(
     if df.empty:
         return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
 
+    from app.services.forecast_service import filter_sales_to_training_cutoff
+    df = await filter_sales_to_training_cutoff(session, df, model_type)
+
     cache_key = model_type
     cached = _forecast_cache.get(cache_key)
 

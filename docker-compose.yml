@@ -28,6 +28,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/cafe_forecasting
       PYTHONPATH: /app/ml-model
+      HUS_DB_URL: postgresql://user:password@hus_db:5432/hus_db
     volumes:
       - ./web/backend:/app/web/backend
       - ./ml-model:/app/ml-model

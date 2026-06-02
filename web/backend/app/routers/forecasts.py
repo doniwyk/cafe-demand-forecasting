@@ -55,6 +55,7 @@ async def retrain_models(
         max_items=body.max_items,
         sync_hus=body.sync_hus,
         include_new_products=body.include_new_products,
+        end_date=body.end_date,
     )
     return RetrainResponse(status=result["status"], message=result["message"])
 

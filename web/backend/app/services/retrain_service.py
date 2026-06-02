@@ -139,7 +139,7 @@ def _suppress_noisy_logs():
     logging.getLogger("cmdstanpy").setLevel(logging.ERROR)
 
 
-def _run_training_sync(model_type: str, max_items: int | None) -> dict[str, Any]:
+def _run_training_sync(model_type: str, max_items: int | None, end_date: str | None = None) -> dict[str, Any]:
     from sqlalchemy import update as sa_update
     from app.db.engine import sync_session as get_sync_session
     from app.db.models import (
@@ -159,11 +159,16 @@ def _run_training_sync(model_type: str, max_items: int | None) -> dict[str, Any]
             return {"status": "cancelled"}
 
         _append_log(model_type, "Loading data from DB...")
-        query = text(
+        base_sql = (
             "SELECT dis.date, i.name as item, dis.quantity_sold "
             "FROM daily_item_sales dis JOIN items i ON dis.item_id = i.id"
         )
-        result = session.execute(query)
+        if end_date:
+            base_sql += " WHERE dis.date <= :end_date"
+            result = session.execute(text(base_sql), {"end_date": end_date})
+            _append_log(model_type, f"Training data limited to dates <= {end_date}")
+        else:
+            result = session.execute(text(base_sql))
         rows = result.fetchall()
         df = pd.DataFrame(
             [tuple(row) for row in rows],
@@ -278,6 +283,7 @@ async def start_retrain(
     max_items: int | None = None,
     sync_hus: bool = False,
     include_new_products: bool = False,
+    end_date: str | None = None,
 ) -> dict:
     if model_type not in _retrain_status:
         return {"status": "error", "message": f"Unknown model type: {model_type}"}
@@ -309,7 +315,7 @@ async def start_retrain(
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(
         _executor,
-        lambda: _on_complete(_run_training_sync(model_type, max_items)),
+        lambda: _on_complete(_run_training_sync(model_type, max_items, end_date)),
     )
 
     return {"status": "started", "message": f"{model_type} retraining has been started in the background"}

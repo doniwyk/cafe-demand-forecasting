@@ -27,6 +27,9 @@ async def get_abc_analysis(
         if df.empty:
             return ABCAnalysisResponse(class_metrics={}, classifications=[])
 
+        from app.services.forecast_service import filter_sales_to_training_cutoff
+        df = await filter_sales_to_training_cutoff(session, df, model_type)
+
         def _run():
             return generate_forecast(df, weeks=12, model_type=model_type)
 
