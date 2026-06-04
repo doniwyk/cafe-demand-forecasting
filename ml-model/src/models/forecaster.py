@@ -88,8 +88,14 @@ def _xgboost_params(base: dict) -> dict:
 
 
 def _split_train_val(df: pd.DataFrame, val_ratio: float = 0.15):
-    val_size = max(1, int(len(df) * val_ratio))
-    return df.iloc[: len(df) - val_size], df.iloc[len(df) - val_size :]
+    train_parts: list[pd.DataFrame] = []
+    val_parts: list[pd.DataFrame] = []
+    for item in df["Item"].unique():
+        item_df = df[df["Item"] == item].sort_values("Date")
+        n_val = max(1, int(len(item_df) * val_ratio))
+        train_parts.append(item_df.iloc[: len(item_df) - n_val])
+        val_parts.append(item_df.iloc[len(item_df) - n_val :])
+    return pd.concat(train_parts, ignore_index=True), pd.concat(val_parts, ignore_index=True)
 
 
 def train_and_predict(

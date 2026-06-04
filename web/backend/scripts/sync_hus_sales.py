@@ -32,6 +32,7 @@ def _cafe_url():
 # Manual fallback: products that appear without variant snapshot but have variants
 FALLBACK_VARIANT_MAP = {
     "Kopi Susu Husgendam": "Kopi Susu Husgendam Ice",
+    "Cappucino": "Cappucino Ice",
 }
 
 # Products to skip (add-ons, different product lines, V60 filter coffees)

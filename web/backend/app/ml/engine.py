@@ -10,6 +10,7 @@ import pandas as pd
 from app.config import ML_MODELS_DIR
 from src.models.features import create_features
 from src.evaluation.metrics import generate_abc_analysis
+from src.utils.config import DISCONTINUED_ITEMS
 
 _FREQUENCY = "daily"
 
@@ -126,6 +127,8 @@ def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"])
     df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
+    if DISCONTINUED_ITEMS:
+        df = df[~df["Item"].isin(DISCONTINUED_ITEMS)]
     df = (
         df.set_index("Date")
         .groupby("Item")
