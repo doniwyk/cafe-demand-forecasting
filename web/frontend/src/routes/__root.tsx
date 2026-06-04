@@ -34,7 +34,6 @@ import { getToken } from '@/lib/request'
 
 const routeTitleKeys: Record<string, string> = {
   '/': 'sidebar.dashboard',
-  '/analytics': 'sidebar.analytics',
   '/forecasts': 'sidebar.salesForecast',
   '/materials/daily-need': 'materials.dailyMaterialRequirements',
   '/settings': 'sidebar.settings',

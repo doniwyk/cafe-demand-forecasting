@@ -36,19 +36,19 @@ export function MetricsGrid({ metrics }: { metrics: Record<string, number> | und
       description: t("analytics.rmseDesc"),
     },
     {
-      label: t("analytics.medianPeriodAccuracy"),
-      value: `${(metrics["median_period_accuracy"] ?? 0).toFixed(1)}%`,
-      description: t("analytics.medianPeriodAccuracyDesc"),
-    },
-    {
       label: t("analytics.periodsWithin20pct"),
       value: `${(metrics["periods_within_20pct"] ?? 0).toFixed(1)}%`,
       description: t("analytics.periodsWithin20pctDesc"),
     },
+    {
+      label: t("analytics.periodsWithin50pct"),
+      value: `${(metrics["periods_within_50pct"] ?? 0).toFixed(1)}%`,
+      description: t("analytics.periodsWithin50pctDesc"),
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       {items.map((m) => (
         <div key={m.label} className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground">{m.label}</p>

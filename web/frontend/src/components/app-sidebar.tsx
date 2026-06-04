@@ -24,27 +24,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: t("sidebar.dashboard"),
       url: "/",
       icon: <LayoutDashboardIcon className="size-4" />,
-      isActive: true,
-      items: [
-        { title: t("sidebar.overview"), url: "/" },
-        { title: t("sidebar.analytics"), url: "/analytics" },
-      ],
     },
     {
       title: t("sidebar.forecasts"),
       url: "/forecasts",
       icon: <BarChart3Icon className="size-4" />,
-      items: [
-        { title: t("sidebar.salesForecast"), url: "/forecasts" },
-      ],
     },
     {
       title: t("sidebar.inventory"),
-      url: "/materials",
+      url: "/materials/daily-need",
       icon: <PackageIcon className="size-4" />,
-      items: [
-        { title: t("materials.dailyMaterialRequirements"), url: "/materials/daily-need" },
-      ],
     },
     {
       title: t("sidebar.settings"),

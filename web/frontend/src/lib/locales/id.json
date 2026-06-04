@@ -49,6 +49,8 @@
     "totalQty": "Total Qty",
     "forecastSummary": "Ringkasan Prakiraan",
     "medianPeriodAccuracy": "Akurasi Median Periode",
+    "periodsWithin20pct": "Prediksi dalam ±20%",
+    "periodsWithin20pctDesc": "Periode dimana prakiraan dalam 20% dari aktual",
     "wmape": "wMAPE",
     "rSquared": "R-kuadrat",
     "rmse": "RMSE",
@@ -70,6 +72,8 @@
     "medianPeriodAccuracyDesc": "Akurasi prediksi median",
     "periodsWithin20pct": "Periode dalam +/-20%",
     "periodsWithin20pctDesc": "Persentase periode dengan error <= 20%",
+    "periodsWithin50pct": "Periode dalam +/-50%",
+    "periodsWithin50pctDesc": "Persentase periode dengan error <= 50%",
     "abcClassification": "Klasifikasi ABC",
     "volume": "Volume",
     "cumulativePct": "Persentase Kumulatif",
@@ -126,12 +130,6 @@
     "cancel": "Batalkan",
     "showLogs": "Tampilkan Log",
     "hideLogs": "Sembunyikan Log",
-    "dataCleanup": "Pembersihan Data",
-    "dataCleanupDesc": "Hapus hasil pelatihan model dan prakiraan yang sudah tidak digunakan.",
-    "deleteInactiveData": "Hapus Data Model Tidak Aktif",
-    "deleteInactiveDesc": "Menghapus hasil pelatihan lama, prakiraan, metrik kelas, dan item teratas yang sudah tidak aktif.",
-    "cleanup": "Bersihkan",
-    "deletedRuns": "Menghapus {{runs}} pelatihan, {{forecasts}} prakiraan",
     "language": "Bahasa",
     "languageDesc": "Pilih bahasa tampilan yang diinginkan.",
     "syncFromHus": "Sync dari hus_db sebelum pelatihan",
@@ -197,10 +195,6 @@
     "modelTraining": {
       "title": "Pelatihan Model",
       "desc": "Latih model secara individual atau sekaligus. Pantau status pelatihan, lihat log, dan batalkan pekerjaan yang sedang berjalan."
-    },
-    "dataCleanup": {
-      "title": "Pembersihan Data",
-      "desc": "Hapus hasil pelatihan model dan prakiraan dari sesi pelatihan sebelumnya untuk menjaga data tetap segar."
     },
     "startTour": "Mulai tur"
   }

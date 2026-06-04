@@ -49,6 +49,8 @@
     "totalQty": "Total Qty",
     "forecastSummary": "Forecast Summary",
     "medianPeriodAccuracy": "Median Period Accuracy",
+    "periodsWithin20pct": "Predictions within ±20%",
+    "periodsWithin20pctDesc": "Periods where forecast is within 20% of actual",
     "wmape": "wMAPE",
     "rSquared": "R-squared",
     "rmse": "RMSE",
@@ -68,8 +70,10 @@
     "rmseDesc": "Root mean squared error",
     "medianPeriodAccuracy": "Median Period Accuracy",
     "medianPeriodAccuracyDesc": "Median prediction accuracy",
-    "periodsWithin20pct": "Periods within +/-20%",
+    "periodsWithin20pct": "Periods within ±20%",
     "periodsWithin20pctDesc": "Fraction of periods with error <= 20%",
+    "periodsWithin50pct": "Periods within ±50%",
+    "periodsWithin50pctDesc": "Fraction of periods with error <= 50%",
     "abcClassification": "ABC Classification",
     "volume": "Volume",
     "cumulativePct": "Cumulative %",
@@ -124,14 +128,7 @@
     "error": "Error",
     "train": "Train",
     "cancel": "Cancel",
-    "showLogs": "Show Logs",
     "hideLogs": "Hide Logs",
-    "dataCleanup": "Data Cleanup",
-    "dataCleanupDesc": "Remove stale model runs and forecasts from previous training sessions.",
-    "deleteInactiveData": "Delete Inactive Model Data",
-    "deleteInactiveDesc": "Removes old model runs, their forecasts, class metrics, and top items that are no longer active.",
-    "cleanup": "Cleanup",
-    "deletedRuns": "Deleted {{runs}} runs, {{forecasts}} forecasts",
     "language": "Language",
     "languageDesc": "Select your preferred display language.",
     "syncFromHus": "Sync from hus_db before training",
@@ -197,10 +194,6 @@
     "modelTraining": {
       "title": "Model Training",
       "desc": "Train individual models or all models at once. Monitor training status, view logs, and cancel running jobs."
-    },
-    "dataCleanup": {
-      "title": "Data Cleanup",
-      "desc": "Remove stale model runs and forecasts from previous training sessions to keep your data fresh."
     },
     "startTour": "Start tour"
   }

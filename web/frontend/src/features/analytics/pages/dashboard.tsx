@@ -28,19 +28,24 @@ import { MetricsGrid } from "@/features/analytics/components/metrics-grid";
 import { CLASS_COLORS } from "@/features/analytics/lib/constants";
 import { CHART_TOOLTIP_STYLE } from "@/lib/chart";
 
-export function AnalyticsPage() {
+export function DashboardPage() {
   const { modelType } = useModelType();
+  const forecastSummary = useForecastSummary(modelType);
   const abc = useABCAnalysis(modelType);
   const metrics = useModelMetrics(modelType);
-  const forecastSummary = useForecastSummary(modelType);
   const { t } = useTranslation();
+
+  const forecastItemCount = useMemo(() => {
+    if (!forecastSummary.data) return 0;
+    return Object.values(forecastSummary.data.class_metrics).reduce((s, m) => s + m.n_items, 0);
+  }, [forecastSummary.data]);
 
   const classBarData = useMemo(() => {
     if (!forecastSummary.data) return [];
     return Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => ({
       class: cls,
       items: m.n_items,
-      accuracy: +m.median_period_accuracy.toFixed(1),
+      wmape: +m.wmape.toFixed(1),
     }));
   }, [forecastSummary.data]);
 
@@ -55,16 +60,76 @@ export function AnalyticsPage() {
   }, [abc]);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
-      <Card data-tour="model-performance">
-        <CardHeader>
-          <CardTitle>{t("analytics.modelPerformance")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MetricsGrid metrics={metrics.data} />
-        </CardContent>
-      </Card>
+    <div className="flex flex-1 flex-col gap-4 p-4">
+      {/* Top Bento: KPIs + Accuracy (left) | Model Performance (right) */}
+      <div className="grid gap-4 lg:grid-cols-5">
+        {/* Left column: KPIs + Accuracy by Class */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {/* KPIs horizontal */}
+          <div className="grid grid-cols-2 gap-4" data-tour="kpi-cards">
+            <Card>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">{t("dashboard.activeItems")}</p>
+                <p className="text-2xl font-bold tracking-tight mt-1">{forecastItemCount || "-"}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">{t("dashboard.itemsForecasted")}</p>
+                <p className="text-2xl font-bold tracking-tight mt-1">{forecastItemCount || "-"}</p>
+              </CardContent>
+            </Card>
+          </div>
 
+          {/* Accuracy by Class */}
+          <Card data-tour="accuracy-by-class">
+            <CardHeader>
+              <CardTitle>{t("dashboard.accuracyByClass")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {forecastSummary.data ? (
+                <div className="flex flex-col gap-2">
+                  {Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => (
+                    <div
+                      key={cls}
+                      className="flex items-center justify-between rounded-lg border px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-primary-foreground"
+                          style={{ backgroundColor: CLASS_COLORS[cls] || "var(--chart-1)" }}
+                        >
+                          {cls}
+                        </div>
+                        <span className="text-sm font-medium">
+                          {m.n_items} {t("dashboard.items")}
+                        </span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        wMAPE {m.wmape.toFixed(1)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Skeleton className="h-20 w-full" />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column: Model Performance */}
+        <Card data-tour="model-performance" className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>{t("analytics.modelPerformance")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MetricsGrid metrics={metrics.data} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ABC Classification */}
       <Card data-tour="abc-classification">
         <CardHeader>
           <CardTitle>{t("analytics.abcClassification")}</CardTitle>
@@ -83,9 +148,7 @@ export function AnalyticsPage() {
                         stroke="var(--muted-foreground)"
                       />
                       <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                      <Tooltip
-                        contentStyle={CHART_TOOLTIP_STYLE}
-                      />
+                      <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                       <Bar dataKey="items" name={t("analytics.volume")} radius={[4, 4, 0, 0]}>
                         {classBarData.map((d) => (
                           <Cell key={d.class} fill={CLASS_COLORS[d.class] || "var(--chart-1)"} />
@@ -96,7 +159,6 @@ export function AnalyticsPage() {
                 </div>
               </div>
             )}
-
             <div className="lg:col-span-3">
               {abc.data ? (
                 <Tabs defaultValue="A">
