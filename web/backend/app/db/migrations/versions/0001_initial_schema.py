@@ -52,61 +52,6 @@ def upgrade() -> None:
     op.create_index("ix_bom_ingredient", "bom_recipes", ["ingredient"])
 
     op.create_table(
-        "condiment_recipes",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("condiment", sa.String(200), nullable=False),
-        sa.Column("condiment_qty", sa.Float(), nullable=False),
-        sa.Column("condiment_unit", sa.String(50), nullable=False),
-        sa.Column("sub_ingredient", sa.String(200), nullable=False),
-        sa.Column("qty_per_unit", sa.Float(), nullable=False),
-        sa.Column("sub_unit", sa.String(50), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_condiment", "condiment_recipes", ["condiment"])
-    op.create_index("ix_condiment_sub", "condiment_recipes", ["sub_ingredient"])
-
-    op.create_table(
-        "daily_total_sales",
-        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("quantity", sa.Float(), nullable=False),
-        sa.Column("net_sales", sa.Float(), nullable=False),
-        sa.Column("gross_sales", sa.Float(), nullable=False),
-        sa.Column("unique_items", sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("date"),
-    )
-
-    op.create_table(
-        "sales_cleaned",
-        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("date", sa.DateTime(), nullable=False),
-        sa.Column("receipt_number", sa.String(100), nullable=True),
-        sa.Column("receipt_type", sa.String(50), nullable=True),
-        sa.Column("category", sa.String(100), nullable=True),
-        sa.Column("sku", sa.String(50), nullable=True),
-        sa.Column("item", sa.String(100), nullable=False),
-        sa.Column("variant", sa.String(100), nullable=True),
-        sa.Column("modifiers_applied", sa.Text(), nullable=True),
-        sa.Column("quantity", sa.Float(), nullable=True),
-        sa.Column("gross_sales", sa.Float(), nullable=True),
-        sa.Column("discounts", sa.Float(), nullable=True),
-        sa.Column("net_sales", sa.Float(), nullable=True),
-        sa.Column("cost_of_goods", sa.Float(), nullable=True),
-        sa.Column("gross_profit", sa.Float(), nullable=True),
-        sa.Column("taxes", sa.Float(), nullable=True),
-        sa.Column("dining_option", sa.String(50), nullable=True),
-        sa.Column("pos", sa.String(50), nullable=True),
-        sa.Column("store", sa.String(100), nullable=True),
-        sa.Column("cashier_name", sa.String(100), nullable=True),
-        sa.Column("customer_name", sa.String(100), nullable=True),
-        sa.Column("status", sa.String(50), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_sales_cleaned_date_item", "sales_cleaned", ["date", "item"])
-    op.create_index("ix_sales_cleaned_date", "sales_cleaned", ["date"])
-
-    op.create_table(
         "model_runs",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("model_type", sa.String(50), nullable=False),
@@ -118,6 +63,7 @@ def upgrade() -> None:
         sa.Column("r2", sa.Float(), nullable=True),
         sa.Column("wmape", sa.Float(), nullable=True),
         sa.Column("mae", sa.Float(), nullable=True),
+        sa.Column("rmse", sa.Float(), nullable=True),
         sa.Column("volume_accuracy", sa.Float(), nullable=True),
         sa.Column("median_period_accuracy", sa.Float(), nullable=True),
         sa.Column("periods_within_20pct", sa.Float(), nullable=True),
@@ -133,20 +79,16 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "daily_category_sales",
+        "daily_item_sales",
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("category", sa.String(100), nullable=False),
-        sa.Column("quantity", sa.Float(), nullable=False),
-        sa.Column("net_sales", sa.Float(), nullable=False),
-        sa.Column("gross_sales", sa.Float(), nullable=False),
-        sa.Column("unique_items", sa.Integer(), nullable=False),
+        sa.Column("item_id", sa.Integer(), nullable=False),
+        sa.Column("quantity_sold", sa.Float(), nullable=False),
+        sa.ForeignKeyConstraint(["item_id"], ["items.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "date", "category", name="uq_daily_category_sales_date_category"
-        ),
+        sa.UniqueConstraint("date", "item_id", name="uq_daily_item_sales_date_item"),
     )
-    op.create_index("ix_daily_category_sales_date", "daily_category_sales", ["date"])
+    op.create_index("ix_daily_item_sales_date", "daily_item_sales", ["date"])
 
     op.create_table(
         "model_run_class_metrics",
@@ -155,8 +97,13 @@ def upgrade() -> None:
         sa.Column("abc_class", sa.String(1), nullable=False),
         sa.Column("n_items", sa.Integer(), nullable=False),
         sa.Column("wmape", sa.Float(), nullable=False),
+        sa.Column("r2", sa.Float(), nullable=False, server_default="0"),
+        sa.Column("mae", sa.Float(), nullable=False, server_default="0"),
+        sa.Column("rmse", sa.Float(), nullable=False, server_default="0"),
         sa.Column("volume_accuracy", sa.Float(), nullable=False),
         sa.Column("median_period_accuracy", sa.Float(), nullable=True),
+        sa.Column("periods_within_20pct", sa.Float(), nullable=True),
+        sa.Column("periods_within_50pct", sa.Float(), nullable=True),
         sa.ForeignKeyConstraint(["model_run_id"], ["model_runs.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("model_run_id", "abc_class", name="uq_model_run_class"),
@@ -176,147 +123,6 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "association_rules",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("antecedents", sa.String(500), nullable=False),
-        sa.Column("consequents", sa.String(500), nullable=False),
-        sa.Column("support", sa.Float(), nullable=False),
-        sa.Column("confidence", sa.Float(), nullable=False),
-        sa.Column("lift", sa.Float(), nullable=False),
-        sa.Column("representativity", sa.Float(), nullable=True),
-        sa.Column("leverage", sa.Float(), nullable=True),
-        sa.Column("conviction", sa.Float(), nullable=True),
-        sa.Column("zhangs_metric", sa.Float(), nullable=True),
-        sa.Column("jaccard", sa.Float(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_assoc_rules_confidence", "association_rules", ["confidence"])
-    op.create_index("ix_assoc_rules_lift", "association_rules", ["lift"])
-
-    op.create_table(
-        "daily_item_sales",
-        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("item_id", sa.Integer(), nullable=False),
-        sa.Column("quantity_sold", sa.Float(), nullable=False),
-        sa.ForeignKeyConstraint(["item_id"], ["items.id"]),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("date", "item_id", name="uq_daily_item_sales_date_item"),
-    )
-    op.create_index("ix_daily_item_sales_date", "daily_item_sales", ["date"])
-
-    op.create_table(
-        "forecasts",
-        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("model_run_id", sa.Integer(), nullable=False),
-        sa.Column("item_id", sa.Integer(), nullable=False),
-        sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("quantity_predicted", sa.Float(), nullable=False),
-        sa.ForeignKeyConstraint(["model_run_id"], ["model_runs.id"]),
-        sa.ForeignKeyConstraint(["item_id"], ["items.id"]),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "model_run_id", "item_id", "date", name="uq_forecast_run_item_date"
-        ),
-    )
-    op.create_index("ix_forecasts_date", "forecasts", ["date"])
-    op.create_index("ix_forecasts_item", "forecasts", ["item_id"])
-
-    op.create_table(
-        "item_abc",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("item_id", sa.Integer(), nullable=False),
-        sa.Column("total_volume", sa.Float(), nullable=False),
-        sa.Column("cumulative_volume", sa.Float(), nullable=False),
-        sa.Column("cumulative_pct", sa.Float(), nullable=False),
-        sa.Column("abc_class", sa.String(1), nullable=False),
-        sa.Column("computed_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(["item_id"], ["items.id"]),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("item_id"),
-    )
-
-    op.create_table(
-        "raw_material_requirements",
-        sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
-        sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("raw_material", sa.String(200), nullable=False),
-        sa.Column("quantity_required", sa.Float(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        "ix_raw_material_date_material",
-        "raw_material_requirements",
-        ["date", "raw_material"],
-    )
-
-    op.create_table(
-        "products",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_products_name", "products", ["name"])
-
-    op.create_table(
-        "product_variants",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("product_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["product_id"], ["products.id"]),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_product_variants_product_id", "product_variants", ["product_id"])
-
-    op.create_table(
-        "materials",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("unit_id", sa.Integer(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_materials_name", "materials", ["name"])
-
-    op.create_table(
-        "condiments",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("name", sa.String(200), nullable=False),
-        sa.Column("batch_quantity", sa.Float(), nullable=True),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_condiments_name", "condiments", ["name"])
-
-    op.create_table(
-        "product_recipe_ingredients",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("product_id", sa.Integer(), nullable=False),
-        sa.Column("variant_id", sa.Integer(), nullable=True),
-        sa.Column("material_id", sa.Integer(), nullable=True),
-        sa.Column("condiment_id", sa.Integer(), nullable=True),
-        sa.Column("quantity", sa.Float(), nullable=False),
-        sa.ForeignKeyConstraint(["condiment_id"], ["condiments.id"]),
-        sa.ForeignKeyConstraint(["material_id"], ["materials.id"]),
-        sa.ForeignKeyConstraint(["product_id"], ["products.id"]),
-        sa.ForeignKeyConstraint(["variant_id"], ["product_variants.id"]),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_product_recipe_product_id", "product_recipe_ingredients", ["product_id"])
-    op.create_index("ix_product_recipe_variant_id", "product_recipe_ingredients", ["variant_id"])
-
-    op.create_table(
-        "condiment_ingredients",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("condiment_id", sa.Integer(), nullable=False),
-        sa.Column("material_id", sa.Integer(), nullable=True),
-        sa.Column("quantity", sa.Float(), nullable=False),
-        sa.ForeignKeyConstraint(["condiment_id"], ["condiments.id"]),
-        sa.ForeignKeyConstraint(["material_id"], ["materials.id"]),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index("ix_condiment_ingredients_condiment_id", "condiment_ingredients", ["condiment_id"])
-
-    op.create_table(
         "users",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("email", sa.String(255), nullable=False),
@@ -333,43 +139,11 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("users")
-    op.drop_index("ix_condiment_ingredients_condiment_id", table_name="condiment_ingredients")
-    op.drop_table("condiment_ingredients")
-    op.drop_index("ix_product_recipe_variant_id", table_name="product_recipe_ingredients")
-    op.drop_index("ix_product_recipe_product_id", table_name="product_recipe_ingredients")
-    op.drop_table("product_recipe_ingredients")
-    op.drop_index("ix_condiments_name", table_name="condiments")
-    op.drop_table("condiments")
-    op.drop_index("ix_materials_name", table_name="materials")
-    op.drop_table("materials")
-    op.drop_index("ix_product_variants_product_id", table_name="product_variants")
-    op.drop_table("product_variants")
-    op.drop_index("ix_products_name", table_name="products")
-    op.drop_table("products")
-    op.drop_index("ix_raw_material_date_material", table_name="raw_material_requirements")
-    op.drop_table("raw_material_requirements")
-    op.drop_table("item_abc")
-    op.drop_index("ix_forecasts_item", table_name="forecasts")
-    op.drop_index("ix_forecasts_date", table_name="forecasts")
-    op.drop_table("forecasts")
-    op.drop_index("ix_daily_item_sales_date", table_name="daily_item_sales")
-    op.drop_table("daily_item_sales")
-    op.drop_index("ix_assoc_rules_lift", table_name="association_rules")
-    op.drop_index("ix_assoc_rules_confidence", table_name="association_rules")
-    op.drop_table("association_rules")
     op.drop_table("model_run_top_items")
     op.drop_table("model_run_class_metrics")
-    op.drop_index("ix_daily_category_sales_date", table_name="daily_category_sales")
-    op.drop_table("daily_category_sales")
+    op.drop_table("daily_item_sales")
     op.drop_index("ix_model_runs_type_active", table_name="model_runs")
     op.drop_table("model_runs")
-    op.drop_index("ix_sales_cleaned_date", table_name="sales_cleaned")
-    op.drop_index("ix_sales_cleaned_date_item", table_name="sales_cleaned")
-    op.drop_table("sales_cleaned")
-    op.drop_table("daily_total_sales")
-    op.drop_index("ix_condiment_sub", table_name="condiment_recipes")
-    op.drop_index("ix_condiment", table_name="condiment_recipes")
-    op.drop_table("condiment_recipes")
     op.drop_index("ix_bom_ingredient", table_name="bom_recipes")
     op.drop_index("ix_bom_item", table_name="bom_recipes")
     op.drop_table("bom_recipes")
