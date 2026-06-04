@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTopItems } from "@/features/sales/hooks/use-sales";
+import { useTopItems } from "@/features/analytics/hooks/use-analytics";
 import { useForecastSummary } from "@/features/forecasts/hooks/use-forecasts";
 import { useModelType } from "@/contexts/model-context";
 import { PackageIcon, TargetIcon, BarChart3Icon } from "lucide-react";
@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { ChartCard } from "@/features/dashboard/components/chart-card";
+import { CHART_TOOLTIP_STYLE } from "@/lib/chart";
 
 export function DashboardPage() {
   const { modelType } = useModelType();
@@ -75,12 +76,7 @@ export function DashboardPage() {
                   />
                   <YAxis type="number" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius)",
-                      fontSize: 12,
-                    }}
+                    contentStyle={CHART_TOOLTIP_STYLE}
                   />
                   <Bar
                     dataKey="total_quantity"

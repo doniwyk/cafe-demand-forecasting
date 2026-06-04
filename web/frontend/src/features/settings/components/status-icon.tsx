@@ -1,6 +1,7 @@
 import { CheckIcon, LoaderIcon, AlertCircleIcon } from "lucide-react";
+import type { ModelStatus } from "@/features/settings/types";
 
-export function StatusIcon({ status }: { status: string }) {
+export function StatusIcon({ status }: { status: ModelStatus }) {
   switch (status) {
     case "training":
       return <LoaderIcon className="size-4 animate-spin" />;

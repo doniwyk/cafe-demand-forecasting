@@ -26,6 +26,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { MetricsGrid } from "@/features/analytics/components/metrics-grid";
 import { CLASS_COLORS } from "@/features/analytics/lib/constants";
+import { CHART_TOOLTIP_STYLE } from "@/lib/chart";
 
 export function AnalyticsPage() {
   const { modelType } = useModelType();
@@ -83,12 +84,7 @@ export function AnalyticsPage() {
                       />
                       <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                       <Tooltip
-                        contentStyle={{
-                          backgroundColor: "var(--popover)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--radius)",
-                          fontSize: 12,
-                        }}
+                        contentStyle={CHART_TOOLTIP_STYLE}
                       />
                       <Bar dataKey="items" name={t("analytics.volume")} radius={[4, 4, 0, 0]}>
                         {classBarData.map((d) => (
@@ -116,7 +112,7 @@ export function AnalyticsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Item</TableHead>
+                            <TableHead>{t("analytics.item")}</TableHead>
                             <TableHead className="text-right">{t("analytics.volume")}</TableHead>
                             <TableHead className="text-right">
                               {t("analytics.cumulativePct")}

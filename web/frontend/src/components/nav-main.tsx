@@ -17,6 +17,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
 import { ChevronRightIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 export function NavMain({
   items,
@@ -33,10 +34,11 @@ export function NavMain({
   }[]
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { t } = useTranslation()
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      <SidebarGroupLabel>{t("sidebar.navigation")}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) =>
           item.items && item.items.length > 0 ? (

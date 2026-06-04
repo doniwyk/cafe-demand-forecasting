@@ -6,7 +6,11 @@
     "close": "Tutup",
     "noData": "Data tidak tersedia",
     "rowsPerPage": "Baris per halaman",
-    "pageOf": "Halaman {{page}} dari {{total}}"
+    "pageOf": "Halaman {{page}} dari {{total}}",
+    "item": "Item",
+    "unit": "Satuan",
+    "materials": "material",
+    "exportCsv": "Ekspor CSV"
   },
   "sidebar": {
     "navigation": "Navigasi",
@@ -18,10 +22,20 @@
     "inventory": "Inventaris",
     "settings": "Pengaturan",
     "brand": "Cafe Supply",
-    "brandSub": "Peramalan"
+    "brandSub": "Peramalan",
+    "logout": "Keluar"
   },
   "root": {
     "home": "Beranda"
+  },
+  "login": {
+    "title": "Masuk",
+    "description": "Masukkan kredensial Anda untuk mengakses dashboard",
+    "email": "Email",
+    "password": "Kata Sandi",
+    "submit": "Masuk",
+    "submitting": "Sedang masuk...",
+    "failed": "Gagal masuk"
   },
   "dashboard": {
     "activeItems": "Item Aktif",
@@ -65,7 +79,8 @@
     "support": "Dukungan",
     "confidence": "Kepercayaan",
     "lift": "Lift",
-    "noStrongRules": "Tidak ditemukan aturan asosiasi yang kuat"
+    "noStrongRules": "Tidak ditemukan aturan asosiasi yang kuat",
+    "item": "Item"
   },
   "forecasts": {
     "itemSelector": "Pemilih Item",
@@ -104,6 +119,9 @@
     "trainAllModels": "Latih Semua Model",
     "trainAllSequential": "Latih Semua (Berurutan)",
     "inProgress": "Sedang Berjalan",
+    "trained": "Sudah Dilatih",
+    "notTrained": "Belum Dilatih",
+    "error": "Error",
     "train": "Latih",
     "cancel": "Batalkan",
     "showLogs": "Tampilkan Log",
@@ -115,7 +133,9 @@
     "cleanup": "Bersihkan",
     "deletedRuns": "Menghapus {{runs}} pelatihan, {{forecasts}} prakiraan",
     "language": "Bahasa",
-    "languageDesc": "Pilih bahasa tampilan yang diinginkan."
+    "languageDesc": "Pilih bahasa tampilan yang diinginkan.",
+    "syncFromHus": "Sync dari hus_db sebelum pelatihan",
+    "includeNewProducts": "Sertakan produk baru"
   },
   "tour": {
     "sidebar": {

@@ -21,12 +21,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuth } from "@/features/auth/contexts/auth-context"
 import { useNavigate } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 
 export function NavUser() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { isMobile } = useSidebar()
 
   if (!user) return null
@@ -80,7 +82,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOutIcon />
-              Log out
+              {t("sidebar.logout", "Log out")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

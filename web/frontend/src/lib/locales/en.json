@@ -6,7 +6,11 @@
     "close": "Close",
     "noData": "No data available",
     "rowsPerPage": "Rows per page",
-    "pageOf": "Page {{page}} of {{total}}"
+    "pageOf": "Page {{page}} of {{total}}",
+    "item": "Item",
+    "unit": "Unit",
+    "materials": "materials",
+    "exportCsv": "Export CSV"
   },
   "sidebar": {
     "navigation": "Navigation",
@@ -18,10 +22,20 @@
     "inventory": "Inventory",
     "settings": "Settings",
     "brand": "Cafe Supply",
-    "brandSub": "Forecasting"
+    "brandSub": "Forecasting",
+    "logout": "Log out"
   },
   "root": {
     "home": "Home"
+  },
+  "login": {
+    "title": "Sign in",
+    "description": "Enter your credentials to access the dashboard",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "failed": "Login failed"
   },
   "dashboard": {
     "activeItems": "Active Items",
@@ -65,7 +79,8 @@
     "support": "Support",
     "confidence": "Confidence",
     "lift": "Lift",
-    "noStrongRules": "No strong association rules found"
+    "noStrongRules": "No strong association rules found",
+    "item": "Item"
   },
   "forecasts": {
     "itemSelector": "Item Selector",
@@ -104,6 +119,9 @@
     "trainAllModels": "Train All Models",
     "trainAllSequential": "Train All (Sequential)",
     "inProgress": "In Progress",
+    "trained": "Trained",
+    "notTrained": "Not Trained",
+    "error": "Error",
     "train": "Train",
     "cancel": "Cancel",
     "showLogs": "Show Logs",
@@ -115,7 +133,9 @@
     "cleanup": "Cleanup",
     "deletedRuns": "Deleted {{runs}} runs, {{forecasts}} forecasts",
     "language": "Language",
-    "languageDesc": "Select your preferred display language."
+    "languageDesc": "Select your preferred display language.",
+    "syncFromHus": "Sync from hus_db before training",
+    "includeNewProducts": "Include new products"
   },
   "tour": {
     "sidebar": {

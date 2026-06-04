@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { salesApi } from "@/features/sales/lib/api";
-import { analyticsApi } from "@/features/analytics/lib/api";
-import type { TopSellingItem } from "@/features/analytics/types";
 
 export function useDailySales(params?: {
   item?: string;
@@ -52,12 +50,5 @@ export function useCategories() {
   return useQuery({
     queryKey: ["sales", "categories"],
     queryFn: () => salesApi.categories(),
-  });
-}
-
-export function useTopItems(n = 20) {
-  return useQuery<TopSellingItem[]>({
-    queryKey: ["analytics", "top-items", n],
-    queryFn: () => analyticsApi.topItems(n),
   });
 }

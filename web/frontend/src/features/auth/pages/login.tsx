@@ -4,11 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CoffeeIcon, EyeIcon, EyeOffIcon, LogInIcon } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/features/auth/contexts/auth-context";
+import { useTranslation } from "react-i18next";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("manager@cafe.com");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +31,7 @@ export function LoginPage() {
       await login(email, password);
       navigate({ to: "/" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t("login.failed"));
     } finally {
       setLoading(false);
     }
@@ -44,8 +46,8 @@ export function LoginPage() {
               <CoffeeIcon className="size-5" />
             </div>
             <div className="grid gap-0.5">
-              <CardTitle>Sign in</CardTitle>
-              <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+              <CardTitle>{t("login.title")}</CardTitle>
+              <CardDescription>{t("login.description")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -53,7 +55,7 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t("login.email")}
               </label>
               <Input
                 id="email"
@@ -67,7 +69,7 @@ export function LoginPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="password" className="text-sm font-medium">
-                Password
+                {t("login.password")}
               </label>
               <div className="relative">
                 <Input
@@ -95,11 +97,11 @@ export function LoginPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading}>
               {loading ? (
-                "Signing in..."
+                t("login.submitting")
               ) : (
                 <>
                   <LogInIcon data-icon="inline-start" />
-                  Sign in
+                  {t("login.submit")}
                 </>
               )}
             </Button>
