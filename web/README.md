@@ -113,7 +113,6 @@ All endpoints are under `/api/`. Auth via `Authorization: Bearer <token>` (obtai
 | GET | `/api/analytics/metrics` | Model performance metrics |
 | GET | `/api/analytics/abc` | ABC classification |
 | GET | `/api/analytics/top-items` | Top N items by accuracy |
-| GET | `/api/analytics/rules` | Association rules (FP-Growth) |
 
 ### Materials
 

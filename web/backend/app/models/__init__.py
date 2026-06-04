@@ -17,4 +17,4 @@ from app.models.forecast import (
     RetrainResponse,
 )
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
-from app.models.analytics import ABCItem, ABCAnalysisResponse, AssociationRule
+from app.models.analytics import ABCItem, ABCAnalysisResponse

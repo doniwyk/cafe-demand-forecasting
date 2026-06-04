@@ -214,7 +214,7 @@ The database contains 22 tables across 5 logical groups:
 | **Auth** | `users` | Login, JWT |
 | **Menu** | `categories`, `items`, `bom_recipes`, `condiment_recipes` | Menu items + Bill of Materials |
 | **Sales** | `sales_cleaned`, `daily_item_sales`, `daily_category_sales`, `daily_total_sales` | Historical POS data |
-| **ML** | `model_runs`, `model_run_class_metrics`, `model_run_top_items`, `forecasts`, `item_abc`, `association_rules`, `raw_material_requirements` | Training runs, forecasts, analytics |
+| **ML** | `model_runs`, `model_run_class_metrics`, `model_run_top_items`, `forecasts`, `item_abc`, `raw_material_requirements` | Training runs, forecasts, analytics |
 | **Inventory** | `products`, `product_variants`, `materials`, `condiments`, `product_recipe_ingredients`, `condiment_ingredients` | Product BOM catalog |
 
 ### 5.2. Migration Commands
@@ -331,7 +331,6 @@ python scripts/seed_database.py --truncate
 | 9 | `model_runs` + `model_run_class_metrics` + `model_run_top_items` | `models/model_metadata.json` + `data/predictions/forecast_summary.json` |
 | 10 | `forecasts` | `data/predictions/3_month_forecasts.csv` |
 | 11 | `item_abc` | `data/processed/daily_item_sales.csv` (computed) |
-| 12 | `association_rules` | `data/processed/association_rules_fpgrowth.csv` |
 
 ### 6.3. Required CSV Files
 
@@ -346,8 +345,7 @@ data/
 │   ├── sales_data_cleaned.csv
 │   ├── daily_item_sales.csv
 │   ├── daily_category_sales.csv
-│   ├── daily_total_sales.csv
-│   └── association_rules_fpgrowth.csv
+│   └── daily_total_sales.csv
 ├── predictions/
 │   ├── 3_month_forecasts.csv
 │   └── forecast_summary.json

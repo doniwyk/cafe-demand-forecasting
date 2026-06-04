@@ -11,14 +11,6 @@ export interface ABCAnalysisResponse {
   classifications: ABCItem[];
 }
 
-export interface AssociationRule {
-  antecedents: string;
-  consequents: string;
-  support: number;
-  confidence: number;
-  lift: number;
-}
-
 export interface TopSellingItem {
   item: string;
   total_quantity: number;

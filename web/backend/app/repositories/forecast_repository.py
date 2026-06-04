@@ -8,7 +8,6 @@ from app.db.models import (
     ModelRunTopItem,
     Forecast,
     ItemABC,
-    AssociationRule,
 )
 from app.repositories import BaseRepository
 
@@ -50,18 +49,6 @@ class ForecastRepository(BaseRepository):
 
     async def get_inactive_run_ids(self):
         query = select(ModelRun.id).where(ModelRun.is_active == False)
-        return (await self._session.execute(query)).scalars().all()
-
-    async def get_association_rules(
-        self, min_confidence: float = 0.3, min_lift: float = 1.0, limit: int = 100
-    ):
-        query = (
-            select(AssociationRule)
-            .where(AssociationRule.confidence >= min_confidence)
-            .where(AssociationRule.lift >= min_lift)
-            .order_by(AssociationRule.lift.desc())
-            .limit(limit)
-        )
         return (await self._session.execute(query)).scalars().all()
 
     async def get_items_with_models(self, model_run_id: int) -> set[str]:

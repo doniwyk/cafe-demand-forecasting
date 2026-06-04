@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_session
-from app.models.analytics import ABCAnalysisResponse, AssociationRule
+from app.models.analytics import ABCAnalysisResponse
 from app.services import analytics_service
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
@@ -30,13 +30,3 @@ async def get_top_items(
     n: int = Query(20, ge=1, le=100),
 ):
     return await analytics_service.get_top_items(session, n)
-
-
-@router.get("/association-rules", response_model=list[AssociationRule])
-async def get_association_rules(
-    session: AsyncSession = Depends(get_session),
-    min_confidence: float = Query(0.3, ge=0, le=1),
-    min_lift: float = Query(1.0, ge=0),
-    model_type: str | None = Query(None),
-):
-    return await analytics_service.get_association_rules(session, min_confidence, min_lift, model_type)

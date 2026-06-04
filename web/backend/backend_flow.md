@@ -29,7 +29,7 @@ web/backend/
 │   │   ├── forecast_service.py     # Forecast generation + cache
 │   │   ├── material_service.py     # Material queries + BOM-based forecast
 │   │   ├── recipe_material_service.py  # BOM → material mapping (sync session)
-│   │   ├── analytics_service.py    # ABC analysis, metrics, association rules
+│   │   ├── analytics_service.py    # ABC analysis, metrics
 │   │   └── retrain_service.py      # Background model training orchestration
 │   ├── ml/
 │   │   └── engine.py               # ML model registry, train/predict/forecast

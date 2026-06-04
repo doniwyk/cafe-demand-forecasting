@@ -14,18 +14,3 @@ export function useModelMetrics(modelType?: string) {
     queryFn: () => analyticsApi.metrics(modelType),
   });
 }
-
-export function useAssociationRules(
-  modelType?: string,
-  params?: { min_confidence?: number; min_lift?: number },
-) {
-  const queryParams = {
-    ...params,
-    ...(modelType ? { model_type: modelType } : {}),
-  };
-
-  return useQuery({
-    queryKey: ["analytics", "association-rules", modelType, params],
-    queryFn: () => analyticsApi.associationRules(queryParams),
-  });
-}

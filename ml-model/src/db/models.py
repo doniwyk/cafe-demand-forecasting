@@ -303,27 +303,6 @@ class ItemABC(Base):
     item: Mapped["Item"] = relationship(back_populates="item_abc", lazy="noload")
 
 
-class AssociationRule(Base):
-    __tablename__ = "association_rules"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    antecedents: Mapped[str] = mapped_column(String(500), nullable=False)
-    consequents: Mapped[str] = mapped_column(String(500), nullable=False)
-    support: Mapped[float] = mapped_column(Float, nullable=False)
-    confidence: Mapped[float] = mapped_column(Float, nullable=False)
-    lift: Mapped[float] = mapped_column(Float, nullable=False)
-    representativity: Mapped[Optional[float]] = mapped_column(Float)
-    leverage: Mapped[Optional[float]] = mapped_column(Float)
-    conviction: Mapped[Optional[float]] = mapped_column(Float)
-    zhangs_metric: Mapped[Optional[float]] = mapped_column(Float)
-    jaccard: Mapped[Optional[float]] = mapped_column(Float)
-
-    __table_args__ = (
-        Index("ix_assoc_rules_confidence", "confidence"),
-        Index("ix_assoc_rules_lift", "lift"),
-    )
-
-
 class RawMaterialRequirement(Base):
     __tablename__ = "raw_material_requirements"
 

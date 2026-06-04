@@ -6,11 +6,9 @@ import json
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import AssociationRule as DBAssociationRule
 from app.models.analytics import (
     ABCItem,
     ABCAnalysisResponse,
-    AssociationRule as AssociationRuleResponse,
 )
 from app.repositories.sales_repository import SalesRepository
 from app.repositories.forecast_repository import ForecastRepository
@@ -83,62 +81,6 @@ async def get_top_items(session: AsyncSession, n: int = 20) -> list[dict]:
         {"item": row.name, "total_quantity": float(row.total_qty)}
         for row in rows
     ]
-
-
-async def get_association_rules(
-    session: AsyncSession,
-    min_confidence: float = 0.3,
-    min_lift: float = 1.0,
-    model_type: str | None = None,
-) -> list[AssociationRuleResponse]:
-    repo = ForecastRepository(session)
-    items_with_models: set[str] = set()
-
-    if model_type:
-        run = await repo.get_active_run(model_type)
-        if run is None:
-            return []
-        items_with_models = await repo.get_items_with_models(run.id)
-        if not items_with_models:
-            return []
-
-    rows = await repo.get_association_rules(min_confidence, min_lift)
-    results: list[AssociationRuleResponse] = []
-
-    for row in rows:
-        if items_with_models:
-            con_items = _parse_rule_items(row.consequents)
-            if con_items and con_items.isdisjoint(items_with_models):
-                continue
-
-        results.append(
-            AssociationRuleResponse(
-                antecedents=row.antecedents,
-                consequents=row.consequents,
-                support=row.support,
-                confidence=row.confidence,
-                lift=row.lift,
-            )
-        )
-
-    return results
-
-
-def _parse_rule_items(raw: str) -> set[str]:
-    text_value = (raw or "").strip()
-    if not text_value:
-        return set()
-    cleaned = (
-        text_value.replace("{", "").replace("}", "")
-        .replace("[", "").replace("]", "")
-        .replace("(", "").replace(")", "")
-        .replace("'", "").replace('"', "")
-    )
-    return {
-        part.strip().lower()
-        for part in cleaned.split(",")
-        if part.strip()
-    }
 
 
 def _compute_abc_classification(rows) -> ABCAnalysisResponse:

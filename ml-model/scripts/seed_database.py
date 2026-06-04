@@ -36,7 +36,6 @@ from src.db.models import (
     ModelRunTopItem,
     Forecast,
     ItemABC,
-    AssociationRule,
     RawMaterialRequirement,
 )
 from src.utils.config import (
@@ -365,39 +364,6 @@ def seed_forecasts(session, model_run, item_map):
     print(f"  Seeded {count} forecast rows")
 
 
-def seed_association_rules(session):
-    filepath = PROCESSED_DIR / "association_rules_fpgrowth.csv"
-    if not filepath.exists():
-        print(f"  File not found: {filepath}")
-        return
-
-    import re
-
-    df = pd.read_csv(filepath)
-    for _, row in df.iterrows():
-
-        def clean_fs(val):
-            m = re.search(r"'([^']+)'\}", str(val))
-            return m.group(1) if m else str(val)
-
-        session.add(
-            AssociationRule(
-                antecedents=clean_fs(row.get("antecedents", "")),
-                consequents=clean_fs(row.get("consequents", "")),
-                support=float(row.get("support", 0)),
-                confidence=float(row.get("confidence", 0)),
-                lift=float(row.get("lift", 0)),
-                representativity=_safe_float(row.get("representativity")),
-                leverage=_safe_float(row.get("leverage")),
-                conviction=_safe_float(row.get("conviction")),
-                zhangs_metric=_safe_float(row.get("zhangs_metric")),
-                jaccard=_safe_float(row.get("jaccard")),
-            )
-        )
-    session.commit()
-    print(f"  Seeded {len(df)} association rules")
-
-
 def seed_item_abc(session, item_map):
     from src.evaluation.metrics import classify_abc
 
@@ -447,7 +413,6 @@ def truncate_all(session):
         "model_runs",
         "item_abc",
         "raw_material_requirements",
-        "association_rules",
         "daily_item_sales",
         "daily_category_sales",
         "daily_total_sales",
@@ -527,9 +492,6 @@ def main():
 
         print("\n11. Seeding ABC classifications...")
         seed_item_abc(session, item_map)
-
-        print("\n12. Seeding association rules...")
-        seed_association_rules(session)
 
         print("\nDone! Database seeded successfully.")
 
