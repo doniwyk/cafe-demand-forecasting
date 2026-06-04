@@ -92,12 +92,7 @@ FEATURE_COLUMNS = [
 FEATURE_COLUMNS_DAILY = [
     "Diff_1",
     "Lag_1",
-    "Lag_3",
-    "Lag_7",
-    "Lag_14",
-    "Lag_28",
     "Accel_2",
-    "Momentum",
     "Seasonal_Strength",
     "Roll_Mean_7",
     "Roll_Mean_28",
