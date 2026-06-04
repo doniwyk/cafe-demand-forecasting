@@ -27,7 +27,12 @@ class ModelMetrics(BaseModel):
 class ClassMetrics(BaseModel):
     n_items: int
     wmape: float
+    r2: float = 0.0
+    mae: float = 0.0
+    rmse: float = 0.0
     median_period_accuracy: float = 0.0
+    periods_within_20pct: float = 0.0
+    periods_within_50pct: float = 0.0
 
 
 class TopItem(BaseModel):

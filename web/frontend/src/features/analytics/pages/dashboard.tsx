@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -13,25 +14,14 @@ import {
 import { useABCAnalysis, useModelMetrics } from "@/features/analytics/hooks/use-analytics";
 import { useForecastSummary } from "@/features/forecasts/hooks/use-forecasts";
 import { useModelType } from "@/contexts/model-context";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import { useTranslation } from "react-i18next";
 import { MetricsGrid } from "@/features/analytics/components/metrics-grid";
 import { CLASS_COLORS } from "@/features/analytics/lib/constants";
-import { CHART_TOOLTIP_STYLE } from "@/lib/chart";
 
 export function DashboardPage() {
   const { modelType } = useModelType();
   const forecastSummary = useForecastSummary(modelType);
-  const abc = useABCAnalysis(modelType);
+  const abc = useABCAnalysis();
   const metrics = useModelMetrics(modelType);
   const { t } = useTranslation();
 
@@ -90,25 +80,44 @@ export function DashboardPage() {
               {forecastSummary.data ? (
                 <div className="flex flex-col gap-2">
                   {Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => (
-                    <div
-                      key={cls}
-                      className="flex items-center justify-between rounded-lg border px-3 py-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-primary-foreground"
-                          style={{ backgroundColor: CLASS_COLORS[cls] || "var(--chart-1)" }}
-                        >
-                          {cls}
+                    <Tooltip key={cls}>
+                      <TooltipTrigger
+                        render={
+                          <div className="flex items-center justify-between rounded-lg border px-3 py-2 cursor-default" />
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="flex size-7 items-center justify-center rounded-md text-xs font-bold text-primary-foreground"
+                            style={{ backgroundColor: CLASS_COLORS[cls] || "var(--chart-1)" }}
+                          >
+                            {cls}
+                          </div>
+                          <span className="text-sm font-medium">
+                            {m.n_items} {t("dashboard.items")}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium">
-                          {m.n_items} {t("dashboard.items")}
+                        <span className="text-sm text-muted-foreground">
+                          wMAPE {m.wmape.toFixed(1)}%
                         </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        wMAPE {m.wmape.toFixed(1)}%
-                      </span>
-                    </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="w-48">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                          <span className="text-muted-foreground">R²</span>
+                          <span className="font-medium text-right">{m.r2.toFixed(3)}</span>
+                          <span className="text-muted-foreground">wMAPE</span>
+                          <span className="font-medium text-right">{m.wmape.toFixed(1)}%</span>
+                          <span className="text-muted-foreground">MAE</span>
+                          <span className="font-medium text-right">{m.mae.toFixed(2)}</span>
+                          <span className="text-muted-foreground">RMSE</span>
+                          <span className="font-medium text-right">{m.rmse.toFixed(2)}</span>
+                          <span className="text-muted-foreground">±20%</span>
+                          <span className="font-medium text-right">{m.periods_within_20pct.toFixed(1)}%</span>
+                          <span className="text-muted-foreground">±50%</span>
+                          <span className="font-medium text-right">{m.periods_within_50pct.toFixed(1)}%</span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   ))}
                 </div>
               ) : (
@@ -135,82 +144,55 @@ export function DashboardPage() {
           <CardTitle>{t("analytics.abcClassification")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 lg:grid-cols-5">
-            {classBarData.length > 0 && (
-              <div className="lg:col-span-2 flex flex-col">
-                <div className="flex-1 min-h-62.5">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={classBarData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis
-                        dataKey="class"
-                        tick={{ fontSize: 13, fontWeight: 600 }}
-                        stroke="var(--muted-foreground)"
-                      />
-                      <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                      <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                      <Bar dataKey="items" name={t("analytics.volume")} radius={[4, 4, 0, 0]}>
-                        {classBarData.map((d) => (
-                          <Cell key={d.class} fill={CLASS_COLORS[d.class] || "var(--chart-1)"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-            <div className="lg:col-span-3">
-              {abc.data ? (
-                <Tabs defaultValue="A">
-                  <TabsList>
-                    {(["A", "B", "C"] as const).map((cls) => (
-                      <TabsTrigger key={cls} value={cls}>
-                        {cls}-class {abcByClass[cls].length > 0 && `(${abcByClass[cls].length})`}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  {(["A", "B", "C"] as const).map((cls) => (
-                    <TabsContent key={cls} value={cls} className="max-h-65 overflow-y-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("analytics.item")}</TableHead>
-                            <TableHead className="text-right">{t("analytics.volume")}</TableHead>
-                            <TableHead className="text-right">
-                              {t("analytics.cumulativePct")}
-                            </TableHead>
+          {abc.data ? (
+            <Tabs defaultValue="A">
+              <TabsList>
+                {(["A", "B", "C"] as const).map((cls) => (
+                  <TabsTrigger key={cls} value={cls}>
+                    {cls}-class {forecastSummary.data?.class_metrics[cls]?.n_items ? `(${forecastSummary.data.class_metrics[cls].n_items})` : ""}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {(["A", "B", "C"] as const).map((cls) => (
+                <TabsContent key={cls} value={cls} className="max-h-65 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("analytics.item")}</TableHead>
+                        <TableHead className="text-right">{t("analytics.volume")}</TableHead>
+                        <TableHead className="text-right">
+                          {t("analytics.cumulativePct")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {abcByClass[cls].length > 0 ? (
+                        abcByClass[cls].slice(0, 50).map((item, idx) => (
+                          <TableRow key={`${item.item}-${idx}`}>
+                            <TableCell className="font-medium">{item.item}</TableCell>
+                            <TableCell className="text-right">
+                              {Math.round(item.vol).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {(item.pct * 100).toFixed(1)}%
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {abcByClass[cls].length > 0 ? (
-                            abcByClass[cls].slice(0, 50).map((item, idx) => (
-                              <TableRow key={`${item.item}-${idx}`}>
-                                <TableCell className="font-medium">{item.item}</TableCell>
-                                <TableCell className="text-right">
-                                  {Math.round(item.vol).toLocaleString()}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {(item.pct * 100).toFixed(1)}%
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={3} className="text-center text-muted-foreground">
-                                {t("common.noData")}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              ) : (
-                <Skeleton className="h-65 w-full" />
-              )}
-            </div>
-          </div>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground">
+                            {t("common.noData")}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <Skeleton className="h-65 w-full" />
+          )}
         </CardContent>
       </Card>
     </div>

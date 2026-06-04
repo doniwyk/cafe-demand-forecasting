@@ -237,8 +237,13 @@ class ModelRunClassMetric(Base):
     abc_class: Mapped[str] = mapped_column(String(1), nullable=False)
     n_items: Mapped[int] = mapped_column(Integer, nullable=False)
     wmape: Mapped[float] = mapped_column(Float, nullable=False)
+    r2: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    mae: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    rmse: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     volume_accuracy: Mapped[float] = mapped_column(Float, nullable=False)
     median_period_accuracy: Mapped[Optional[float]] = mapped_column(Float)
+    periods_within_20pct: Mapped[Optional[float]] = mapped_column(Float)
+    periods_within_50pct: Mapped[Optional[float]] = mapped_column(Float)
 
     model_run: Mapped["ModelRun"] = relationship(
         back_populates="class_metrics", lazy="noload"

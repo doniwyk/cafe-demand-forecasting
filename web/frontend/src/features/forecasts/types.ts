@@ -24,7 +24,12 @@ export interface ModelMetrics {
 export interface ClassMetrics {
   n_items: number;
   wmape: number;
+  r2: number;
+  mae: number;
+  rmse: number;
   median_period_accuracy: number;
+  periods_within_20pct: number;
+  periods_within_50pct: number;
 }
 
 export interface PredictResponse {

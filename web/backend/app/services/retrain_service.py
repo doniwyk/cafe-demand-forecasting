@@ -245,8 +245,13 @@ def _run_training_sync(model_type: str, max_items: int | None, end_date: str | N
                     abc_class=cls_name,
                     n_items=_as_int(cm.get("n_items")) or 0,
                     wmape=_as_float(cm.get("wmape")) or 0.0,
-                    volume_accuracy=_as_float(cm.get("median_period_acc")) or 0.0,
-                    median_period_accuracy=_as_float(cm.get("median_period_acc")) or 0.0,
+                    r2=_as_float(cm.get("r2")) or 0.0,
+                    mae=_as_float(cm.get("mae")) or 0.0,
+                    rmse=_as_float(cm.get("rmse")) or 0.0,
+                    volume_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
+                    median_period_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
+                    periods_within_20pct=_as_float(cm.get("periods_within_20pct")) or 0.0,
+                    periods_within_50pct=_as_float(cm.get("periods_within_50pct")) or 0.0,
                 )
             )
 

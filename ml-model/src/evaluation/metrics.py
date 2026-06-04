@@ -83,13 +83,9 @@ def generate_abc_analysis(df: pd.DataFrame, frequency: str = "weekly") -> Dict[s
         sub = df[df["Class"] == c]
         if len(sub) == 0:
             continue
-        class_metrics[c] = {
-            "n_items": sub["Item"].nunique(),
-            "wmape": round(weighted_mape(sub["Quantity_Sold"], sub["Predicted"]), 1),
-            "median_period_acc": per_period_median_accuracy(
-                sub["Quantity_Sold"], sub["Predicted"], sub["Item"]
-            ),
-        }
+        cm = compute_item_metrics(sub["Quantity_Sold"], sub["Predicted"], sub["Item"])
+        cm["n_items"] = sub["Item"].nunique()
+        class_metrics[c] = cm
 
     top_items = (
         df[df["Class"] == "A"]

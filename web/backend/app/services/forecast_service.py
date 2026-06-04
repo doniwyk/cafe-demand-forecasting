@@ -106,7 +106,12 @@ async def get_forecast_summary(
         row.abc_class: ClassMetrics(
             n_items=row.n_items,
             wmape=row.wmape,
+            r2=row.r2 or 0,
+            mae=row.mae or 0,
+            rmse=row.rmse or 0,
             median_period_accuracy=row.median_period_accuracy or row.volume_accuracy or 0,
+            periods_within_20pct=row.periods_within_20pct or 0,
+            periods_within_50pct=row.periods_within_50pct or 0,
         )
         for row in class_rows
     }

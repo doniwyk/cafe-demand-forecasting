@@ -20,7 +20,6 @@ import {
 import { useModelType, MODEL_TYPES, MODEL_LABELS } from "@/contexts/model-context";
 import type { ModelType } from "@/contexts/model-context";
 import { AppTour } from "@/components/app-tour";
-import { BrainCircuitIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
