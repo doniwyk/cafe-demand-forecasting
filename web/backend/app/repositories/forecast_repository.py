@@ -6,8 +6,6 @@ from app.db.models import (
     ModelRun,
     ModelRunClassMetric,
     ModelRunTopItem,
-    Forecast,
-    ItemABC,
 )
 from app.repositories import BaseRepository
 
@@ -41,10 +39,6 @@ class ForecastRepository(BaseRepository):
 
     async def get_top_items(self, model_run_id: int):
         query = select(ModelRunTopItem).where(ModelRunTopItem.model_run_id == model_run_id)
-        return (await self._session.execute(query)).scalars().all()
-
-    async def get_item_abc(self):
-        query = select(ItemABC).order_by(ItemABC.cumulative_pct)
         return (await self._session.execute(query)).scalars().all()
 
     async def get_inactive_run_ids(self):

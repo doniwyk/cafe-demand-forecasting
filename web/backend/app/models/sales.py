@@ -17,24 +17,6 @@ class DailySalePage(BaseModel):
     page_size: int
 
 
-class DailyTotalSale(BaseModel):
-    date: str
-    quantity: float
-    net_sales: float
-    gross_sales: float
-    unique_items: int
-    unique_categories: int | None = None
-
-
-class DailyCategorySale(BaseModel):
-    date: str
-    category: str
-    quantity: float
-    net_sales: float
-    gross_sales: float
-    unique_items: int
-
-
 class ItemInfo(BaseModel):
     name: str
     category: str | None = None

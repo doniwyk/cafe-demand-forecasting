@@ -53,12 +53,6 @@ class Item(Base):
     daily_item_sales: Mapped[list["DailyItemSale"]] = relationship(
         back_populates="item", lazy="noload"
     )
-    forecasts: Mapped[list["Forecast"]] = relationship(
-        back_populates="item", lazy="noload"
-    )
-    item_abc: Mapped[Optional["ItemABC"]] = relationship(
-        back_populates="item", lazy="noload", uselist=False
-    )
 
     __table_args__ = (Index("ix_items_category_id", "category_id"),)
 
@@ -93,52 +87,6 @@ class BomRecipe(Base):
     )
 
 
-class CondimentRecipe(Base):
-    __tablename__ = "condiment_recipes"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    condiment: Mapped[str] = mapped_column(String(200), nullable=False)
-    condiment_qty: Mapped[float] = mapped_column(Float, nullable=False)
-    condiment_unit: Mapped[str] = mapped_column(String(50), nullable=False)
-    sub_ingredient: Mapped[str] = mapped_column(String(200), nullable=False)
-    qty_per_unit: Mapped[float] = mapped_column(Float, nullable=False)
-    sub_unit: Mapped[str] = mapped_column(String(50), nullable=False)
-
-    __table_args__ = (
-        Index("ix_condiment", "condiment"),
-        Index("ix_condiment_sub", "sub_ingredient"),
-    )
-
-
-class SaleCleaned(Base):
-    __tablename__ = "sales_cleaned"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    date: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
-    receipt_number: Mapped[Optional[str]] = mapped_column(String(100))
-    receipt_type: Mapped[Optional[str]] = mapped_column(String(50))
-    category: Mapped[Optional[str]] = mapped_column(String(100))
-    sku: Mapped[Optional[str]] = mapped_column(String(50))
-    item: Mapped[Optional[str]] = mapped_column(String(100), nullable=False, index=True)
-    variant: Mapped[Optional[str]] = mapped_column(String(100))
-    modifiers_applied: Mapped[Optional[str]] = mapped_column(Text)
-    quantity: Mapped[Optional[float]] = mapped_column(Float)
-    gross_sales: Mapped[Optional[float]] = mapped_column(Float)
-    discounts: Mapped[Optional[float]] = mapped_column(Float)
-    net_sales: Mapped[Optional[float]] = mapped_column(Float)
-    cost_of_goods: Mapped[Optional[float]] = mapped_column(Float)
-    gross_profit: Mapped[Optional[float]] = mapped_column(Float)
-    taxes: Mapped[Optional[float]] = mapped_column(Float)
-    dining_option: Mapped[Optional[str]] = mapped_column(String(50))
-    pos: Mapped[Optional[str]] = mapped_column(String(50))
-    store: Mapped[Optional[str]] = mapped_column(String(100))
-    cashier_name: Mapped[Optional[str]] = mapped_column(String(100))
-    customer_name: Mapped[Optional[str]] = mapped_column(String(100))
-    status: Mapped[Optional[str]] = mapped_column(String(50))
-
-    __table_args__ = (Index("ix_sales_cleaned_date_item", "date", "item"),)
-
-
 class DailyItemSale(Base):
     __tablename__ = "daily_item_sales"
 
@@ -157,38 +105,6 @@ class DailyItemSale(Base):
         UniqueConstraint("date", "item_id", name="uq_daily_item_sales_date_item"),
         Index("ix_daily_item_sales_date", "date"),
     )
-
-
-class DailyCategorySale(Base):
-    __tablename__ = "daily_category_sales"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    net_sales: Mapped[float] = mapped_column(Float, nullable=False)
-    gross_sales: Mapped[float] = mapped_column(Float, nullable=False)
-    unique_items: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint(
-            "date", "category", name="uq_daily_category_sales_date_category"
-        ),
-        Index("ix_daily_category_sales_date", "date"),
-    )
-
-
-class DailyTotalSale(Base):
-    __tablename__ = "daily_total_sales"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    date: Mapped[date] = mapped_column(
-        Date, primary_key=False, unique=True, nullable=False
-    )
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
-    net_sales: Mapped[float] = mapped_column(Float, nullable=False)
-    gross_sales: Mapped[float] = mapped_column(Float, nullable=False)
-    unique_items: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class ModelRun(Base):
@@ -214,9 +130,6 @@ class ModelRun(Base):
     params: Mapped[Optional[str]] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    forecasts: Mapped[list["Forecast"]] = relationship(
-        back_populates="model_run", lazy="noload"
-    )
     class_metrics: Mapped[list["ModelRunClassMetric"]] = relationship(
         back_populates="model_run", lazy="noload"
     )
@@ -273,189 +186,3 @@ class ModelRunTopItem(Base):
     __table_args__ = (
         UniqueConstraint("model_run_id", "item_name", name="uq_model_run_top_item"),
     )
-
-
-class Forecast(Base):
-    __tablename__ = "forecasts"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    model_run_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("model_runs.id"), nullable=False
-    )
-    item_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("items.id"), nullable=False
-    )
-    date: Mapped[date] = mapped_column(Date, nullable=False)
-    quantity_predicted: Mapped[float] = mapped_column(Float, nullable=False)
-
-    model_run: Mapped["ModelRun"] = relationship(
-        back_populates="forecasts", lazy="noload"
-    )
-    item: Mapped["Item"] = relationship(back_populates="forecasts", lazy="noload")
-
-    __table_args__ = (
-        UniqueConstraint(
-            "model_run_id", "item_id", "date", name="uq_forecast_run_item_date"
-        ),
-        Index("ix_forecasts_date", "date"),
-        Index("ix_forecasts_item", "item_id"),
-    )
-
-
-class ItemABC(Base):
-    __tablename__ = "item_abc"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    item_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("items.id"), unique=True, nullable=False
-    )
-    total_volume: Mapped[float] = mapped_column(Float, nullable=False)
-    cumulative_volume: Mapped[float] = mapped_column(Float, nullable=False)
-    cumulative_pct: Mapped[float] = mapped_column(Float, nullable=False)
-    abc_class: Mapped[str] = mapped_column(String(1), nullable=False)
-    computed_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-
-    item: Mapped["Item"] = relationship(back_populates="item_abc", lazy="noload")
-
-
-
-
-
-class RawMaterialRequirement(Base):
-    __tablename__ = "raw_material_requirements"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
-    raw_material: Mapped[str] = mapped_column(String(200), nullable=False)
-    quantity_required: Mapped[float] = mapped_column(Float, nullable=False)
-
-    __table_args__ = (Index("ix_raw_material_date_material", "date", "raw_material"),)
-
-
-class Product(Base):
-    __tablename__ = "products"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True)
-
-    variants: Mapped[list["ProductVariant"]] = relationship(
-        back_populates="product", lazy="noload"
-    )
-    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
-        back_populates="product", lazy="noload"
-    )
-
-    __table_args__ = (Index("ix_products_name", "name"),)
-
-
-class ProductVariant(Base):
-    __tablename__ = "product_variants"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    product_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("products.id"), nullable=False
-    )
-
-    product: Mapped["Product"] = relationship(
-        back_populates="variants", lazy="noload"
-    )
-    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
-        back_populates="variant", lazy="noload"
-    )
-
-    __table_args__ = (Index("ix_product_variants_product_id", "product_id"),)
-
-
-class Material(Base):
-    __tablename__ = "materials"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    unit_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-
-    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
-        back_populates="material", lazy="noload"
-    )
-    condiment_ingredients: Mapped[list["CondimentIngredient"]] = relationship(
-        back_populates="material", lazy="noload"
-    )
-
-    __table_args__ = (Index("ix_materials_name", "name"),)
-
-
-class Condiment(Base):
-    __tablename__ = "condiments"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False)
-    batch_quantity: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-
-    recipe_ingredients: Mapped[list["ProductRecipeIngredient"]] = relationship(
-        back_populates="condiment", lazy="noload"
-    )
-    ingredients: Mapped[list["CondimentIngredient"]] = relationship(
-        back_populates="condiment", lazy="noload"
-    )
-
-    __table_args__ = (Index("ix_condiments_name", "name"),)
-
-
-class ProductRecipeIngredient(Base):
-    __tablename__ = "product_recipe_ingredients"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    product_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("products.id"), nullable=False
-    )
-    variant_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("product_variants.id"), nullable=True
-    )
-    material_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("materials.id"), nullable=True
-    )
-    condiment_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("condiments.id"), nullable=True
-    )
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
-
-    product: Mapped["Product"] = relationship(
-        back_populates="recipe_ingredients", lazy="noload"
-    )
-    variant: Mapped[Optional["ProductVariant"]] = relationship(
-        back_populates="recipe_ingredients", lazy="noload"
-    )
-    material: Mapped[Optional["Material"]] = relationship(
-        back_populates="recipe_ingredients", lazy="noload"
-    )
-    condiment: Mapped[Optional["Condiment"]] = relationship(
-        back_populates="recipe_ingredients", lazy="noload"
-    )
-
-    __table_args__ = (
-        Index("ix_product_recipe_product_id", "product_id"),
-        Index("ix_product_recipe_variant_id", "variant_id"),
-    )
-
-
-class CondimentIngredient(Base):
-    __tablename__ = "condiment_ingredients"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    condiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("condiments.id"), nullable=False
-    )
-    material_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("materials.id"), nullable=True
-    )
-    quantity: Mapped[float] = mapped_column(Float, nullable=False)
-
-    condiment: Mapped["Condiment"] = relationship(
-        back_populates="ingredients", lazy="noload"
-    )
-    material: Mapped[Optional["Material"]] = relationship(
-        back_populates="condiment_ingredients", lazy="noload"
-    )
-
-    __table_args__ = (Index("ix_condiment_ingredients_condiment_id", "condiment_id"),)

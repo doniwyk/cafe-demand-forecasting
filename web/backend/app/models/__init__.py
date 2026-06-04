@@ -1,8 +1,6 @@
 from app.models.sales import (
     DailySale,
     DailySalePage,
-    DailyTotalSale,
-    DailyCategorySale,
     ItemInfo,
 )
 from app.models.forecast import (

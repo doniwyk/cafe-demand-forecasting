@@ -30,15 +30,6 @@ export function DashboardPage() {
     return Object.values(forecastSummary.data.class_metrics).reduce((s, m) => s + m.n_items, 0);
   }, [forecastSummary.data]);
 
-  const classBarData = useMemo(() => {
-    if (!forecastSummary.data) return [];
-    return Object.entries(forecastSummary.data.class_metrics).map(([cls, m]) => ({
-      class: cls,
-      items: m.n_items,
-      wmape: +m.wmape.toFixed(1),
-    }));
-  }, [forecastSummary.data]);
-
   const abcByClass = useMemo(() => {
     if (!abc.data?.classifications) return { A: [], B: [], C: [] };
     const grouped: Record<string, typeof abc.data.classifications> = { A: [], B: [], C: [] };

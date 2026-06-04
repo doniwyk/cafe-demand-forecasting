@@ -4,43 +4,12 @@ import asyncio
 from datetime import date
 
 import pandas as pd
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
-from app.repositories.material_repository import MaterialRepository
 from app.ml.engine import generate_forecast
 from app.repositories.forecast_repository import ForecastRepository
 from app.services.forecast_service import _forecast_cache
-
-
-async def get_daily_materials(
-    session: AsyncSession,
-    material: str | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    page: int = 1,
-    page_size: int = 100,
-) -> MaterialRequirementPage:
-    repo = MaterialRepository(session)
-    rows, total = await repo.get_daily_materials(
-        material, start_date, end_date, page, page_size
-    )
-
-    return MaterialRequirementPage(
-        data=[
-            DailyMaterialRequirement(
-                date=str(row.date),
-                raw_material=row.raw_material,
-                quantity_required=row.quantity_required,
-            )
-            for row in rows
-        ],
-        total=total,
-        page=page,
-        page_size=page_size,
-    )
 
 
 async def get_material_forecast(

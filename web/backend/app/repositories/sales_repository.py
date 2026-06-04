@@ -3,14 +3,11 @@ from __future__ import annotations
 from datetime import date
 
 from sqlalchemy import select, func, text
-from sqlalchemy.orm import joinedload
 
 from app.db.models import (
     Category,
     Item,
     DailyItemSale,
-    DailyCategorySale,
-    DailyTotalSale,
 )
 from app.repositories import BaseRepository
 
@@ -34,54 +31,13 @@ class SalesRepository(BaseRepository):
         query = query.order_by(DailyItemSale.date, Item.name)
         return await self._paginate(query, page, page_size)
 
-    async def get_daily_total_sales(
-        self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        page: int = 1,
-        page_size: int = 100,
-    ):
-        query = select(DailyTotalSale)
-        if start_date:
-            query = query.where(DailyTotalSale.date >= date.fromisoformat(start_date))
-        if end_date:
-            query = query.where(DailyTotalSale.date <= date.fromisoformat(end_date))
-        query = query.order_by(DailyTotalSale.date)
-        query = query.offset((page - 1) * page_size).limit(page_size)
-        result = await self._session.execute(query)
-        return result.scalars().all()
-
-    async def get_daily_category_sales(
-        self,
-        category: str | None = None,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        page: int = 1,
-        page_size: int = 100,
-    ):
-        query = select(DailyCategorySale)
-        if category:
-            query = query.where(DailyCategorySale.category == category)
-        if start_date:
-            query = query.where(DailyCategorySale.date >= date.fromisoformat(start_date))
-        if end_date:
-            query = query.where(DailyCategorySale.date <= date.fromisoformat(end_date))
-        query = query.order_by(DailyCategorySale.date)
-        query = query.offset((page - 1) * page_size).limit(page_size)
-        result = await self._session.execute(query)
-        return result.scalars().all()
-
     async def get_items(self):
         query = select(Item.name, Category.name).outerjoin(Category).order_by(Item.name)
         result = await self._session.execute(query)
         return result.all()
 
     async def get_categories(self):
-        query = (
-            select(DailyCategorySale.category)
-            .distinct()
-            .order_by(DailyCategorySale.category)
-        )
+        query = select(Category.name).order_by(Category.name)
         result = await self._session.execute(query)
         return [row[0] for row in result.all()]
 
