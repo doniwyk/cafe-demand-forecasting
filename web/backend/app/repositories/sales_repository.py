@@ -41,19 +41,6 @@ class SalesRepository(BaseRepository):
         result = await self._session.execute(query)
         return [row[0] for row in result.all()]
 
-    async def get_sales_dataframe(self):
-        import pandas as pd
-
-        result = await self._session.execute(text(SALES_JOIN_SQL))
-        rows = result.fetchall()
-        if not rows:
-            return pd.DataFrame(columns=["Date", "Item", "Quantity_Sold"])
-        df = pd.DataFrame(
-            [tuple(row) for row in rows], columns=["Date", "Item", "Quantity_Sold"]
-        )
-        df["Date"] = pd.to_datetime(df["Date"])
-        return df
-
     async def get_item_volumes(self):
         query = (
             select(
@@ -82,8 +69,3 @@ class SalesRepository(BaseRepository):
         return result.all()
 
 
-SALES_JOIN_SQL = """
-    SELECT dis.date, i.name as item, dis.quantity_sold
-    FROM daily_item_sales dis
-    JOIN items i ON dis.item_id = i.id
-"""

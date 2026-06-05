@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_session
@@ -47,7 +47,6 @@ async def predict_items(request: PredictRequest):
 
 @router.post("/retrain", response_model=RetrainResponse)
 async def retrain_models(
-    background_tasks: BackgroundTasks,
     body: RetrainRequest = RetrainRequest(),
 ):
     result = await start_retrain(

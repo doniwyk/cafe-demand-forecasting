@@ -238,33 +238,35 @@ def _run_training_sync(model_type: str, max_items: int | None, end_date: str | N
         session.add(run)
         session.flush()
 
-        for cls_name, cm in analysis.get("class_metrics", {}).items():
-            session.add(
-                ModelRunClassMetric(
-                    model_run_id=run.id,
-                    abc_class=cls_name,
-                    n_items=_as_int(cm.get("n_items")) or 0,
-                    wmape=_as_float(cm.get("wmape")) or 0.0,
-                    r2=_as_float(cm.get("r2")) or 0.0,
-                    mae=_as_float(cm.get("mae")) or 0.0,
-                    rmse=_as_float(cm.get("rmse")) or 0.0,
-                    volume_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
-                    median_period_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
-                    periods_within_20pct=_as_float(cm.get("periods_within_20pct")) or 0.0,
-                    periods_within_50pct=_as_float(cm.get("periods_within_50pct")) or 0.0,
-                )
+        class_metrics_objs = [
+            ModelRunClassMetric(
+                model_run_id=run.id,
+                abc_class=cls_name,
+                n_items=_as_int(cm.get("n_items")) or 0,
+                wmape=_as_float(cm.get("wmape")) or 0.0,
+                r2=_as_float(cm.get("r2")) or 0.0,
+                mae=_as_float(cm.get("mae")) or 0.0,
+                rmse=_as_float(cm.get("rmse")) or 0.0,
+                volume_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
+                median_period_accuracy=_as_float(cm.get("median_period_accuracy")) or 0.0,
+                periods_within_20pct=_as_float(cm.get("periods_within_20pct")) or 0.0,
+                periods_within_50pct=_as_float(cm.get("periods_within_50pct")) or 0.0,
             )
+            for cls_name, cm in analysis.get("class_metrics", {}).items()
+        ]
+        session.add_all(class_metrics_objs)
 
-        for t in analysis.get("top_items", []):
-            session.add(
-                ModelRunTopItem(
-                    model_run_id=run.id,
-                    item_name=t["Item"],
-                    quantity_sold=_as_float(t["Quantity_Sold"]) or 0.0,
-                    predicted=_as_float(t["Predicted"]) or 0.0,
-                    accuracy_pct=_as_float(t["accuracy_pct"]) or 0.0,
-                )
+        top_items_objs = [
+            ModelRunTopItem(
+                model_run_id=run.id,
+                item_name=t["Item"],
+                quantity_sold=_as_float(t["Quantity_Sold"]) or 0.0,
+                predicted=_as_float(t["Predicted"]) or 0.0,
+                accuracy_pct=_as_float(t["accuracy_pct"]) or 0.0,
             )
+            for t in analysis.get("top_items", [])
+        ]
+        session.add_all(top_items_objs)
 
         session.commit()
         invalidate_forecast_cache(model_type)

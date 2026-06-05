@@ -91,7 +91,13 @@ async def get_material_forecast(
     )
 
 
+_unit_map_cache: dict[str, str] | None = None
+
+
 def _build_unit_map(menu_bom_path, condiment_bom_path) -> dict[str, str]:
+    global _unit_map_cache
+    if _unit_map_cache is not None:
+        return _unit_map_cache
     unit_map = {}
     try:
         menu = pd.read_csv(menu_bom_path)
@@ -102,4 +108,5 @@ def _build_unit_map(menu_bom_path, condiment_bom_path) -> dict[str, str]:
             unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
     except Exception:
         pass
+    _unit_map_cache = unit_map
     return unit_map

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { PackageIcon, BarChart3Icon, LayoutDashboardIcon, SettingsIcon } from "lucide-react"
+import { PackageIcon, BarChart3Icon, LayoutDashboardIcon, SettingsIcon, ChartPie } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -13,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { CoffeeIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -47,13 +46,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <CoffeeIcon className="size-4" />
-              </div>
+            <SidebarMenuButton size="default">
+              <ChartPie className="size-4" />
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{t("sidebar.brand")}</span>
-                <span className="truncate text-xs">{t("sidebar.brandSub")}</span>
+                <span className="truncate font-semibold">HusgenCast</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

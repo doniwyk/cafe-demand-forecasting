@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { forecastsApi } from "@/features/forecasts/lib/api";
-import type { PredictResponse, RetrainResponse, RetrainStatusMap } from "@/features/forecasts/types";
+import type { RetrainResponse, RetrainStatusMap } from "@/features/forecasts/types";
 import { useMutation } from "@tanstack/react-query";
 
 export function useForecasts(params?: {
@@ -21,16 +21,6 @@ export function useForecastSummary(modelType?: string) {
   return useQuery({
     queryKey: ["forecasts", "summary", modelType],
     queryFn: () => forecastsApi.summary(modelType),
-  });
-}
-
-export function usePredict() {
-  return useMutation<
-    PredictResponse,
-    Error,
-    { items: string[]; weeks?: number; model_type?: string }
-  >({
-    mutationFn: (data) => forecastsApi.predict(data),
   });
 }
 
@@ -55,20 +45,5 @@ export function useRetrainStatus() {
     queryKey: ["forecasts", "retrain-status"],
     queryFn: () => forecastsApi.retrainStatus(),
     refetchInterval: 5_000,
-  });
-}
-
-export function useCleanup() {
-  return useMutation<
-    {
-      deleted_runs: number;
-      deleted_forecasts: number;
-      deleted_class_metrics: number;
-      deleted_top_items: number;
-    },
-    Error,
-    void
-  >({
-    mutationFn: () => forecastsApi.cleanup(),
   });
 }

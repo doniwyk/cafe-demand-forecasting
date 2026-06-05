@@ -15,7 +15,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("model_runs", sa.Column("rmse", sa.Float(), nullable=True))
+    from sqlalchemy.engine import reflection
+    conn = op.get_bind()
+    inspector = reflection.Inspector.from_engine(conn)
+    cols = [c["name"] for c in inspector.get_columns("model_runs")]
+    if "rmse" not in cols:
+        op.add_column("model_runs", sa.Column("rmse", sa.Float(), nullable=True))
 
 
 def downgrade() -> None:

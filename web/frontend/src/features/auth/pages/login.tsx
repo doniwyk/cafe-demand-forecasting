@@ -29,7 +29,6 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate({ to: "/" });
     } catch (err) {
       setError(err instanceof Error ? err.message : t("login.failed"));
     } finally {

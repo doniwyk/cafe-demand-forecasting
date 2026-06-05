@@ -115,13 +115,6 @@ def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
     return analysis
 
 
-def run_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
-    processed = _clean_and_prepare(df_daily, model_type)
-    fns = _get_fns(model_type)
-    test_pred = fns["train_and_predict"](processed, frequency=_FREQUENCY)
-    return generate_abc_analysis(test_pred, frequency=_FREQUENCY)
-
-
 def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.str.strip()

@@ -41,24 +41,6 @@ class ForecastRepository(BaseRepository):
         query = select(ModelRunTopItem).where(ModelRunTopItem.model_run_id == model_run_id)
         return (await self._session.execute(query)).scalars().all()
 
-    async def get_inactive_run_ids(self):
-        query = select(ModelRun.id).where(ModelRun.is_active == False)
-        return (await self._session.execute(query)).scalars().all()
-
-    async def get_items_with_models(self, model_run_id: int) -> set[str]:
-        run = await self._session.get(ModelRun, model_run_id)
-        if not run or not run.items_with_models:
-            return set()
-        import json
-        try:
-            return {
-                str(item).strip().lower()
-                for item in json.loads(run.items_with_models or "[]")
-                if str(item).strip()
-            }
-        except (TypeError, json.JSONDecodeError):
-            return set()
-
     async def get_sales_dataframe(self, items: list[str] | None = None):
         import pandas as pd
 

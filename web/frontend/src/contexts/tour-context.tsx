@@ -42,11 +42,6 @@ const TOUR_STEPS: Record<string, StepDef[]> = {
     { titleKey: 'tour.modelSelector.title', descKey: 'tour.modelSelector.desc', element: '[data-tour="model-selector"]', side: 'bottom', align: 'end' },
     { titleKey: 'tour.kpiCards.title', descKey: 'tour.kpiCards.desc', element: '[data-tour="kpi-cards"]', side: 'bottom', align: 'start' },
     { titleKey: 'tour.topItemsChart.title', descKey: 'tour.topItemsChart.desc', element: '[data-tour="top-items-chart"]', side: 'left', align: 'start' },
-    { titleKey: 'tour.forecastSummary.title', descKey: 'tour.forecastSummary.desc', element: '[data-tour="forecast-summary"]', side: 'left', align: 'start' },
-  ],
-  '/analytics': [
-    { titleKey: 'tour.modelPerformance.title', descKey: 'tour.modelPerformance.desc', element: '[data-tour="model-performance"]', side: 'bottom', align: 'start' },
-    { titleKey: 'tour.abcClassification.title', descKey: 'tour.abcClassification.desc', element: '[data-tour="abc-classification"]', side: 'bottom', align: 'start' },
   ],
   '/forecasts': [
     { titleKey: 'tour.itemSelector.title', descKey: 'tour.itemSelector.desc', element: '[data-tour="item-selector"]', side: 'bottom', align: 'start' },
@@ -56,11 +51,9 @@ const TOUR_STEPS: Record<string, StepDef[]> = {
   '/materials/daily-need': [
     { titleKey: 'tour.materialFilter.title', descKey: 'tour.materialFilter.desc', element: '[data-tour="material-filter"]', side: 'bottom', align: 'start' },
     { titleKey: 'tour.dailyRequirements.title', descKey: 'tour.dailyRequirements.desc', element: '[data-tour="daily-requirements"]', side: 'top', align: 'start' },
-    { titleKey: 'tour.requirementsTrend.title', descKey: 'tour.requirementsTrend.desc', element: '[data-tour="requirements-trend"]', side: 'top', align: 'start' },
   ],
   '/settings': [
     { titleKey: 'tour.modelTraining.title', descKey: 'tour.modelTraining.desc', element: '[data-tour="model-training"]', side: 'bottom', align: 'start' },
-    { titleKey: 'tour.dataCleanup.title', descKey: 'tour.dataCleanup.desc', element: '[data-tour="data-cleanup"]', side: 'top', align: 'start' },
   ],
 }
 
@@ -150,4 +143,4 @@ export function useTour() {
   return useContext(TourContext)
 }
 
-export { resetAll, hasCompleted }
+export { hasCompleted }
