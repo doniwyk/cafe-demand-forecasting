@@ -13,28 +13,18 @@ warnings.filterwarnings("ignore")
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
-MIN_TRAIN_RECORDS_DAILY = 60
-MIN_TRAIN_RECORDS_WEEKLY = 24
+MIN_TRAIN_RECORDS = 60
 
 _DEFAULT_ORDER = (1, 1, 1)
-_DEFAULT_SEASONAL_ORDER_WEEKLY = (0, 0, 0, 0)
-_DEFAULT_SEASONAL_ORDER_DAILY = (0, 0, 0, 0)
+_DEFAULT_SEASONAL_ORDER = (0, 0, 0, 0)
 _FIT_KWARGS = {"maxiter": 20, "disp": False}
 
 
-def get_min_train_records(frequency: str) -> int:
-    return MIN_TRAIN_RECORDS_DAILY if frequency == "daily" else MIN_TRAIN_RECORDS_WEEKLY
-
-
-def _fit_item_sarimax(series: pd.Series, frequency: str = "weekly"):
-    seasonal_order = (
-        _DEFAULT_SEASONAL_ORDER_DAILY if frequency == "daily"
-        else _DEFAULT_SEASONAL_ORDER_WEEKLY
-    )
+def _fit_item_sarimax(series: pd.Series):
     model = SARIMAX(
         series,
         order=_DEFAULT_ORDER,
-        seasonal_order=seasonal_order,
+        seasonal_order=_DEFAULT_SEASONAL_ORDER,
         enforce_stationarity=False,
         enforce_invertibility=False,
     )
@@ -83,19 +73,17 @@ def _get_global_avg(df: pd.DataFrame) -> float:
 def train_models_sarimax(
     df_features: pd.DataFrame,
     output_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> tuple[dict, float, dict]:
     output_dir = Path(output_dir) if output_dir else None
     output_dir.mkdir(parents=True, exist_ok=True) if output_dir else None
 
     dow_factor_dict = _compute_dow_factors(df_features)
     global_avg = _get_global_avg(df_features)
-    min_recs = get_min_train_records(frequency)
 
     item_models = {}
     items = list(df_features["Item"].unique())
     total_items = len(items)
-    print(f"[SARIMAX] Training per-item models ({frequency})...", flush=True)
+    print("[SARIMAX] Training per-item models...", flush=True)
     for idx, item in enumerate(items):
         if (idx + 1) % 5 == 0 or idx == 0:
             print(
@@ -103,12 +91,12 @@ def train_models_sarimax(
                 flush=True,
             )
         train_item = df_features[df_features["Item"] == item].set_index("Date").sort_index()
-        if len(train_item) >= min_recs:
+        if len(train_item) >= MIN_TRAIN_RECORDS:
             try:
-                model = _fit_item_sarimax(train_item["Quantity_Sold"], frequency=frequency)
+                model = _fit_item_sarimax(train_item["Quantity_Sold"])
                 item_models[item] = {
                     "order": _DEFAULT_ORDER,
-                    "seasonal_order": _DEFAULT_SEASONAL_ORDER_WEEKLY if frequency == "weekly" else _DEFAULT_SEASONAL_ORDER_DAILY,
+                    "seasonal_order": _DEFAULT_SEASONAL_ORDER,
                     "params": model.params_,
                 }
             except Exception:
@@ -156,7 +144,6 @@ def predict_sarimax(
     global_model: float | None = None,
     dow_factor_dict: dict | None = None,
     model_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
     if item_models is None or global_model is None or dow_factor_dict is None:
         item_models, global_model, dow_factor_dict = load_models_sarimax(model_dir)
@@ -169,10 +156,6 @@ def predict_sarimax(
 
         if item in item_models:
             try:
-                seasonal_order = (
-                    _DEFAULT_SEASONAL_ORDER_DAILY if frequency == "daily"
-                    else _DEFAULT_SEASONAL_ORDER_WEEKLY
-                )
                 series = df_features[
                     (df_features["Item"] == item)
                     & (df_features["Date"] < test_item["Date"].min())
@@ -197,18 +180,17 @@ def predict_sarimax(
     return _apply_dow_adjustment(result.sort_values(["Item", "Date"]), dow_factor_dict)
 
 
-def generate_future_weekly(
+def generate_future(
     df_daily: pd.DataFrame,
     future_weeks: int = 12,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
     max_date = df_daily["Date"].max()
     items = df_daily["Item"].unique()
 
     future_dates = pd.date_range(
-        start=max_date + pd.Timedelta(weeks=1),
-        periods=future_weeks,
-        freq="W-MON",
+        start=max_date + pd.Timedelta(days=1),
+        periods=future_weeks * 7,
+        freq="D",
     )
 
     future_df = pd.DataFrame(
@@ -242,20 +224,15 @@ def generate_future_weekly(
 def train_and_predict_sarimax(
     df_features: pd.DataFrame,
     n_test_periods: int = 12,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
-    if frequency == "daily":
-        split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
-    else:
-        split_date = df_features["Date"].max() - pd.Timedelta(weeks=n_test_periods)
+    split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
     train = df_features[df_features["Date"] < split_date].copy()
     test = df_features[df_features["Date"] >= split_date].copy()
 
     dow_factor_dict = _compute_dow_factors(train)
     global_avg = _get_global_avg(train)
-    min_recs = get_min_train_records(frequency)
 
-    print(f"[SARIMAX] Training per-item models ({frequency})...", flush=True)
+    print("[SARIMAX] Training per-item models...", flush=True)
     predictions = []
     items = list(test["Item"].unique())
     total_items = len(items)
@@ -265,9 +242,9 @@ def train_and_predict_sarimax(
         train_item = train[train["Item"] == item].set_index("Date").sort_index()
         test_item = test[test["Item"] == item].copy()
 
-        if len(train_item) >= min_recs:
+        if len(train_item) >= MIN_TRAIN_RECORDS:
             try:
-                result = _fit_item_sarimax(train_item["Quantity_Sold"], frequency=frequency)
+                result = _fit_item_sarimax(train_item["Quantity_Sold"])
                 pred = result.forecast(steps=len(test_item))
                 pred = np.maximum(0, pred.values)
             except Exception:

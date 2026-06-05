@@ -9,11 +9,10 @@ from pathlib import Path
 
 from sklearn.ensemble import RandomForestRegressor
 
-from src.utils.config import get_feature_columns
+from src.utils.config import FEATURE_COLUMNS
 
 
-MIN_TRAIN_RECORDS_DAILY = 60
-MIN_TRAIN_RECORDS_WEEKLY = 24
+MIN_TRAIN_RECORDS = 60
 _BLEND_ALPHA = 0.5
 
 _RF_GLOBAL_PARAMS = {
@@ -33,10 +32,6 @@ _RF_ITEM_PARAMS = {
     "random_state": 42,
     "n_jobs": -1,
 }
-
-
-def get_min_train_records(frequency: str) -> int:
-    return MIN_TRAIN_RECORDS_DAILY if frequency == "daily" else MIN_TRAIN_RECORDS_WEEKLY
 
 
 def _compute_dow_factors(df: pd.DataFrame) -> dict:
@@ -76,19 +71,16 @@ def _apply_dow_adjustment(df: pd.DataFrame, dow_factor_dict: dict) -> pd.DataFra
 def train_models_rf(
     df_features: pd.DataFrame,
     output_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> tuple[dict, RandomForestRegressor, dict]:
     output_dir = Path(output_dir) if output_dir else None
     output_dir.mkdir(parents=True, exist_ok=True) if output_dir else None
 
-    features = get_feature_columns(frequency)
     dow_factor_dict = _compute_dow_factors(df_features)
-    min_recs = get_min_train_records(frequency)
 
     print("[RF] Training global fallback model...", flush=True)
     t0 = time.time()
     global_model = RandomForestRegressor(**_RF_GLOBAL_PARAMS)
-    global_model.fit(df_features[features], df_features["Quantity_Sold"])
+    global_model.fit(df_features[FEATURE_COLUMNS], df_features["Quantity_Sold"])
     print(f"[RF] Global model trained in {time.time() - t0:.1f}s", flush=True)
 
     item_models = {}
@@ -102,11 +94,11 @@ def train_models_rf(
                 flush=True,
             )
         train_item = df_features[df_features["Item"] == item]
-        if len(train_item) < min_recs:
+        if len(train_item) < MIN_TRAIN_RECORDS:
             continue
 
         model = RandomForestRegressor(**_RF_ITEM_PARAMS)
-        model.fit(train_item[features], train_item["Quantity_Sold"])
+        model.fit(train_item[FEATURE_COLUMNS], train_item["Quantity_Sold"])
         item_models[item] = model
 
     if output_dir:
@@ -145,12 +137,10 @@ def predict_rf(
     global_model: RandomForestRegressor | None = None,
     dow_factor_dict: dict | None = None,
     model_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
     if item_models is None or global_model is None or dow_factor_dict is None:
         item_models, global_model, dow_factor_dict = load_models_rf(model_dir)
 
-    features = get_feature_columns(frequency)
     predictions = []
 
     for item in df_features["Item"].unique():
@@ -158,11 +148,11 @@ def predict_rf(
 
         if item in item_models:
             model = item_models[item]
-            pred_item = model.predict(test_item[features])
-            pred_global = global_model.predict(test_item[features])
+            pred_item = model.predict(test_item[FEATURE_COLUMNS])
+            pred_global = global_model.predict(test_item[FEATURE_COLUMNS])
             pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
-            pred = global_model.predict(test_item[features])
+            pred = global_model.predict(test_item[FEATURE_COLUMNS])
 
         test_item["Raw_Pred"] = np.maximum(0, pred)
         predictions.append(test_item)
@@ -174,23 +164,17 @@ def predict_rf(
 def train_and_predict_rf(
     df_features: pd.DataFrame,
     n_test_periods: int = 12,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
-    if frequency == "daily":
-        split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
-    else:
-        split_date = df_features["Date"].max() - pd.Timedelta(weeks=n_test_periods)
+    split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
     train = df_features[df_features["Date"] < split_date].copy()
     test = df_features[df_features["Date"] >= split_date].copy()
 
-    features = get_feature_columns(frequency)
     dow_factor_dict = _compute_dow_factors(train)
-    min_recs = get_min_train_records(frequency)
 
     print("[RF] Training global fallback model...", flush=True)
     t0 = time.time()
     global_model = RandomForestRegressor(**_RF_GLOBAL_PARAMS)
-    global_model.fit(train[features], train["Quantity_Sold"])
+    global_model.fit(train[FEATURE_COLUMNS], train["Quantity_Sold"])
     print(f"[RF] Global model trained in {time.time() - t0:.1f}s", flush=True)
 
     print("[RF] Training per-item models...", flush=True)
@@ -203,14 +187,14 @@ def train_and_predict_rf(
         train_item = train[train["Item"] == item]
         test_item = test[test["Item"] == item].copy()
 
-        if len(train_item) >= min_recs:
+        if len(train_item) >= MIN_TRAIN_RECORDS:
             model = RandomForestRegressor(**_RF_ITEM_PARAMS)
-            model.fit(train_item[features], train_item["Quantity_Sold"])
-            pred_item = model.predict(test_item[features])
-            pred_global = global_model.predict(test_item[features])
+            model.fit(train_item[FEATURE_COLUMNS], train_item["Quantity_Sold"])
+            pred_item = model.predict(test_item[FEATURE_COLUMNS])
+            pred_global = global_model.predict(test_item[FEATURE_COLUMNS])
             pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
-            pred = global_model.predict(test_item[features])
+            pred = global_model.predict(test_item[FEATURE_COLUMNS])
 
         test_item["Raw_Pred"] = np.maximum(0, pred)
         predictions.append(test_item)

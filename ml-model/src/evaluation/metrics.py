@@ -65,7 +65,7 @@ def classify_abc(df: pd.DataFrame, volume_col: str = "Quantity_Sold") -> pd.Data
     return item_vol
 
 
-def generate_abc_analysis(df: pd.DataFrame, frequency: str = "weekly") -> Dict[str, Any]:
+def generate_abc_analysis(df: pd.DataFrame) -> Dict[str, Any]:
     y_true = df["Quantity_Sold"]
     y_pred = df["Predicted"]
     item_col = df["Item"]
@@ -75,8 +75,6 @@ def generate_abc_analysis(df: pd.DataFrame, frequency: str = "weekly") -> Dict[s
     abc_df = classify_abc(df)
     df = df.copy()
     df["Class"] = df["Item"].map(abc_df["Class"])
-
-    period_label = "day" if frequency == "daily" else "week"
 
     class_metrics = {}
     for c in ["A", "B", "C"]:
@@ -108,16 +106,11 @@ def generate_abc_analysis(df: pd.DataFrame, frequency: str = "weekly") -> Dict[s
         "class_metrics": class_metrics,
         "top_items": top_items.reset_index().to_dict("records"),
         "abc_classifications": abc_df.reset_index().to_dict("records"),
-        "frequency": frequency,
     }
 
 
 def print_abc_report(analysis: Dict[str, Any]):
     gm = analysis["global_metrics"]
-    freq = analysis.get("frequency", "weekly")
-    p = "day" if freq == "daily" else "week"
-    P = p.capitalize()
-    Ps = p.capitalize() + "s"
 
     print("\n" + "=" * 90)
     print("MODEL PERFORMANCE")
@@ -125,9 +118,8 @@ def print_abc_report(analysis: Dict[str, Any]):
     print(f"Global R2              : {gm['r2']:.4f}")
     print(f"Global wMAPE           : {gm['wmape']:.2f}%")
     print(f"Global MAE             : {gm['mae']:.2f}")
-    print(f"Median {P} Accuracy    : {gm['median_period_accuracy']:.1f}%")
-    print(f"{Ps} within ±20%       : {gm['periods_within_20pct']:.1f}%")
-    print(f"{Ps} within ±50%       : {gm['periods_within_50pct']:.1f}%")
+    print(f"Days within ±20%       : {gm['periods_within_20pct']:.1f}%")
+    print(f"Days within ±50%       : {gm['periods_within_50pct']:.1f}%")
 
     print("\nABC BY CLASS")
     print("-" * 60)
@@ -137,7 +129,7 @@ def print_abc_report(analysis: Dict[str, Any]):
         cm = analysis["class_metrics"][c]
         print(
             f"{c}-Class | Items: {cm['n_items']:2d} | "
-            f"wMAPE: {cm['wmape']:5.1f}% | Med.{P[:1]}: {cm['median_period_acc']:5.1f}%"
+            f"wMAPE: {cm['wmape']:5.1f}%"
         )
 
     print("\nTOP 10 CLASS A ITEMS")

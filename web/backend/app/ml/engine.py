@@ -12,7 +12,6 @@ from src.models.features import create_features
 from src.evaluation.metrics import generate_abc_analysis
 from src.utils.config import DISCONTINUED_ITEMS
 
-_FREQUENCY = "daily"
 
 _METADATA_FILE: dict[str, str] = {
     "xgboost": "model_metadata.json",
@@ -86,31 +85,31 @@ def _ensure_models_loaded(model_type: str = "xgboost"):
     cache["loaded"] = True
 
 
-def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors, frequency: str = _FREQUENCY):
+def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors):
     fns = _get_fns(model_type)
-    return fns["predict"](df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors, frequency=frequency)
+    return fns["predict"](df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
 
 
 def run_predict(df: pd.DataFrame, model_type: str = "xgboost") -> pd.DataFrame:
     _ensure_models_loaded(model_type)
     cache = _models_cache[model_type]
-    return _predict_dispatch(model_type, df, cache["item_models"], cache["global_model"], cache["dow_factors"], frequency=_FREQUENCY)
+    return _predict_dispatch(model_type, df, cache["item_models"], cache["global_model"], cache["dow_factors"])
 
 
 def _clean_and_prepare(df_daily: pd.DataFrame, model_type: str) -> pd.DataFrame:
     df = _clean_data(df_daily)
     fns = _get_fns(model_type)
     if fns["needs_features"]:
-        return create_features(df, frequency=_FREQUENCY)
+        return create_features(df)
     return df
 
 
 def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
     processed = _clean_and_prepare(df_daily, model_type)
     fns = _get_fns(model_type)
-    fns["train"](processed, ML_MODELS_DIR, frequency=_FREQUENCY)
-    test_pred = fns["train_and_predict"](processed, frequency=_FREQUENCY)
-    analysis = generate_abc_analysis(test_pred, frequency=_FREQUENCY)
+    fns["train"](processed, ML_MODELS_DIR)
+    test_pred = fns["train_and_predict"](processed)
+    analysis = generate_abc_analysis(test_pred)
     _models_cache[model_type]["loaded"] = False
     return analysis
 
@@ -167,7 +166,7 @@ def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12, model_type: str =
             next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
             temp = pd.concat([current, next_df], ignore_index=True)
             future_row = temp[temp["Date"] == next_date].copy()
-            pred_result = _predict_dispatch(model_type, future_row, cache["item_models"], cache["global_model"], cache["dow_factors"], frequency=_FREQUENCY)
+            pred_result = _predict_dispatch(model_type, future_row, cache["item_models"], cache["global_model"], cache["dow_factors"])
             pred_result["Date"] = next_date
             pred_result["Item"] = future_row["Item"].values
             all_predictions.append(pred_result[["Date", "Item", "Predicted"]])
@@ -183,9 +182,9 @@ def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12, model_type: str =
                 batch_rows.append(df)
             batch_df = pd.concat(batch_rows, ignore_index=True)
             temp = pd.concat([current, batch_df], ignore_index=True)
-            feat = create_features(temp, frequency=_FREQUENCY)
+            feat = create_features(temp)
             batch_features = feat[feat["Date"].isin(batch_dates)]
-            pred_result = _predict_dispatch(model_type, batch_features, cache["item_models"], cache["global_model"], cache["dow_factors"], frequency=_FREQUENCY)
+            pred_result = _predict_dispatch(model_type, batch_features, cache["item_models"], cache["global_model"], cache["dow_factors"])
             pred_df = batch_features.copy()
             pred_df["Predicted"] = pred_result["Predicted"].values
             all_predictions.append(pred_df)

@@ -11,14 +11,11 @@ from datetime import datetime
 
 from xgboost import XGBRegressor
 
-from src.utils.config import FEATURE_COLUMNS, MODELS_DIR, get_feature_columns
+from src.utils.config import FEATURE_COLUMNS, MODELS_DIR
 from src.utils.gpu import get_xgboost_params
 from src.models.features import create_features
 
-FREQ_MAP = {"daily": "D", "weekly": "W-MON"}
-
-MIN_TRAIN_RECORDS_DAILY = 60
-MIN_TRAIN_RECORDS_WEEKLY = 24
+MIN_TRAIN_RECORDS = 60
 
 _EARLY_STOPPING_ROUNDS = 30
 _BLEND_ALPHA = 0.5
@@ -50,10 +47,7 @@ _BASE_ITEM_PARAMS = {
 }
 
 
-def load_and_prep_data(
-    filepath: str | Path,
-    frequency: str = "weekly",
-) -> pd.DataFrame:
+def load_and_prep_data(filepath: str | Path) -> pd.DataFrame:
     print(f"Loading data from: {filepath}")
     df = pd.read_csv(filepath)
     df.columns = df.columns.str.strip()
@@ -65,22 +59,17 @@ def load_and_prep_data(
 
     df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
 
-    freq_label = FREQ_MAP.get(frequency, "W-MON")
     df_freq = (
         df.set_index("Date")
         .groupby("Item")
-        .resample(freq_label)["Quantity_Sold"]
+        .resample("D")["Quantity_Sold"]
         .sum()
         .reset_index()
     )
 
-    print(f"Aggregated to {frequency}: {len(df_freq)} observations")
+    print(f"Aggregated to daily: {len(df_freq)} observations")
     print(f"Date range: {df_freq['Date'].min().date()} to {df_freq['Date'].max().date()}")
     return df_freq
-
-
-def get_min_train_records(frequency: str) -> int:
-    return MIN_TRAIN_RECORDS_DAILY if frequency == "daily" else MIN_TRAIN_RECORDS_WEEKLY
 
 
 def _xgboost_params(base: dict) -> dict:
@@ -101,12 +90,8 @@ def _split_train_val(df: pd.DataFrame, val_ratio: float = 0.15):
 def train_and_predict(
     df_features: pd.DataFrame,
     n_test_periods: int = 12,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
-    if frequency == "daily":
-        split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
-    else:
-        split_date = df_features["Date"].max() - pd.Timedelta(weeks=n_test_periods)
+    split_date = df_features["Date"].max() - pd.Timedelta(days=n_test_periods * 7)
     train = df_features[df_features["Date"] < split_date].copy()
     test = df_features[df_features["Date"] >= split_date].copy()
 
@@ -132,7 +117,6 @@ def train_and_predict(
         .to_dict("index")
     )
 
-    features = get_feature_columns(frequency)
     train_core, train_val = _split_train_val(train)
 
     print("Training global fallback model (with early stopping)...")
@@ -142,8 +126,8 @@ def train_and_predict(
         early_stopping_rounds=_EARLY_STOPPING_ROUNDS,
     )
     global_model.fit(
-        train_core[features], train_core["Quantity_Sold"],
-        eval_set=[(train_val[features], train_val["Quantity_Sold"])],
+        train_core[FEATURE_COLUMNS], train_core["Quantity_Sold"],
+        eval_set=[(train_val[FEATURE_COLUMNS], train_val["Quantity_Sold"])],
         verbose=False,
     )
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
@@ -161,27 +145,27 @@ def train_and_predict(
         test_item = test[test["Item"] == item].copy()
         val_item = train_val[train_val["Item"] == item]
 
-        if len(train_item) >= get_min_train_records(frequency):
+        if len(train_item) >= MIN_TRAIN_RECORDS:
             has_val = len(val_item) >= 1
             model_params = _xgboost_params(_BASE_ITEM_PARAMS)
             if has_val:
                 model_params["early_stopping_rounds"] = _EARLY_STOPPING_ROUNDS
             model = XGBRegressor(**model_params)
             eval_set = (
-                [(val_item[features], val_item["Quantity_Sold"])]
+                [(val_item[FEATURE_COLUMNS], val_item["Quantity_Sold"])]
                 if has_val
                 else None
             )
             model.fit(
-                train_item[features], train_item["Quantity_Sold"],
+                train_item[FEATURE_COLUMNS], train_item["Quantity_Sold"],
                 eval_set=eval_set, verbose=False,
             )
-            pred_item = model.predict(test_item[features])
-            pred_global = global_model.predict(test_item[features])
+            pred_item = model.predict(test_item[FEATURE_COLUMNS])
+            pred_global = global_model.predict(test_item[FEATURE_COLUMNS])
             pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
             model = None
-            pred = global_model.predict(test_item[features])
+            pred = global_model.predict(test_item[FEATURE_COLUMNS])
 
         test_item["Raw_Pred"] = np.maximum(0, pred)
         test_item["DOW"] = test_item["Date"].dt.weekday
@@ -201,12 +185,9 @@ def train_and_predict(
 def train_models(
     df_features: pd.DataFrame,
     output_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> tuple[dict, XGBRegressor, dict]:
     output_dir = Path(output_dir) if output_dir else MODELS_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    features = get_feature_columns(frequency)
 
     train_data, val_data = _split_train_val(df_features)
 
@@ -217,8 +198,8 @@ def train_models(
         early_stopping_rounds=_EARLY_STOPPING_ROUNDS,
     )
     global_model.fit(
-        train_data[features], train_data["Quantity_Sold"],
-        eval_set=[(val_data[features], val_data["Quantity_Sold"])],
+        train_data[FEATURE_COLUMNS], train_data["Quantity_Sold"],
+        eval_set=[(val_data[FEATURE_COLUMNS], val_data["Quantity_Sold"])],
         verbose=False,
     )
     print(f"Global fallback model trained in {time.time() - t0:.1f}s")
@@ -233,7 +214,7 @@ def train_models(
                 f"  Progress: {idx + 1}/{total_items} items ({((idx + 1) / total_items * 100):.1f}%)"
             )
         train_item = train_data[train_data["Item"] == item]
-        if len(train_item) < get_min_train_records(frequency):
+        if len(train_item) < MIN_TRAIN_RECORDS:
             continue
 
         val_item = val_data[val_data["Item"] == item]
@@ -243,12 +224,12 @@ def train_models(
             model_params["early_stopping_rounds"] = _EARLY_STOPPING_ROUNDS
         model = XGBRegressor(**model_params)
         eval_set = (
-            [(val_item[features], val_item["Quantity_Sold"])]
+            [(val_item[FEATURE_COLUMNS], val_item["Quantity_Sold"])]
             if has_val
             else None
         )
         model.fit(
-            train_item[features], train_item["Quantity_Sold"],
+            train_item[FEATURE_COLUMNS], train_item["Quantity_Sold"],
             eval_set=eval_set, verbose=False,
         )
         item_models[item] = model
@@ -285,7 +266,7 @@ def train_models(
         "trained_at": datetime.now().isoformat(),
         "n_item_models": len(item_models),
         "items_with_models": sorted(item_models.keys()),
-        "features": features,
+        "features": FEATURE_COLUMNS,
         "n_records": len(df_features),
         "date_range": [
             str(df_features["Date"].min()),
@@ -326,12 +307,10 @@ def predict(
     global_model: XGBRegressor | None = None,
     dow_factor_dict: dict | None = None,
     model_dir: str | Path | None = None,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
     if item_models is None or global_model is None or dow_factor_dict is None:
         item_models, global_model, dow_factor_dict = load_models(model_dir)
 
-    features = get_feature_columns(frequency)
     predictions = []
 
     for item in df_features["Item"].unique():
@@ -339,11 +318,11 @@ def predict(
 
         if item in item_models:
             model = item_models[item]
-            pred_item = model.predict(test_item[features])
-            pred_global = global_model.predict(test_item[features])
+            pred_item = model.predict(test_item[FEATURE_COLUMNS])
+            pred_global = global_model.predict(test_item[FEATURE_COLUMNS])
             pred = _BLEND_ALPHA * pred_item + (1 - _BLEND_ALPHA) * pred_global
         else:
-            pred = global_model.predict(test_item[features])
+            pred = global_model.predict(test_item[FEATURE_COLUMNS])
 
         test_item["Raw_Pred"] = np.maximum(0, pred)
         test_item["DOW"] = test_item["Date"].dt.weekday
@@ -371,23 +350,15 @@ def predict(
 def generate_future_features(
     df_daily: pd.DataFrame,
     future_weeks: int = 12,
-    frequency: str = "weekly",
 ) -> pd.DataFrame:
     max_date = df_daily["Date"].max()
     items = df_daily["Item"].unique()
 
-    if frequency == "daily":
-        future_dates = pd.date_range(
-            start=max_date + pd.Timedelta(days=1),
-            periods=future_weeks * 7,
-            freq="D",
-        )
-    else:
-        future_dates = pd.date_range(
-            start=max_date + pd.Timedelta(weeks=1),
-            periods=future_weeks,
-            freq="W-MON",
-        )
+    future_dates = pd.date_range(
+        start=max_date + pd.Timedelta(days=1),
+        periods=future_weeks * 7,
+        freq="D",
+    )
 
     last_known = (
         df_daily.sort_values("Date")
@@ -407,7 +378,7 @@ def generate_future_features(
         next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
 
         temp = pd.concat([current, next_df], ignore_index=True)
-        feat = create_features(temp, frequency=frequency)
+        feat = create_features(temp)
         future_rows = feat[feat["Date"] == next_date]
         all_features.append(future_rows)
 
