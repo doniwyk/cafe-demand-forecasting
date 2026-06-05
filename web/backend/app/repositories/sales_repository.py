@@ -68,4 +68,9 @@ class SalesRepository(BaseRepository):
         result = await self._session.execute(query)
         return result.all()
 
+    async def get_latest_date(self):
+        query = select(func.max(DailyItemSale.date))
+        result = await self._session.execute(query)
+        return result.scalar()
+
 

@@ -5,6 +5,7 @@ class ForecastRecord(BaseModel):
     date: str
     item: str
     quantity_sold: float
+    actual: float = 0.0
 
 
 class ForecastPage(BaseModel):
@@ -46,6 +47,7 @@ class ForecastSummary(BaseModel):
     global_metrics: ModelMetrics
     class_metrics: dict[str, ClassMetrics]
     top_items: list[TopItem]
+    latest_training_date: str | None = None
 
 
 class PredictRequest(BaseModel):
@@ -57,7 +59,6 @@ class PredictRequest(BaseModel):
 class RetrainRequest(BaseModel):
     model_type: str = "xgboost"
     max_items: int | None = None
-    sync_hus: bool = False
     include_new_products: bool = False
     end_date: str | None = None
 

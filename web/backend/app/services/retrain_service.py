@@ -288,7 +288,6 @@ def _run_training_sync(model_type: str, max_items: int | None, end_date: str | N
 async def start_retrain(
     model_type: str,
     max_items: int | None = None,
-    sync_hus: bool = False,
     include_new_products: bool = False,
     end_date: str | None = None,
 ) -> dict:
@@ -299,11 +298,10 @@ async def start_retrain(
 
     _retrain_logs[model_type] = []
 
-    if sync_hus:
-        try:
-            _sync_hus_data(model_type, include_new_products)
-        except Exception as e:
-            _append_log(model_type, f"[sync] Error: {e}")
+    try:
+        _sync_hus_data(model_type, include_new_products)
+    except Exception as e:
+        _append_log(model_type, f"[sync] Error: {e}")
 
     _retrain_status[model_type] = {"status": "training", "message": f"Retraining {model_type}..."}
     _append_log(model_type, f"Starting {model_type} training...")

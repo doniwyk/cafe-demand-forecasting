@@ -52,7 +52,6 @@ async def retrain_models(
     result = await start_retrain(
         model_type=body.model_type,
         max_items=body.max_items,
-        sync_hus=body.sync_hus,
         include_new_products=body.include_new_products,
         end_date=body.end_date,
     )

@@ -17,4 +17,7 @@ export const salesApi = {
   categories() {
     return http.get<string[]>("/sales/categories");
   },
+  latestDate() {
+    return http.get<string | null>("/sales/latest-date");
+  },
 };

@@ -10,7 +10,8 @@
     "item": "Item",
     "unit": "Satuan",
     "materials": "material",
-    "exportCsv": "Ekspor CSV"
+    "exportCsv": "Ekspor CSV",
+    "actual": "Aktual"
   },
   "sidebar": {
     "navigation": "Navigasi",
@@ -115,7 +116,7 @@
     "noMaterialData": "Tidak ada data kebutuhan material",
     "dateRange": "Rentang Tanggal",
     "selectDateRange": "Pilih rentang tanggal",
-    "material": "Material: {{name}}"
+    "material": "Material"
   },
   "settings": {
     "modelTraining": "Pelatihan Model",
@@ -130,6 +131,7 @@
     "cancel": "Batalkan",
     "showLogs": "Tampilkan Log",
     "hideLogs": "Sembunyikan Log",
+    "trainingDataCutoff": "Batas data pelatihan",
     "language": "Bahasa",
     "languageDesc": "Pilih bahasa tampilan yang diinginkan.",
     "syncFromHus": "Sync dari hus_db sebelum pelatihan",

@@ -27,8 +27,8 @@ export const forecastsApi = {
   retrain(params: {
     model_type: string;
     max_items?: number;
-    sync_hus?: boolean;
     include_new_products?: boolean;
+    end_date?: string;
   }) {
     return http.post<RetrainResponse>("/forecasts/retrain", params);
   },

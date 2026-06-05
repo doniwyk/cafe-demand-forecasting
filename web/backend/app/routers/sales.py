@@ -30,3 +30,8 @@ async def get_items(session: AsyncSession = Depends(get_session)):
 @router.get("/categories", response_model=list[str])
 async def get_categories(session: AsyncSession = Depends(get_session)):
     return await sales_service.get_categories(session)
+
+
+@router.get("/latest-date", response_model=str | None)
+async def get_latest_date(session: AsyncSession = Depends(get_session)):
+    return await sales_service.get_latest_date(session)

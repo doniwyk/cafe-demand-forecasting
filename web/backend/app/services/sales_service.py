@@ -43,3 +43,9 @@ async def get_items(session) -> list[ItemInfo]:
 async def get_categories(session) -> list[str]:
     repo = SalesRepository(session)
     return await repo.get_categories()
+
+
+async def get_latest_date(session) -> str | None:
+    repo = SalesRepository(session)
+    latest = await repo.get_latest_date()
+    return str(latest) if latest else None

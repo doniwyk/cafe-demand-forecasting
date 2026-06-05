@@ -7,3 +7,10 @@ export function useItems() {
     queryFn: () => salesApi.items(),
   });
 }
+
+export function useLatestSalesDate() {
+  return useQuery({
+    queryKey: ["sales", "latest-date"],
+    queryFn: () => salesApi.latestDate(),
+  });
+}

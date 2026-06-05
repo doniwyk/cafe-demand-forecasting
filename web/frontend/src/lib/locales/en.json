@@ -10,7 +10,8 @@
     "item": "Item",
     "unit": "Unit",
     "materials": "materials",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "actual": "Actual"
   },
   "sidebar": {
     "navigation": "Navigation",
@@ -115,7 +116,7 @@
     "noMaterialData": "No material requirement data available",
     "dateRange": "Date Range",
     "selectDateRange": "Select date range",
-    "material": "Material: {{name}}"
+    "material": "Material"
   },
   "settings": {
     "modelTraining": "Model Training",
@@ -129,6 +130,7 @@
     "train": "Train",
     "cancel": "Cancel",
     "hideLogs": "Hide Logs",
+    "trainingDataCutoff": "Training data cutoff",
     "language": "Language",
     "languageDesc": "Select your preferred display language.",
     "syncFromHus": "Sync from hus_db before training",

@@ -50,11 +50,12 @@ async def get_forecasts(
 ) -> ForecastPage:
     model_type = model_type or "xgboost"
     repo = ForecastRepository(session)
-    df = await repo.get_sales_dataframe()
+    original_df = await repo.get_sales_dataframe()
 
-    if df.empty:
+    if original_df.empty:
         return ForecastPage(data=[], total=0, page=page, page_size=page_size)
 
+    df = original_df.copy()
     df = await filter_sales_to_training_cutoff(session, df, model_type)
     df = _resample_daily(df)
 
@@ -65,8 +66,31 @@ async def get_forecasts(
     result_df = await _get_or_generate_forecast(df, forecast_weeks, model_type)
     result_df = _filter_forecast(result_df, start_date, end_date, item)
 
-    total = len(result_df)
-    result_df = result_df.iloc[(page - 1) * page_size : page * page_size]
+    # Get actual sales for the same date range
+    actual_df = original_df.copy()
+    if start_date:
+        actual_df = actual_df[actual_df["Date"] >= pd.to_datetime(start_date)]
+    if end_date:
+        actual_df = actual_df[actual_df["Date"] <= pd.to_datetime(end_date)]
+    if item:
+        actual_df = actual_df[actual_df["Item"] == item]
+
+    # Merge predictions with actuals
+    pred_data = result_df[["Date", "Item", "Predicted"]].copy()
+    actual_data = actual_df[["Date", "Item", "Quantity_Sold"]].copy()
+
+    merged = pd.merge(
+        pred_data,
+        actual_data,
+        on=["Date", "Item"],
+        how="outer",
+    )
+    merged["Predicted"] = merged["Predicted"].fillna(0)
+    merged["Quantity_Sold"] = merged["Quantity_Sold"].fillna(0)
+    merged = merged.sort_values(["Date", "Item"])
+
+    total = len(merged)
+    merged = merged.iloc[(page - 1) * page_size : page * page_size]
 
     return ForecastPage(
         data=[
@@ -74,8 +98,9 @@ async def get_forecasts(
                 date=str(pd.to_datetime(row["Date"]).date()),
                 item=str(row["Item"]),
                 quantity_sold=float(row["Predicted"]),
+                actual=float(row["Quantity_Sold"]),
             )
-            for _, row in result_df.iterrows()
+            for _, row in merged.iterrows()
         ],
         total=total,
         page=page,
@@ -133,6 +158,7 @@ async def get_forecast_summary(
         ),
         class_metrics=class_metrics,
         top_items=top_items,
+        latest_training_date=str(run.date_range_end) if run.date_range_end else None,
     )
 
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForecasts, useForecastSummary } from "@/features/forecasts/hooks/use-forecasts";
 import { useModelType } from "@/contexts/model-context";
 import { format, parseISO, addDays } from "date-fns";
@@ -9,12 +9,22 @@ import { ForecastTable } from "@/features/forecasts/components/forecast-table";
 
 export function ForecastsPage() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
-    from: new Date(),
-    to: addDays(new Date(), 14),
-  });
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
   const { modelType } = useModelType();
   const { t } = useTranslation();
+
+  const summary = useForecastSummary(modelType);
+
+  // Default date range starts from training cutoff + 30 days of predictions
+  useEffect(() => {
+    if (summary.data?.latest_training_date && !dateRange.from) {
+      const cutoff = parseISO(summary.data.latest_training_date);
+      setDateRange({
+        from: cutoff,
+        to: addDays(cutoff, 30),
+      });
+    }
+  }, [summary.data?.latest_training_date]);
 
   const forecastParams = useMemo(() => {
     const p: { item?: string; start_date: string; end_date: string; model_type?: string } = {
@@ -27,7 +37,6 @@ export function ForecastsPage() {
   }, [selectedItem, dateRange, modelType]);
 
   const forecasts = useForecasts(forecastParams);
-  const summary = useForecastSummary(modelType);
 
   const forecastForItem = useMemo(() => {
     if (!forecasts.data) return [];
@@ -36,20 +45,26 @@ export function ForecastsPage() {
       .map((f) => ({
         date: format(parseISO(f.date), "MMM dd"),
         predicted: Math.round(f.quantity_sold * 10) / 10,
+        actual: Math.round(f.actual * 10) / 10,
       }));
   }, [forecasts.data]);
 
   const allItemsChartData = useMemo(() => {
     if (!forecasts.data) return [];
-    const dailyTotals = new Map<string, number>();
+    const dailyTotals = new Map<string, { predicted: number; actual: number }>();
     for (const f of forecasts.data.data) {
-      dailyTotals.set(f.date, (dailyTotals.get(f.date) || 0) + f.quantity_sold);
+      const existing = dailyTotals.get(f.date) || { predicted: 0, actual: 0 };
+      dailyTotals.set(f.date, {
+        predicted: existing.predicted + f.quantity_sold,
+        actual: existing.actual + f.actual,
+      });
     }
     return Array.from(dailyTotals.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, total]) => ({
+      .map(([date, totals]) => ({
         date: format(parseISO(date), "MMM dd"),
-        total: Math.round(total),
+        predicted: Math.round(totals.predicted),
+        actual: Math.round(totals.actual),
       }));
   }, [forecasts.data]);
 

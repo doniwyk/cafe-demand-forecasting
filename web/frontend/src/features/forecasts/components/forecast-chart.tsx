@@ -14,8 +14,8 @@ import { CHART_TOOLTIP_STYLE } from "@/lib/chart";
 
 interface ForecastChartProps {
   selectedItem: string | null;
-  forecastForItem: { date: string; predicted: number }[];
-  allItemsChartData: { date: string; total: number }[];
+  forecastForItem: { date: string; predicted: number; actual: number }[];
+  allItemsChartData: { date: string; predicted: number; actual: number }[];
 }
 
 export function ForecastChart({
@@ -52,9 +52,18 @@ export function ForecastChart({
                 <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                 <Line
                   type="monotone"
+                  dataKey="actual"
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                  dot={false}
+                  name={t("common.actual")}
+                />
+                <Line
+                  type="monotone"
                   dataKey="predicted"
                   stroke="var(--chart-2)"
                   strokeWidth={2}
+                  strokeDasharray="5 5"
                   dot={false}
                   name={t("forecasts.predicted")}
                 />
@@ -74,9 +83,18 @@ export function ForecastChart({
               <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
               <Line
                 type="monotone"
-                dataKey="total"
+                dataKey="actual"
                 stroke="var(--chart-1)"
                 strokeWidth={2}
+                dot={false}
+                name={t("common.actual")}
+              />
+              <Line
+                type="monotone"
+                dataKey="predicted"
+                stroke="var(--chart-2)"
+                strokeWidth={2}
+                strokeDasharray="5 5"
                 dot={false}
                 name={t("forecasts.predicted")}
               />

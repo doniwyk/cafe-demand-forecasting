@@ -2,6 +2,7 @@ export interface ForecastRecord {
   date: string;
   item: string;
   quantity_sold: number;
+  actual: number;
 }
 
 export interface ForecastPage {
@@ -61,4 +62,5 @@ export interface ForecastSummary {
   global_metrics: ModelMetrics;
   class_metrics: Record<string, ClassMetrics>;
   top_items: TopItem[];
+  latest_training_date: string | null;
 }
