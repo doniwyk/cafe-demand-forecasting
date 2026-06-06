@@ -22,7 +22,7 @@ async def get_material_forecast(
     model_type: str | None = None,
 ) -> MaterialRequirementPage:
     from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
-    from src.models.raw_materials import RawMaterialProcessor
+    from app.ml.raw_materials import RawMaterialProcessor
 
     model_type = model_type or "xgboost"
     repo = ForecastRepository(session)

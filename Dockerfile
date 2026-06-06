@@ -23,10 +23,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /app
 
 COPY web/backend/ web/backend/
-COPY ml-model/ ml-model/
 
 WORKDIR /app/web/backend
-ENV PYTHONPATH=/app/ml-model
 
 EXPOSE 8001
 

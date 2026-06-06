@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 
 from app.config import ML_MODELS_DIR
-from src.models.features import create_features
-from src.evaluation.metrics import generate_abc_analysis
-from src.utils.config import DISCONTINUED_ITEMS
+from app.ml.features import create_features
+from app.ml.metrics import generate_abc_analysis
+from app.ml.config import DISCONTINUED_ITEMS
 
 
 _METADATA_FILE: dict[str, str] = {
@@ -24,7 +24,7 @@ _METADATA_FILE: dict[str, str] = {
 def _import_model_fns(model_type: str) -> dict[str, Any]:
     """Lazily import the right module and return its key functions."""
     if model_type == "xgboost":
-        from src.models.forecaster import train_models, load_models, predict, train_and_predict
+        from app.ml.models.xgboost import train_models, load_models, predict, train_and_predict
         return {
             "train": train_models,
             "load": load_models,
@@ -33,18 +33,22 @@ def _import_model_fns(model_type: str) -> dict[str, Any]:
             "needs_features": True,
         }
 
-    suffix = {"random_forest": "rf", "sarimax": "sarimax", "prophet": "prophet"}[model_type]
-    module_name = f"src.models.forecaster_{suffix}"
+    model_modules = {
+        "random_forest": "app.ml.models.random_forest",
+        "sarimax": "app.ml.models.sarimax",
+        "prophet": "app.ml.models.prophet",
+    }
+    module_name = model_modules[model_type]
     try:
         mod = importlib.import_module(module_name)
     except ImportError:
         raise ImportError(f"Required module {module_name} not available")
 
-    prefix = "" if model_type == "xgboost" else f"_{suffix}"
-    train_fn = getattr(mod, f"train_models{prefix}", None)
-    load_fn = getattr(mod, f"load_models{prefix}", None)
-    predict_fn = getattr(mod, f"predict{prefix}", None)
-    tap_fn = getattr(mod, f"train_and_predict{prefix}", None)
+    suffix = {"random_forest": "_rf", "sarimax": "_sarimax", "prophet": "_prophet"}[model_type]
+    train_fn = getattr(mod, f"train_models{suffix}", None)
+    load_fn = getattr(mod, f"load_models{suffix}", None)
+    predict_fn = getattr(mod, f"predict{suffix}", None)
+    tap_fn = getattr(mod, f"train_and_predict{suffix}", None)
 
     if any(fn is None for fn in [train_fn, load_fn, predict_fn, tap_fn]):
         raise ImportError(f"{module_name} missing required functions")
