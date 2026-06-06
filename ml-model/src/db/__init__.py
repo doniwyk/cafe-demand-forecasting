@@ -16,7 +16,7 @@ class Base(DeclarativeBase):
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/cafe_forecasting",
+    "postgresql://postgres:postgres@localhost:5433/cafe_forecasting",
 )
 
 engine = create_engine(DATABASE_URL, echo=False, pool_size=5, max_overflow=10)

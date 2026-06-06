@@ -31,7 +31,7 @@ from src.models.forecaster import (
     predict,
 )
 from src.evaluation.metrics import generate_abc_analysis, print_abc_report
-from src.utils.config import PROCESSED_DIR, SALES_FORECASTING_DIR, PREDICTIONS_DIR, MODELS_DIR, get_feature_columns
+from src.utils.config import PROCESSED_DIR, SALES_FORECASTING_DIR, PREDICTIONS_DIR, MODELS_DIR
 
 
 def cmd_evaluate(args):
@@ -39,16 +39,16 @@ def cmd_evaluate(args):
     print(f"MODEL EVALUATION ({args.frequency.upper()})")
     print("=" * 80)
 
-    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv", frequency=args.frequency)
+    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv")
 
     print("\nCreating features...")
-    df_feat = create_features(df_raw, frequency=args.frequency)
+    df_feat = create_features(df_raw)
     print(f"Features created: {df_feat.shape[1]} columns")
 
     print(f"\nTraining & evaluating on last 12 {args.frequency} periods...")
-    test_pred = train_and_predict(df_feat, frequency=args.frequency)
+    test_pred = train_and_predict(df_feat)
 
-    analysis = generate_abc_analysis(test_pred, frequency=args.frequency)
+    analysis = generate_abc_analysis(test_pred)
     print_abc_report(analysis)
 
 
@@ -61,21 +61,21 @@ def cmd_train(args):
     model_dir = MODELS_DIR / freq
     pred_file = PREDICTIONS_DIR / freq / "3_month_forecasts.csv"
 
-    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv", frequency=freq)
+    df_raw = load_and_prep_data(SALES_FORECASTING_DIR / "daily_item_sales.csv")
 
     print("\nCreating features...")
-    df_feat = create_features(df_raw, frequency=freq)
+    df_feat = create_features(df_raw)
     print(f"Features created: {df_feat.shape[1]} columns")
 
     print(f"\nSaving models to: {model_dir}")
-    item_models, global_model, dow_factors = train_models(df_feat, model_dir, frequency=freq)
+    item_models, global_model, dow_factors = train_models(df_feat, model_dir)
 
     if not args.no_forecast:
         print("\n" + "=" * 80)
         print("GENERATING 3-MONTH FORECAST")
         print("=" * 80)
 
-        future_features = generate_future_features(df_feat, future_weeks=12, frequency=freq)
+        future_features = generate_future_features(df_feat, future_weeks=12)
         print(f"Future feature rows: {len(future_features)}")
 
         future_predictions = predict(
@@ -83,7 +83,6 @@ def cmd_train(args):
             item_models=item_models,
             global_model=global_model,
             dow_factor_dict=dow_factors,
-            frequency=freq,
         )
         print(f"Predictions generated: {len(future_predictions)} rows")
 
@@ -99,8 +98,8 @@ def cmd_train(args):
     print("MODEL EVALUATION")
     print("=" * 80)
 
-    test_pred = train_and_predict(df_feat, frequency=freq)
-    analysis = generate_abc_analysis(test_pred, frequency=freq)
+    test_pred = train_and_predict(df_feat)
+    analysis = generate_abc_analysis(test_pred)
     print_abc_report(analysis)
 
     print("\nTraining complete!")

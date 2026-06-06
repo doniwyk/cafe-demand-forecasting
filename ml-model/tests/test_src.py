@@ -28,7 +28,7 @@ from src.models.forecaster import (
 )
 from src.models.raw_materials import RawMaterialProcessor
 from src.data.merger import translate_indonesian_to_english, clean_numeric_columns
-from src.data.cleaner import SalesDataCleaner, PACKAGE_MAP
+from src.data.cleaner import SalesDataCleaner
 from src.evaluation.metrics import (
     weighted_mape,
     compute_metrics,
@@ -84,9 +84,9 @@ class TestConfig:
         assert len(FEATURE_COLUMNS) > 0
 
     def test_daily_has_daily_lags(self):
-        assert "Lag_7" in FEATURE_COLUMNS
-        assert "Lag_14" in FEATURE_COLUMNS
         assert "Lag_1" in FEATURE_COLUMNS
+        assert "Roll_Mean_7" in FEATURE_COLUMNS
+        assert "Roll_Mean_28" in FEATURE_COLUMNS
 
     def test_paths_exist(self):
         assert BOM_DIR.exists()
@@ -126,8 +126,8 @@ class TestFeatures:
     def test_lag_values_daily(self, daily_sales_df):
         result = create_features(daily_sales_df)
         assert "Lag_1" in result.columns
-        assert "Lag_7" in result.columns
-        assert "Lag_14" in result.columns
+        assert "Roll_Mean_7" in result.columns
+        assert "EWMA_28" in result.columns
 
 
 # ---------------------------------------------------------------------------
@@ -224,11 +224,6 @@ class TestDataPipeline:
     def test_cleaner_identifies_discontinued(self, tiny_bom_csv, tiny_sales_csv):
         cleaner = SalesDataCleaner(tiny_sales_csv, tiny_bom_csv)
         assert len(cleaner.active_items) == 2  # Espresso, Black
-
-    def test_package_map_structure(self):
-        for key, components in PACKAGE_MAP.items():
-            assert isinstance(components, list)
-            assert all(isinstance(c, tuple) and len(c) == 2 for c in components)
 
 
 # ---------------------------------------------------------------------------
