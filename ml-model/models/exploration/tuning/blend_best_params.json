@@ -1,0 +1,19 @@
+{
+  "best_config": {
+    "weekend_baseline": "P75",
+    "weekend_model_w": 0.8,
+    "weekday_model_w": 0.6,
+    "rf_weight": 0.5
+  },
+  "best_pinball": 0.617423264039545,
+  "best_mae": 1.3388368346772017,
+  "best_fri_sat_mae": 1.3910645174211071,
+  "best_bias": 0.20798061319622352,
+  "baseline_config": {
+    "weekend_baseline": "P75",
+    "weekend_model_w": 0.3,
+    "weekday_model_w": 0.4,
+    "rf_weight": 0.5
+  },
+  "baseline_pinball": 0.6593385502803403
+}
