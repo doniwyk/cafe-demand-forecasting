@@ -41,35 +41,23 @@ python exploration/eda/rebranding_effect.py
 
 ---
 
-## Step 2: Features — Discover and justify features
+## Step 2: Features — Evidence-driven feature analysis
 
-### 2a. Feature Discovery
-```bash
-python exploration/features/feature_discovery.py
-```
-**What it does:** Day-1 feature exploration — target distribution, autocorrelation at various lags, DOW patterns, rolling window analysis (mean/std correlations), trend features, proposed feature set, feature correlations & collinearity, XGBoost feature importance (global + per-item), rebranding feature analysis (pre/post mean shifts, model comparison), DOW × rebranding interaction.
-
-**Output:** Console report + 8 plots in `figures/feature_discovery/`
-
-**Key findings used later:**
-- Lag-7 is the strongest weekly signal (r=0.33)
-- Lag-1 is strongest single lag but causes over-reliance on yesterday
-- DOW patterns differ significantly pre/post rebrand
-- Feature importance: Lag_1 > EWMA_7 > Roll_Mean_7
-
-### 2b. Feature Analysis (Final Justification)
+### 2a. Feature Analysis
 ```bash
 python exploration/features/feature_analysis.py
 ```
-**What it does:** Justifies the final 15-feature set used in the inference pipeline. Lists all 27 candidates tested with include/exclude reasons. Shows autocorrelation, DOW demand patterns, trained model feature importance, ablation study (remove each feature group and measure Fri/Sat impact), and concrete demonstration of why Lag_1 was removed.
+**What it does:** Builds all candidate features from raw data, then **computes evidence** for every inclusion/exclusion decision. No hardcoded opinions — every number is derived from the actual data. 8 sections: autocorrelation at each lag, NaN sparsity analysis, inter-feature collinearity (computed r values), target correlation, production model feature importance, ablation study (remove feature groups, measure Fri/Sat impact), Lag_1 vs no-Lag_1 comparison on real Fri/Sat rows, and final exclusion summary with evidence references.
 
-**Output:** Console report (6 sections)
+**Output:** Console report (8 sections, all data-backed)
 
 **Key findings:**
-- 15 features selected, 12 excluded with documented reasons
-- Lag_1 removed: "puts too much weight on yesterday, drags Fri down to ~5 even though Fri P90=12"
-- DOW_P75/P90 features capture weekend spikes that tree models underpredict
-- Top 3 importance: EWMA_28, Is_Weekend, DOW_Median
+- 15 features selected, 12 excluded with computed evidence
+- Lag_7 has strongest weekly signal (r=+0.33 at lag-7)
+- Lag_182 excluded: 12.5% NaN, weak autocorrelation r=+0.13
+- Lag_1 excluded: model with Lag_1 drags Fri predictions toward yesterday's value instead of DOW pattern (Section 7 shows concrete comparison)
+- Roll_Std_7 excluded: collinear with Roll_Mean_7 (r=+0.76)
+- Top 3 model importance: EWMA_28, Roll_Mean_28, DOW_Avg
 
 ---
 
@@ -164,9 +152,8 @@ exploration/
 │   ├── data_exploration.py    #   1a. Data overview, patterns, quality
 │   └── rebranding_effect.py   #   1b. Rebranding impact on raw sales
 │
-├── features/                  # Step 2: Feature discovery & justification
-│   ├── feature_discovery.py   #   2a. Explore candidate features
-│   └── feature_analysis.py    #   2b. Justify final 15-feature selection
+├── features/                  # Step 2: Feature analysis
+│   └── feature_analysis.py    #   2a. Evidence-driven feature selection
 │
 ├── tuning/                    # Step 3: Hyperparameter optimization
 │   ├── tune_quantile.py       #   3a. Quantile XGBoost tuning (active)
