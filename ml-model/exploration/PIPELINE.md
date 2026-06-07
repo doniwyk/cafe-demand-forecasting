@@ -5,7 +5,7 @@ Step-by-step flow from raw data to production forecasts.
 **Prerequisites:** Conda env `cafe` with `cafe_db` running on `localhost:5433`.
 
 ```
-eda/ → features/ → tuning/ → inference/
+eda/ → features/ → tuning/ → training/ → inference/
 ```
 
 ---
@@ -63,7 +63,7 @@ python exploration/features/feature_analysis.py
 
 ## Step 3: Tuning — Find optimal hyperparameters
 
-### 3a. Quantile XGBoost Tuning (current/active)
+### 3a. Quantile XGBoost Tuning
 ```bash
 python exploration/tuning/tune_quantile.py
 ```
@@ -80,19 +80,33 @@ python exploration/tuning/tune_quantile.py
 | learning_rate | 0.04 | 0.04 (same) |
 | Pinball loss | 1.647 | **1.559** (-5.3%) |
 
-### 3b. Legacy: XGBoost + RF Tuning (older pipeline)
-```bash
-python exploration/tuning/main.py
-```
-**What it does:** Tunes XGBoost (huber loss) and Random Forest with RMSE. Uses old feature set (includes Lag_1/Diff_1). Used by the `training/` pipeline, not by the current `inference/` pipeline.
+---
 
-**Output:** `models/exploration/tuning/xgboost_best_params.json`, `rf_best_params.json`
+## Step 4: Model Comparison — XGBoost vs Random Forest
+
+```bash
+python exploration/training/model_comparison.py
+```
+**What it does:** Trains both XGBoost (quantile) and Random Forest on the same data with the same 15 features (from the inference pipeline). Uses 3-fold expanding window CV, evaluates with RMSE/MAE/R2/wMAPE/accuracy buckets, and outputs a side-by-side comparison. Trains final models on full data with ABC analysis.
+
+**Output:** Console report (per-fold + summary comparison + ABC reports) + `models/exploration/training/xgboost_model.pkl`, `rf_model.pkl`, `comparison_metadata.json`
+
+**Results (3-fold CV average):**
+| Metric | XGBoost | RF | Winner |
+|--------|---------|-----|--------|
+| RMSE | 1.58 | 1.56 | RF |
+| MAE | 1.13 | 1.03 | RF |
+| R2 | 0.13 | 0.16 | RF |
+| wMAPE | 54.3% | 49.5% | RF |
+| ±20% accuracy | 42.7% | 34.9% | XGBoost |
+| ±50% accuracy | 81.9% | 79.2% | XGBoost |
+| Time | 0.43s | 1.73s | XGBoost |
 
 ---
 
-## Step 4: Inference — Production forecasts
+## Step 5: Inference — Production forecasts
 
-### 4a. Forecast
+### 5a. Forecast
 ```bash
 python exploration/inference/forecast.py
 ```
@@ -100,11 +114,11 @@ python exploration/inference/forecast.py
 - **Fri/Sat:** 70% DOW_P75 baseline + 30% quantile XGBoost
 - **Weekdays:** 60% DOW_Median baseline + 40% quantile XGBoost
 
-Loads tuned params from Step 3a. Trains per-item quantile XGBoost on post-rebrand data with 15 features. Forecasts 7 days ahead.
+Loads tuned params from Step 3. Trains per-item quantile XGBoost on post-rebrand data with 15 features. Forecasts 7 days ahead.
 
 **Output:** Console table + `models/exploration/inference/forecasts.csv` (all items) + `forecast_metadata.json`
 
-### 4b. Backtest
+### 5b. Backtest
 ```bash
 python exploration/inference/backtest.py
 ```
@@ -123,21 +137,9 @@ python exploration/inference/backtest.py
 
 ---
 
-## Legacy Pipeline (training/ + evaluation/)
+## Legacy
 
-These are from the initial exploration and use a different modeling approach (global + per-item blend with Lag_1/Diff_1 features, huber loss). The current inference pipeline supersedes them.
-
-### Training
-```bash
-python exploration/training/main.py
-```
-Trains XGBoost + Random Forest with global/per-item blend, 3-fold CV, ABC evaluation.
-
-### Evaluation
-```bash
-python exploration/evaluation/evaluate.py
-```
-Evaluates saved models with expanding-window CV and true holdout.
+`evaluation/` contains the initial model evaluation scripts from early exploration. The current pipeline supersedes them.
 
 ---
 
@@ -145,8 +147,8 @@ Evaluates saved models with expanding-window CV and true holdout.
 
 ```
 exploration/
-├── config.py                  # Paths, feature list, constants
-├── features.py                # Shared feature engineering (used by training/)
+├── config.py                  # Paths, old feature list (inference ignores this)
+├── features.py                # Old feature engineering (used by legacy only)
 │
 ├── eda/                       # Step 1: Raw data exploration
 │   ├── data_exploration.py    #   1a. Data overview, patterns, quality
@@ -156,17 +158,17 @@ exploration/
 │   └── feature_analysis.py    #   2a. Evidence-driven feature selection
 │
 ├── tuning/                    # Step 3: Hyperparameter optimization
-│   ├── tune_quantile.py       #   3a. Quantile XGBoost tuning (active)
-│   ├── xgboost_tuning.py      #   3b. Legacy XGBoost tuning
-│   ├── rf_tuning.py           #   3b. Legacy RF tuning
-│   └── main.py                #   3b. Legacy orchestrator
+│   └── tune_quantile.py       #   3a. Quantile XGBoost tuning
 │
-├── inference/                 # Step 4: Production forecasting
-│   ├── forecast.py            #   4a. Generate 7-day forecasts
-│   └── backtest.py            #   4b. Validate on historical data
+├── training/                  # Step 4: Model comparison
+│   ├── model_comparison.py    #   4a. XGBoost vs RF comparison
+│   └── metrics.py             #   Shared metrics (ABC, wMAPE, etc.)
 │
-├── training/                  # Legacy: model training
-├── evaluation/                # Legacy: model evaluation
+├── inference/                 # Step 5: Production forecasting
+│   ├── forecast.py            #   5a. Generate 7-day forecasts
+│   └── backtest.py            #   5b. Validate on historical data
+│
+├── evaluation/                # Legacy: initial model evaluation
 ├── figures/                   # Generated plots
 └── models/                    # Saved models, params, outputs
 ```
