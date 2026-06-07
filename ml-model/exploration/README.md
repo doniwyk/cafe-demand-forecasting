@@ -91,6 +91,20 @@ python exploration/eda/rebranding_effect.py
 
 The Cohen's d of 1.675 means the pre- and post-rebrand distributions barely overlap. Including pre-rebrand data would teach the model patterns that no longer exist. The lift is also growing month-over-month, so using old data would drag predictions downward.
 
+**Training data scope:**
+
+| Period | Date Range | Rows | % | Used? |
+|--------|-----------|------|---|-------|
+| Full dataset | Jan 2022 – May 2026 | 35,392 | 100% | Source only |
+| Pre-rebrand | Jan 2022 – Apr 2025 | 22,147 | 63% | **Excluded** |
+| Post-rebrand | May 2025 – May 2026 | 13,245 | 37% | **Training only** |
+
+**Why exclude 63% of the data?**
+- Pre- and post-rebrand are fundamentally different distributions (Cohen's d=1.675)
+- The +125% sales lift is growing (not fading) — old patterns no longer apply
+- Using pre-rebrand data would drag predictions downward (teaching outdated demand)
+- 12 months of post-rebrand data (~1,200 rows/item) is sufficient for per-item models
+
 **Additional insight:** Weekend lift > weekday lift tells us that **DOW features will be important** — the rebrand amplified an existing weekend pattern. This motivates our later decision to use separate blend weights for Fri/Sat vs weekdays.
 
 **Plots:**
@@ -581,12 +595,12 @@ forecast_item() — recursive 7-day loop:
 ```
 
 **Per-item process:**
-1. Load item data from PostgreSQL (post-rebrand only)
+1. Load item data from PostgreSQL (post-rebrand only: May 2025 – May 2026, ~12 months)
 2. Check minimum 60 non-zero days (skip sparse items)
 3. Compute DOW stats (last 12 weeks, non-zero only) — Avg, Median, P75, P90, P95, Std
 4. Build 16 features with `build_item_features()`
 5. Train XGBoost quantile (q=0.75) with tuned params + 3x Fri/Sat upweight
-6. Train Random Forest with tuned params (kept for blend compatibility, but rf_weight=0.0)
+6. Train Random Forest with tuned params (rf_weight=0.5 in blend)
 7. Recursive 7-day forecast with blend
 8. Round to cups
 
