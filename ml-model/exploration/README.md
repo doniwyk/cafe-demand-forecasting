@@ -47,13 +47,13 @@ python exploration/eda/data_exploration.py
 | Rows | ~36,000 daily item-level rows |
 | Top item | Kopi Susu Husgendam Ice — avg 4.6 cups/day |
 | Missing dates | 9 days (cafe closures — holidays, etc.) |
-| Zero-quantity days | ~40% of rows are qty=0 (item available but nobody bought) |
+| Zero-quantity days | None in dataset (qty >= 1 for all rows) |
 | Volatility | Many items have CV > 1.5 (coefficient of variation — std > mean) |
 | Sparse items | Several items sold fewer than 100 days total |
 
 **Why this matters for later steps:**
-- 40% zero-quantity days means we need to handle sparsity — zeroes are NOT missing data, they're real "nobody bought this today" events. But for DOW averages, closure days (where the whole cafe was closed) should be excluded.
-- High CV means simple averages won't work — we need models that handle variance.
+- No zero-quantity rows in the dataset (DB stores qty >= 1 only), but cafe closure days (where ALL items have no data) should be excluded from DOW averages.
+- 97% of items average 1–3 cups/day — only 2 items average above 3. High CV means simple averages won't work — we need models that handle variance.
 - 66 items → after filtering discontinued (Menawan) and sparse items (<60 non-zero days), we forecast **58 items**.
 
 **Output:** Console report + 5 plots in `figures/data_exploration/`
@@ -423,7 +423,7 @@ Items classified by cumulative volume: A (top 70%), B (70–90%), C (bottom 10%)
 
 wMAPE = `sum(|pred - actual|) / sum(actual)`. It's high because **the cafe sells small quantities per item per day**.
 
-**Actual data distribution (35,392 item-day rows):**
+**Actual data distribution (35,392 item-day rows from cafe_db):**
 
 | Daily qty | % of rows | Cumulative |
 |-----------|-----------|------------|
@@ -434,8 +434,10 @@ wMAPE = `sum(|pred - actual|) / sum(actual)`. It's high because **the cafe sells
 | 5 cups | 3.3% | 95.4% |
 | 6+ cups | 4.6% | 100% |
 
-- **Average: 2.11 cups/day.** Median: 2 cups/day.
+- **Average: 2.11 cups/item/day.** Median: 2 cups. Max: 60 (rare spike).
 - **86% of all rows sell 1–3 cups.** Only 4.6% of rows sell 6+ cups.
+- **97% of items (59/61) average 1–3 cups/day.** Even the #1 item (Kopi Susu Husgendam Ice) only averages 4.64 cups/day. Bottom items average ~1.2 cups/day.
+- **Zero-quantity days are excluded** from the dataset — the DB only contains days where qty >= 1.
 
 **The math:** wMAPE = avg absolute error / avg actual = MAE / 2.11.
 
