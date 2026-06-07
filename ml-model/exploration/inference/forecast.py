@@ -24,19 +24,42 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 import sys
 sys.path.insert(0, str(BASE_DIR))
 
+from config import MODELS_DIR
+
 CAFE_DB_URL = os.getenv(
     "CAFE_DB_URL",
     "postgresql://postgres:postgres@localhost:5433/cafe_forecasting",
 )
-MODELS_DIR = BASE_DIR / "models" / "exploration"
+
+TUNING_FILE = MODELS_DIR / "exploration" / "tuning" / "quantile_best_params.json"
 
 QUANTILE = 0.75
-N_ESTIMATORS = 600
-MAX_DEPTH = 5
-LEARNING_RATE = 0.04
 DOW_LOOKBACK_WEEKS = 12
 FORECAST_HORIZON = 7
 MIN_NONZERO_DAYS = 60
+FRI_SAT_UPWEIGHT = 3.0
+
+DEFAULT_MODEL_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 3,
+    "learning_rate": 0.04,
+    "min_child_weight": 5,
+    "subsample": 0.8,
+    "colsample_bytree": 1.0,
+    "reg_alpha": 1.0,
+    "reg_lambda": 2.0,
+}
+
+
+def _load_model_params() -> dict:
+    if TUNING_FILE.exists():
+        with open(TUNING_FILE) as f:
+            tuned = json.load(f)
+        params = tuned.get("params", {})
+        print(f"Loaded tuned params from {TUNING_FILE}")
+        return params
+    print(f"No tuning file found, using defaults")
+    return DEFAULT_MODEL_PARAMS
 
 SKIP_PREFIXES = [
     "Add ", "Filter", "FIlter", "V60",
@@ -158,20 +181,14 @@ def train_model(df: pd.DataFrame, features: list) -> XGBRegressor:
 
     sample_weight = np.ones(len(non_zero))
     fri_sat_mask = non_zero["DOW"].isin([4, 5])
-    sample_weight[fri_sat_mask] = 3.0
+    sample_weight[fri_sat_mask] = FRI_SAT_UPWEIGHT
 
+    params = _load_model_params()
     model = XGBRegressor(
         objective="reg:quantileerror",
         quantile_alpha=QUANTILE,
-        n_estimators=N_ESTIMATORS,
-        max_depth=MAX_DEPTH,
-        learning_rate=LEARNING_RATE,
-        min_child_weight=5,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        reg_alpha=1.0,
-        reg_lambda=2.0,
         random_state=42,
+        **params,
     )
     model.fit(non_zero[features], non_zero["Quantity_Sold"], sample_weight=sample_weight, verbose=False)
     return model
