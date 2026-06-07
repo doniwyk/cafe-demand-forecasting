@@ -519,7 +519,10 @@ exploration/
 │   ├── forecast.py            #   Production 7-day forecasts (all items)
 │   └── backtest.py            #   Historical validation (5 periods)
 │
-├── evaluation/                # Legacy: early model evaluation (superseded)
+├── evaluation/                # Legacy: initial model evaluation (superseded)
+│   └── evaluate.py            #   Expanding-window CV + holdout eval for old global/item models
+│                                #   Depends on deleted training/data.py and old pickle models
+│                                #   Superseded by inference/backtest.py
 ├── figures/                   # Generated plots from EDA
 └── models/                    # Saved params + outputs (gitignored)
     └── exploration/
@@ -550,6 +553,27 @@ exploration/
 | max_depth=3 | Deeper trees overfit; 3 levels enough for DOW splits with 16 features |
 | min_child_weight=1 | 1200 training rows — requiring 5 per leaf was too restrictive |
 | min 60 non-zero days per item | Below this, not enough data for reliable per-DOW statistics |
+
+---
+
+## Legacy: `evaluation/evaluate.py`
+
+This was the initial evaluation module, written before the current pipeline. It is **superseded** by `inference/backtest.py`.
+
+**What it did:**
+- Evaluated old global + per-item pickle models (XGBoost and RF) using expanding-window CV (3 folds) and a true 20% holdout set
+- Loaded models from `models/exploration/xgboost/` and `models/exploration/random_forest/` (global_model.pkl + item_models.pkl)
+- Used the old 23-feature candidate list from `config.py` and the old feature builder `features.py`
+- Reported RMSE, MAE, MAPE, R², wMAPE, plus top-10 item accuracy on holdout
+
+**Why it was replaced:**
+- Depended on `training/data.py` (deleted during consolidation)
+- Used old 23-feature set including Lag_1/Diff_1 (proven harmful in Section 7 of feature analysis)
+- Used MSE-trained models (not quantile regression)
+- Had no DOW baseline blending
+- Evaluated on rounded predictions, which inflated metrics
+
+The current pipeline achieves better results with fewer features (16 vs 23), quantile regression (q=0.75 instead of MSE), and DOW baseline blending — all validated by `inference/backtest.py`.
 
 ---
 
