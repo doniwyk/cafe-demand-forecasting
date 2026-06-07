@@ -58,13 +58,13 @@ python exploration/eda/data_exploration.py
 
 **Plots:**
 
-| Plot | What it shows |
-|------|---------------|
-| ![Daily Sales](figures/data_exploration/01_daily_sales.png) | Total daily sales over 4.5 years — clear upward trend post-rebrand |
-| ![Monthly Sales](figures/data_exploration/02_monthly_sales.png) | Monthly aggregates — seasonal patterns visible |
-| ![Day of Week](figures/data_exploration/03_day_of_week.png) | Average qty by DOW — Sat/Sun slightly higher, but overall flat (~2.0–2.2) |
-| ![Top Items](figures/data_exploration/04_top_items.png) | Top 15 items by volume — Kopi Susu Husgendam Ice dominates |
-| ![Quantity Distribution](figures/data_exploration/06_quantity_distribution.png) | **Key plot:** 86% of rows sell 1–3 cups. Avg 2.1 cups/day. Proves wMAPE is structurally inflated. |
+| Plot | What it shows | Why it matters |
+|------|---------------|----------------|
+| ![Daily Sales](figures/data_exploration/01_daily_sales.png) | Total daily sales over 4.5 years. Clear upward trend starting May 2025 (rebrand). Large day-to-day variance (std=30, mean=47.5). | The variance tells us simple moving averages won't work — we need a model that handles volatility. The upward trend confirms the rebrand changed sales permanently, which we verify in Step 1b. |
+| ![Monthly Sales](figures/data_exploration/02_monthly_sales.png) | Monthly total sales bars. Post-2025 months are consistently higher than pre-2025. | Confirms the rebrand lift is sustained (not a one-time spike). This supports using only post-rebrand data — old monthly patterns no longer apply. |
+| ![Day of Week](figures/data_exploration/03_day_of_week.png) | Average qty per item by DOW. All days are ~2.0–2.2 cups. Sat/Sun slightly higher. | DOW differences are small at the aggregate level, but individual items (like Kopi Susu Husgendam Ice) have much larger DOW variation. This is why we compute per-item DOW stats with 12-week lookback rather than using global DOW averages. |
+| ![Top Items](figures/data_exploration/04_top_items.png) | Top 15 items by total volume. Kopi Susu Husgendam Ice (6732 total) is 2x the #2 item (Tubruk, 5204). | Heavy head distribution — top items drive most volume. This motivates our ABC analysis in Step 4 and our decision to train per-item models instead of one global model. |
+| ![Quantity Distribution](figures/data_exploration/06_quantity_distribution.png) | **Key plot:** 86% of rows sell 1–3 cups/day. Average 2.1 cups. 50% of rows sell exactly 1 cup. Only 4.6% sell 6+. | This is the single most important data insight. It explains why wMAPE is 47–55% even with decent models: being 1 cup off when actual=1 is 100% error. MAE (~1.3 cups) is the honest metric. This also tells us that quantile regression (predicting the upper range) is better than MSE (predicting the mean of 2.1) for supply planning. |
 
 **Output:** Console report + 6 plots in `figures/data_exploration/`
 
@@ -95,12 +95,12 @@ The Cohen's d of 1.675 means the pre- and post-rebrand distributions barely over
 
 **Plots:**
 
-| Plot | What it shows |
-|------|---------------|
-| ![Rebrand Daily](figures/rebranding_effect/11_rebranding_daily.png) | Daily sales with rebrand vertical line — clear structural break |
-| ![DOW Shift](figures/rebranding_effect/13_rebranding_dow_shift.png) | Pre vs post DOW averages — weekend amplified more than weekday |
-| ![Item Impact](figures/rebranding_effect/14_rebranding_item_impact.png) | Top items by lift factor — broad-based, not driven by single product |
-| ![Zero Inflation](figures/rebranding_effect/15_rebranding_zero_inflation.png) | P(Qty > threshold) pre vs post — post-rebrand sells more at every threshold |
+| Plot | What it shows | Why it matters |
+|------|---------------|----------------|
+| ![Rebrand Daily](figures/rebranding_effect/11_rebranding_daily.png) | Daily total sales with a vertical line at May 2025 (rebrand date). Post-rebrand monthly averages shown as bars. | The visual break is unmistakable — average daily sales jump from ~20 to ~50. The monthly bars show the lift is **growing** (not fading), which means we can't just add a "post-rebrand flag" — the data distribution is fundamentally different. This is why we train on post-rebrand data only. |
+| ![DOW Shift](figures/rebranding_effect/13_rebranding_dow_shift.png) | Side-by-side bars: pre vs post average qty by day of week. Every DOW increased. Weekend bars grew taller than weekday. | Weekend lift (+89%) > weekday lift (+77%). This tells us the rebrand amplified an existing weekend pattern. **Impact on next step:** we need DOW features, and we should consider separate treatment for Fri/Sat vs weekdays. This directly motivates our blend formula (different weights for weekend vs weekday). |
+| ![Item Impact](figures/rebranding_effect/14_rebranding_item_impact.png) | Top 15 items by lift factor (post/pre ratio). Most items show 2–4x lift. | The lift is broad-based — >90% of items increased. This means we can't just adjust one item; the entire data distribution shifted. **Impact:** every item needs its own model trained on post-rebrand data. |
+| ![Zero Inflation](figures/rebranding_effect/15_rebranding_zero_inflation.png) | P(Qty > threshold) curves for pre vs post. Post-rebrand has higher probability at every threshold (1, 2, 3, 5 cups). | After rebrand, items are more likely to sell at every quantity level. This means the entire shape of the demand distribution changed, not just the mean. **Impact:** using pre-rebrand data would teach the model an outdated demand distribution. |
 
 **Output:** Console report + 4 plots in `figures/rebranding_effect/`
 
@@ -286,12 +286,12 @@ All features use only past data (shifted by 1+ day) — no target leakage. DOW s
 
 **Plots (from earlier feature discovery, in `figures/feature_discovery/`):**
 
-| Plot | What it shows |
-|------|---------------|
-| ![Autocorrelation](figures/feature_discovery/07_autocorrelation.png) | Lag-7 is the dominant signal — weekly pattern is key |
-| ![Feature Correlation](figures/feature_discovery/09_feature_correlation.png) | Collinearity heatmap — Roll_Mean_28/EWMA_28 highly correlated but both kept |
-| ![Feature Importance](figures/feature_discovery/10_feature_importance.png) | XGB importance ranking — EWMA_28, Roll_Mean_28, DOW_Avg top 3 |
-| ![Model Comparison](figures/feature_discovery/12_model_comparison.png) | Feature set comparisons — 16-feature set performance |
+| Plot | What it shows | Why it matters |
+|------|---------------|----------------|
+| ![Autocorrelation](figures/feature_discovery/07_autocorrelation.png) | Autocorrelation at each lag. Lag-7 spike is the tallest. Lag-1 is moderate. Lag-182 is near zero. | Lag-7 being the strongest confirms weekly seasonality is the dominant pattern — same day last week is more predictive than yesterday. **Impact:** we keep Lag_7/14/28 but exclude Lag_182 (weak signal + 12.5% NaN). Lag_1 is excluded despite moderate r because Section 7 shows it harms Fri/Sat. |
+| ![Feature Correlation](figures/feature_discovery/09_feature_correlation.png) | Correlation heatmap of all candidate features. Red = high correlation pairs. | Shows which features are redundant. Roll_Mean_28 and EWMA_28 are r=0.98 but we keep both because they smooth differently (simple vs exponential). Roll_Std_7 is r=0.76 with Roll_Mean_7 — excluded, replaced by per-DOW DOW_Std. **Impact:** removing redundancy prevents the model from splitting importance across collinear features. |
+| ![Feature Importance](figures/feature_discovery/10_feature_importance.png) | XGB feature importance bar chart. EWMA_28 is tallest, followed by Roll_Mean_28, DOW_Avg. | This is what the model actually uses (not what has highest target correlation). DOW_Avg is 3rd in importance despite low target r (0.065) — XGBoost uses it for tree splits to separate weekday vs weekend patterns. **Impact:** confirms our 16-feature set — every feature has non-zero importance. |
+| ![Model Comparison](figures/feature_discovery/12_model_comparison.png) | Prediction accuracy across different feature set sizes. 16 features is the sweet spot. | Adding more features beyond 16 doesn't improve predictions (noise features dilute signal). Removing any of the 16 hurts. **Impact:** validates our final feature selection. |
 
 ---
 
