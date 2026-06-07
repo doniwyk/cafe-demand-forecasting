@@ -110,11 +110,12 @@ python exploration/training/model_comparison.py
 ```bash
 python exploration/inference/forecast.py
 ```
-**What it does:** Production inference for all items. Uses a blended approach:
-- **Fri/Sat:** 70% DOW_P75 baseline + 30% quantile XGBoost
-- **Weekdays:** 60% DOW_Median baseline + 40% quantile XGBoost
+**What it does:** Production inference for all items. Uses a 3-component blended approach:
+- **Models:** Quantile XGBoost (tuned) + Random Forest (tuned), averaged 50/50
+- **Fri/Sat:** 30% model blend + 70% DOW_P75 baseline
+- **Weekdays:** 40% model blend + 60% DOW_Median baseline
 
-Loads tuned params from Step 3. Trains per-item quantile XGBoost on post-rebrand data with 15 features. Forecasts 7 days ahead.
+Loads tuned params from Steps 3-4. Trains per-item XGB+RF on post-rebrand data with 15 features. Forecasts 7 days ahead.
 
 **Output:** Console table + `models/exploration/inference/forecasts.csv` (all items) + `forecast_metadata.json`
 
@@ -126,14 +127,14 @@ python exploration/inference/backtest.py
 
 **Output:** Console report + `models/exploration/inference/backtest_results.csv`
 
-**Results:**
+**Results (XGB+RF blended):**
 | Metric | Value |
 |--------|-------|
-| Overall MAE | 1.35 |
-| Overall RMSE | 1.89 |
-| Fri+Sat MAE | 1.45 |
-| Bias | +0.04 (near zero) |
-| Within 50% | 54.0% |
+| Overall MAE | 1.33 |
+| Overall RMSE | 1.86 |
+| Fri+Sat MAE | 1.44 |
+| Bias | +0.03 (near zero) |
+| Within 50% | 55.4% |
 
 ---
 

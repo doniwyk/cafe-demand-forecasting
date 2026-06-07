@@ -24,7 +24,7 @@ from forecast import (
     load_all_items,
     build_item_features,
     compute_dow_stats,
-    train_model,
+    train_models,
     forecast_item,
     FEATURE_COLS,
     _dow_baseline,
@@ -68,7 +68,7 @@ def backtest_item(
     features = [f for f in FEATURE_COLS if f in df_feat.columns]
 
     try:
-        model = train_model(df_feat, features)
+        xgb, rf = train_models(df_feat, features)
     except Exception:
         return None
 
@@ -76,7 +76,7 @@ def backtest_item(
     if n_days <= 0 or n_days > 14:
         return None
 
-    forecast = forecast_item(model, dow_stats, train_df, features, n_days=n_days)
+    forecast = forecast_item(xgb, rf, dow_stats, train_df, features, n_days=n_days)
 
     forecast = forecast[forecast["Date"].isin(test_df["Date"])]
     test_df = test_df[test_df["Date"].isin(forecast["Date"])]

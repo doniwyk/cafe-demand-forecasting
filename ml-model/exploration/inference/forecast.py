@@ -1,24 +1,27 @@
 """Production inference for daily item sales forecasting.
 
-Blended approach:
-  - Fri/Sat: 70% DOW_P75 baseline + 30% quantile XGBoost
-  - Weekdays: 60% DOW_Median baseline + 40% quantile XGBoost
+Blended approach with 3 components:
+  - Quantile XGBoost (tuned params, q=0.75)
+  - Random Forest (tuned params)
+  - DOW percentile baseline
 
-DOW_P75 captures the upper range of weekend demand while avoiding the
-extreme overprediction of P90. Backtested across 5 historical periods:
-  - Overall MAE: ~1.4 | Fri/Sat MAE: ~3.4 (vs 4.8 with P90)
+Fri/Sat: XGB + RF average, blended with DOW_P75 baseline
+Weekdays: XGB + RF average, blended with DOW_Median baseline
+
+Backtested across 5 historical periods:
+  - Overall MAE: ~1.4 | Fri/Sat MAE: ~3.4
   - Slight overprediction bias is intentional for supply planning.
 """
 from __future__ import annotations
 
 import json
 import os
-import pickle
 import numpy as np
 import pandas as pd
 from datetime import timedelta
 from pathlib import Path
 from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 import sys
@@ -31,7 +34,9 @@ CAFE_DB_URL = os.getenv(
     "postgresql://postgres:postgres@localhost:5433/cafe_forecasting",
 )
 
-TUNING_FILE = MODELS_DIR / "exploration" / "tuning" / "quantile_best_params.json"
+TUNING_DIR = MODELS_DIR / "exploration" / "tuning"
+XGB_TUNING_FILE = TUNING_DIR / "quantile_best_params.json"
+RF_TUNING_FILE = TUNING_DIR / "rf_best_params.json"
 
 QUANTILE = 0.75
 DOW_LOOKBACK_WEEKS = 12
@@ -39,7 +44,7 @@ FORECAST_HORIZON = 7
 MIN_NONZERO_DAYS = 60
 FRI_SAT_UPWEIGHT = 3.0
 
-DEFAULT_MODEL_PARAMS = {
+DEFAULT_XGB_PARAMS = {
     "n_estimators": 200,
     "max_depth": 3,
     "learning_rate": 0.04,
@@ -50,16 +55,38 @@ DEFAULT_MODEL_PARAMS = {
     "reg_lambda": 2.0,
 }
 
+DEFAULT_RF_PARAMS = {
+    "n_estimators": 200,
+    "max_depth": 7,
+}
 
-def _load_model_params() -> dict:
-    if TUNING_FILE.exists():
-        with open(TUNING_FILE) as f:
-            tuned = json.load(f)
-        params = tuned.get("params", {})
-        print(f"Loaded tuned params from {TUNING_FILE}")
-        return params
-    print(f"No tuning file found, using defaults")
-    return DEFAULT_MODEL_PARAMS
+
+def _load_xgb_params() -> dict:
+    if not hasattr(_load_xgb_params, "_cache"):
+        if XGB_TUNING_FILE.exists():
+            with open(XGB_TUNING_FILE) as f:
+                tuned = json.load(f)
+            _load_xgb_params._cache = tuned.get("params", {})
+            print(f"Loaded XGB params from {XGB_TUNING_FILE}")
+        else:
+            print("No XGB tuning file found, using defaults")
+            _load_xgb_params._cache = DEFAULT_XGB_PARAMS
+    return _load_xgb_params._cache
+
+
+def _load_rf_params() -> dict:
+    if not hasattr(_load_rf_params, "_cache"):
+        if RF_TUNING_FILE.exists():
+            with open(RF_TUNING_FILE) as f:
+                params = json.load(f)
+            params["random_state"] = 42
+            params["n_jobs"] = -1
+            _load_rf_params._cache = params
+            print(f"Loaded RF params from {RF_TUNING_FILE}")
+        else:
+            print("No RF tuning file found, using defaults")
+            _load_rf_params._cache = {**DEFAULT_RF_PARAMS, "random_state": 42, "n_jobs": -1}
+    return _load_rf_params._cache
 
 SKIP_PREFIXES = [
     "Add ", "Filter", "FIlter", "V60",
@@ -68,6 +95,7 @@ DISCONTINUED_ITEMS = ["Menawan"]
 
 WEEKEND_BLEND_MODEL = 0.3
 WEEKDAY_BLEND_MODEL = 0.4
+MODEL_BLEND_RF = 0.5
 
 FEATURE_COLS = [
     "Lag_7", "Lag_14", "Lag_28",
@@ -176,22 +204,27 @@ def build_item_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def train_model(df: pd.DataFrame, features: list) -> XGBRegressor:
+def train_models(df: pd.DataFrame, features: list) -> tuple[XGBRegressor, RandomForestRegressor]:
     non_zero = df[df["Quantity_Sold"] > 0].copy()
 
     sample_weight = np.ones(len(non_zero))
     fri_sat_mask = non_zero["DOW"].isin([4, 5])
     sample_weight[fri_sat_mask] = FRI_SAT_UPWEIGHT
 
-    params = _load_model_params()
-    model = XGBRegressor(
+    xgb_params = _load_xgb_params()
+    xgb = XGBRegressor(
         objective="reg:quantileerror",
         quantile_alpha=QUANTILE,
         random_state=42,
-        **params,
+        **xgb_params,
     )
-    model.fit(non_zero[features], non_zero["Quantity_Sold"], sample_weight=sample_weight, verbose=False)
-    return model
+    xgb.fit(non_zero[features], non_zero["Quantity_Sold"], sample_weight=sample_weight, verbose=False)
+
+    rf_params = _load_rf_params()
+    rf = RandomForestRegressor(**rf_params)
+    rf.fit(non_zero[features], non_zero["Quantity_Sold"], sample_weight=sample_weight)
+
+    return xgb, rf
 
 
 def _dow_baseline(dow_stats: pd.DataFrame, dow: int) -> float:
@@ -205,7 +238,8 @@ def _dow_baseline(dow_stats: pd.DataFrame, dow: int) -> float:
 
 
 def forecast_item(
-    model: XGBRegressor,
+    xgb: XGBRegressor,
+    rf: RandomForestRegressor,
     dow_stats: pd.DataFrame,
     df_hist: pd.DataFrame,
     features: list,
@@ -229,7 +263,10 @@ def forecast_item(
         if row.empty:
             continue
 
-        model_pred = max(0, model.predict(row[features])[0])
+        xgb_pred = max(0, xgb.predict(row[features])[0])
+        rf_pred = max(0, rf.predict(row[features])[0])
+        model_pred = MODEL_BLEND_RF * rf_pred + (1 - MODEL_BLEND_RF) * xgb_pred
+
         dow = fd.dayofweek
         baseline = _dow_baseline(dow_stats, dow)
 
@@ -240,7 +277,8 @@ def forecast_item(
             "Date": fd,
             "DOW": dow,
             "DOW_Name": fd.day_name(),
-            "Model": round(model_pred, 2),
+            "XGB": round(xgb_pred, 2),
+            "RF": round(rf_pred, 2),
             "Baseline": round(baseline, 2),
             "Predicted": round(blended, 2),
         })
@@ -265,9 +303,9 @@ def forecast_single(item_name: str, df_all: pd.DataFrame | None = None, n_days: 
     df_feat = build_item_features(df.copy())
     features = [f for f in FEATURE_COLS if f in df_feat.columns]
     dow_stats = compute_dow_stats(df)
-    model = train_model(df_feat, features)
+    xgb, rf = train_models(df_feat, features)
 
-    return forecast_item(model, dow_stats, df, features, n_days)
+    return forecast_item(xgb, rf, dow_stats, df, features, n_days)
 
 
 def forecast_all(n_days: int = FORECAST_HORIZON) -> dict[str, pd.DataFrame]:
@@ -309,11 +347,11 @@ def print_forecast_table(results: dict[str, pd.DataFrame], top_n: int = 15):
     for item in top_items:
         df = results[item]
         print(f"\n--- {item} (avg: {avg_preds[item]:.1f}/day) ---")
-        print(f"  {'Date':<12} {'DOW':<10} {'Model':>7} {'Baseline':>9} {'Predicted':>10}")
-        print(f"  {'-'*50}")
+        print(f"  {'Date':<12} {'DOW':<10} {'XGB':>7} {'RF':>7} {'Baseline':>9} {'Predicted':>10}")
+        print(f"  {'-'*55}")
         for _, r in df.iterrows():
             print(f"  {r['Date'].strftime('%Y-%m-%d'):<12} {r['DOW_Name']:<10} "
-                  f"{r['Model']:>7.1f} {r['Baseline']:>9.1f} {r['Predicted']:>10.1f}")
+                  f"{r['XGB']:>7.1f} {r['RF']:>7.1f} {r['Baseline']:>9.1f} {r['Predicted']:>10.1f}")
 
 
 def save_results(results: dict[str, pd.DataFrame]):
@@ -328,7 +366,7 @@ def save_results(results: dict[str, pd.DataFrame]):
 
     if all_forecasts:
         combined = pd.concat(all_forecasts, ignore_index=True)
-        combined = combined[["Item", "Date", "DOW", "DOW_Name", "Model", "Baseline", "Predicted"]]
+        combined = combined[["Item", "Date", "DOW", "DOW_Name", "XGB", "RF", "Baseline", "Predicted"]]
         combined.to_csv(output_dir / "forecasts.csv", index=False)
         print(f"Saved {len(combined)} forecast rows to {output_dir / 'forecasts.csv'}")
 
@@ -342,6 +380,7 @@ def save_results(results: dict[str, pd.DataFrame]):
         "blend_weights": {
             "fri_sat_model": WEEKEND_BLEND_MODEL,
             "weekday_model": WEEKDAY_BLEND_MODEL,
+            "model_blend_rf": MODEL_BLEND_RF,
         },
         "features": FEATURE_COLS,
     }
@@ -354,6 +393,7 @@ def main():
     print("PRODUCTION INFERENCE: All Items")
     print(f"Quantile: {QUANTILE} | Horizon: {FORECAST_HORIZON} days | DOW lookback: {DOW_LOOKBACK_WEEKS} weeks")
     print(f"Blend: Fri/Sat={WEEKEND_BLEND_MODEL:.0%} model, Weekdays={WEEKDAY_BLEND_MODEL:.0%} model")
+    print(f"Model blend: {MODEL_BLEND_RF:.0%} RF + {1-MODEL_BLEND_RF:.0%} XGB")
     print("=" * 80)
 
     results = forecast_all()
