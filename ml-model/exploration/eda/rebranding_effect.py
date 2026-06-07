@@ -1,17 +1,17 @@
 """
-Rebranding Effect Analysis (ML Engineer Perspective)
-=====================================================
-Comprehensive analysis of rebranding impact (May 2025) on:
-  1. Structural break detection (statistical tests)
-  2. Feature impact analysis (lag/rolling behavior changes)
-  3. Prediction decay (does the effect fade?)
-  4. DOW pattern shift (weekly seasonality changes)
-  5. Zero-inflation change (demand frequency shifts)
-  6. Category heterogeneity (differential impact by product tier)
-  7. Model implications (how to handle in forecasting)
+Rebranding Effect Analysis — Raw Data Patterns
+=================================================
+Analyzes the May 2025 rebranding impact using raw sales data only:
+  1. Structural break detection (t-test, Cohen's d)
+  2. Prediction decay (monthly trend post-rebrand)
+  3. DOW pattern shift (weekly seasonality changes)
+  4. Zero-inflation change (demand frequency shifts)
+  5. Category heterogeneity (impact by product tier)
+  6. Menu changes & lift decomposition
+
+Feature-level analysis lives in features/feature_discovery.py.
 
 Fetches from cafe_forecasting DB, generates plots to figures/rebranding_effect/.
-
 Run from ml-model/: python exploration/eda/rebranding_effect.py
 """
 
@@ -30,11 +30,10 @@ FIGURES_DIR = Path(__file__).resolve().parent.parent / "figures" / "rebranding_e
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import DISCONTINUED_ITEMS, FEATURE_COLUMNS
+from config import DISCONTINUED_ITEMS
 
 CAFE_DB_URL = os.getenv("CAFE_DB_URL", "postgresql://postgres:postgres@localhost:5433/cafe_forecasting")
 REBRAND_DATE = pd.Timestamp("2025-05-01")
-END_DATE = "2026-04-25"
 
 SEPARATOR = "=" * 80
 
@@ -48,54 +47,46 @@ def load_data() -> pd.DataFrame:
             SELECT dis.date, i.name as item, dis.quantity_sold
             FROM daily_item_sales dis
             JOIN items i ON dis.item_id = i.id
-            WHERE dis.date <= %s
             ORDER BY dis.date, i.name
-        """, (END_DATE,))
+        """)
         rows = cur.fetchall()
         cur.close()
         conn.close()
 
         df = pd.DataFrame(rows, columns=["Date", "Item", "Quantity_Sold"])
         df["Date"] = pd.to_datetime(df["Date"])
-    except Exception as e:
-        print(f"Cannot connect to cafe_forecasting DB: {e}")
-        print("Falling back to CSV...")
-        csv_path = Path(__file__).resolve().parent.parent.parent / "daily_item_sales.csv"
+    except Exception:
+        csv_path = Path(__file__).resolve().parent.parent / "data" / "processed" / "sales_forecasting" / "daily_item_sales.csv"
         df = pd.read_csv(csv_path)
         df.columns = df.columns.str.strip()
-        date_col = "Date_Only" if "Date_Only" in df.columns else "Date"
-        df["Date"] = pd.to_datetime(df[date_col])
-        df = df.rename(columns={"Quantity": "Quantity_Sold"})
-        df = df[df["Date"] <= END_DATE]
+        df["Date"] = pd.to_datetime(df.get("Date_Only", df.get("Date")))
+        df["Quantity_Sold"] = df.get("Quantity", df.get("Quantity_Sold")).astype(int)
+        df = df.rename(columns={"Item": "Item"})
 
-    df = df[~df["Item"].str.strip().str.lower().str.startswith(("add", "filter"))].copy()
-    if DISCONTINUED_ITEMS:
-        df = df[~df["Item"].isin(DISCONTINUED_ITEMS)]
-
+    df = df[~df["Item"].isin(DISCONTINUED_ITEMS)]
+    print(f"Loaded {len(df):,} rows | {df['Item'].nunique()} products | {df['Date'].min().date()} -> {df['Date'].max().date()}")
     return df
 
 
-# =============================================================================
-# SECTION 1: Structural Break Detection
-# =============================================================================
 def section_structural_break(daily: pd.Series, pre: pd.Series, post: pd.Series):
     print(f"\n{SEPARATOR}")
     print("1. STRUCTURAL BREAK DETECTION")
     print(SEPARATOR)
 
     t_stat, p_value = stats.ttest_ind(pre, post)
-    cohens_d = (post.mean() - pre.mean()) / np.sqrt((pre.std()**2 + post.std()**2) / 2)
+    pooled_std = np.sqrt((pre.std() ** 2 + post.std() ** 2) / 2)
+    cohens_d = (post.mean() - pre.mean()) / pooled_std
 
-    print(f"\nWelch's t-test:")
+    print(f"\nWelch's t-test (daily total sales):")
     print(f"  t-statistic:  {t_stat:.4f}")
     print(f"  p-value:      {p_value:.2e}")
-    print(f"  Significant:  {'YES (p < 0.001)' if p_value < 0.001 else 'NO'}")
+    print(f"  Significant:  {'YES' if p_value < 0.05 else 'NO'}")
 
     print(f"\nEffect size (Cohen's d): {cohens_d:.3f}")
     if abs(cohens_d) > 0.8:
         print(f"  Interpretation: LARGE effect (d > 0.8)")
     elif abs(cohens_d) > 0.5:
-        print(f"  Interpretation: MEDIUM effect (d > 0.5)")
+        print(f"  Interpretation: MEDIUM effect (0.5 < d < 0.8)")
     else:
         print(f"  Interpretation: SMALL effect")
 
@@ -108,90 +99,9 @@ def section_structural_break(daily: pd.Series, pre: pd.Series, post: pd.Series):
     return t_stat, p_value, cohens_d
 
 
-# =============================================================================
-# SECTION 2: Feature Impact Analysis
-# =============================================================================
-def build_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Build feature matrix for analysis."""
-    data = df[["Item", "Date", "Quantity_Sold"]].copy().sort_values(["Item", "Date"]).reset_index(drop=True)
-
-    for item in data["Item"].unique():
-        mask = data["Item"] == item
-        g = data.loc[mask, "Quantity_Sold"]
-        shifted = g.shift(1)
-
-        data.loc[mask, "Lag_1"] = shifted.values
-        data.loc[mask, "Diff_1"] = g.diff(1).values
-        data.loc[mask, "Accel_2"] = g.diff(1).diff(1).values
-
-        g_lag1 = g.shift(1)
-        g_lag4 = g.shift(4)
-        data.loc[mask, "Seasonal_Strength"] = (g_lag1 / (g_lag4 + 1) - 1).values
-
-        data.loc[mask, "Roll_Mean_7"] = shifted.rolling(7, min_periods=1).mean().values
-        data.loc[mask, "Roll_Mean_28"] = shifted.rolling(28, min_periods=1).mean().values
-        data.loc[mask, "Roll_Std_7"] = shifted.rolling(7, min_periods=1).std().values
-        data.loc[mask, "Roll_Q95_7"] = shifted.rolling(7, min_periods=1).quantile(0.95).values
-        data.loc[mask, "EWMA_7"] = shifted.ewm(span=7, adjust=False).mean().values
-        data.loc[mask, "EWMA_28"] = shifted.ewm(span=28, adjust=False).mean().values
-
-        roll7 = shifted.rolling(7, min_periods=1).mean()
-        roll28 = shifted.rolling(28, min_periods=1).mean()
-        data.loc[mask, "Trend_7"] = ((roll7 - roll28) / (roll28 + 1)).values
-
-        recent3 = shifted.rolling(3, min_periods=1).mean()
-        data.loc[mask, "Momentum_3"] = ((recent3 - roll7) / (roll7 + 1)).values
-
-        data.loc[mask, "Price_Level"] = (shifted / (roll28 + 1)).values
-
-        data.loc[mask, "Lag_7"] = g.shift(7).values
-        data.loc[mask, "Lag_14"] = g.shift(14).values
-        data.loc[mask, "Lag_28"] = g.shift(28).values
-        data.loc[mask, "Lag_182"] = g.shift(182).values
-
-        lag7 = g.shift(7)
-        lag28 = g.shift(28)
-        lag182 = g.shift(182)
-        data.loc[mask, "Weekly_Ratio"] = (lag7 / (lag28 + 1)).values
-        data.loc[mask, "Monthly_Ratio"] = (lag28 / (lag182 + 1)).values
-        data.loc[mask, "Seasonal_Diff"] = (lag7 - lag28).values
-
-    data["DOW"] = data["Date"].dt.dayofweek
-    data["Is_Weekend"] = (data["DOW"] >= 5).astype(int)
-
-    data = data.fillna(0).replace([np.inf, -np.inf], 0)
-    data["IsPost"] = (data["Date"] >= REBRAND_DATE).astype(int)
-    return data
-
-
-def section_feature_impact(data: pd.DataFrame):
-    print(f"\n{SEPARATOR}")
-    print("2. FEATURE IMPACT ANALYSIS")
-    print(SEPARATOR)
-
-    features = FEATURE_COLUMNS + ["Quantity_Sold"]
-    pre = data[data["Date"] < REBRAND_DATE]
-    post = data[data["Date"] >= REBRAND_DATE]
-
-    print(f"\nFeature mean comparison (pre vs post rebranding):")
-    print(f"{'Feature':<22s} {'Pre':>10s} {'Post':>10s} {'Change':>10s} {'p-value':>10s}")
-    print("-" * 65)
-
-    for feat in features:
-        pre_vals = pre[feat].dropna()
-        post_vals = post[feat].dropna()
-        if len(pre_vals) > 10 and len(post_vals) > 10:
-            _, p = stats.ttest_ind(pre_vals, post_vals)
-            change = post_vals.mean() - pre_vals.mean()
-            print(f"  {feat:<20s} {pre_vals.mean():10.3f} {post_vals.mean():10.3f} {change:+10.3f} {p:10.2e}")
-
-
-# =============================================================================
-# SECTION 3: Prediction Decay Analysis
-# =============================================================================
 def section_prediction_decay(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
-    print("3. PREDICTION DECAY (Does the effect fade?)")
+    print("2. PREDICTION DECAY (Does the effect fade?)")
     print(SEPARATOR)
 
     daily = df.groupby("Date")["Quantity_Sold"].sum()
@@ -224,13 +134,12 @@ def section_prediction_decay(df: pd.DataFrame):
     else:
         print(f"  Interpretation: STABLE (no significant trend)")
 
+    return slope, p_value
 
-# =============================================================================
-# SECTION 4: DOW Pattern Shift
-# =============================================================================
+
 def section_dow_shift(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
-    print("4. DAY-OF-WEEK PATTERN SHIFT")
+    print("3. DAY-OF-WEEK PATTERN SHIFT")
     print(SEPARATOR)
 
     df["DOW"] = df["Date"].dt.dayofweek
@@ -267,12 +176,9 @@ def section_dow_shift(df: pd.DataFrame):
     print(f"  Weekend lift: +{weekend_lift:.1f}%  |  Weekday lift: +{weekday_lift:.1f}%")
 
 
-# =============================================================================
-# SECTION 5: Zero-Inflation Analysis
-# =============================================================================
 def section_zero_inflation(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
-    print("5. ZERO-INFLATION CHANGE")
+    print("4. ZERO-INFLATION CHANGE")
     print(SEPARATOR)
 
     daily = df.groupby(["Item", "Date"])["Quantity_Sold"].sum().reset_index()
@@ -305,12 +211,9 @@ def section_zero_inflation(df: pd.DataFrame):
         print(f"  P(Qty > {qty_threshold}): {pre_gt:.3f} -> {post_gt:.3f} ({(post_gt/pre_gt-1)*100:+.1f}%)")
 
 
-# =============================================================================
-# SECTION 6: Category Heterogeneity
-# =============================================================================
 def section_category_heterogeneity(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
-    print("6. CATEGORY HETEROGENEITY")
+    print("5. CATEGORY HETEROGENEITY")
     print(SEPARATOR)
 
     item_vol = df[df["Date"] < REBRAND_DATE].groupby("Item")["Quantity_Sold"].mean()
@@ -358,64 +261,6 @@ def section_category_heterogeneity(df: pd.DataFrame):
     print(f"  P25: {p25:.2f}  P50: {p50:.2f}  P75: {p75:.2f}")
 
 
-# =============================================================================
-# SECTION 7: Model Implications
-# =============================================================================
-def section_model_implications(data: pd.DataFrame):
-    print(f"\n{SEPARATOR}")
-    print("7. MODEL IMPLICATIONS")
-    print(SEPARATOR)
-
-    pre = data[data["Date"] < REBRAND_DATE]
-    post = data[data["Date"] >= REBRAND_DATE]
-
-    print(f"\nRecommendation: Add 'IsPostRebrand' feature to model")
-    print(f"\nFeature importance comparison (pre vs post rebranding):")
-    print(f"{'Feature':<22s} {'Pre Imp':>10s} {'Post Imp':>10s} {'Delta':>10s}")
-    print("-" * 55)
-
-    from xgboost import XGBRegressor
-    features = FEATURE_COLUMNS
-    target = "Quantity_Sold"
-
-    if len(pre) > 100:
-        model_pre = XGBRegressor(
-            objective="count:poisson", n_estimators=100, learning_rate=0.05,
-            max_depth=4, random_state=42, early_stopping_rounds=15,
-        )
-        split_pre = int(len(pre) * 0.8)
-        model_pre.fit(pre[features][:split_pre], target and pre[target][:split_pre],
-                      eval_set=[(pre[features][split_pre:], pre[target][split_pre:])], verbose=False)
-        imp_pre = pd.Series(model_pre.feature_importances_, index=features)
-    else:
-        imp_pre = pd.Series(0, index=features)
-
-    if len(post) > 100:
-        model_post = XGBRegressor(
-            objective="count:poisson", n_estimators=100, learning_rate=0.05,
-            max_depth=4, random_state=42, early_stopping_rounds=15,
-        )
-        split_post = int(len(post) * 0.8)
-        model_post.fit(post[features][:split_post], target and post[target][:split_post],
-                       eval_set=[(post[features][split_post:], post[target][split_post:])], verbose=False)
-        imp_post = pd.Series(model_post.feature_importances_, index=features)
-    else:
-        imp_post = pd.Series(0, index=features)
-
-    for feat in features:
-        delta = imp_post[feat] - imp_pre[feat]
-        print(f"  {feat:<20s} {imp_pre[feat]:10.4f} {imp_post[feat]:10.4f} {delta:+10.4f}")
-
-    print(f"\nImplementation options:")
-    print(f"  1. Add binary feature 'IsPostRebrand' (0/1) — simple level shift")
-    print(f"  2. Add ramp feature 'MonthsSinceRebrand' — capture gradual effect")
-    print(f"  3. Train separate models for pre/post periods — if patterns differ")
-    print(f"  4. Use post-rebrand data only for forecasting — if effect is permanent")
-
-
-# =============================================================================
-# PLOT FUNCTIONS
-# =============================================================================
 def plot_daily_with_decay(daily: pd.Series, pre: pd.Series, post: pd.Series):
     fig, axes = plt.subplots(2, 1, figsize=(14, 8), height_ratios=[2, 1])
 
@@ -426,17 +271,15 @@ def plot_daily_with_decay(daily: pd.Series, pre: pd.Series, post: pd.Series):
     axes[0].axhline(y=pre.mean(), xmin=0, xmax=split, color="green", linestyle=":", label=f"Avg before: {pre.mean():.0f}/day")
     axes[0].axhline(y=post.mean(), xmin=split, xmax=1, color="darkgreen", linestyle=":", label=f"Avg after: {post.mean():.0f}/day")
     axes[0].set_title("Daily Total Sales with Rebranding Effect", fontsize=14)
-    axes[0].set_ylabel("Quantity Sold")
+    axes[0].set_ylabel("Units sold")
     axes[0].legend(fontsize=9)
 
     post_monthly = post.resample("ME").mean()
-    axes[1].plot(post_monthly.index, post_monthly.values, marker="o", linewidth=1.5, color="darkgreen")
-    z = np.polyfit(range(len(post_monthly)), post_monthly.values, 1)
-    p = np.poly1d(z)
-    axes[1].plot(post_monthly.index, p(range(len(post_monthly))), "r--", alpha=0.7, label=f"Trend: {z[0]:+.1f}/month")
-    axes[1].set_title("Post-Rebrand Monthly Trend (Decay Analysis)", fontsize=12)
-    axes[1].set_ylabel("Avg Daily Qty")
-    axes[1].legend()
+    axes[1].bar(post_monthly.index, post_monthly.values, width=20, alpha=0.7, color="darkgreen")
+    axes[1].axhline(y=post.mean(), color="red", linestyle="--", label=f"Overall avg: {post.mean():.0f}")
+    axes[1].set_title("Post-Rebrand Monthly Average", fontsize=12)
+    axes[1].set_ylabel("Avg units/day")
+    axes[1].legend(fontsize=9)
 
     fig.tight_layout()
     fig.savefig(FIGURES_DIR / "11_rebranding_daily.png", dpi=150)
@@ -444,38 +287,21 @@ def plot_daily_with_decay(daily: pd.Series, pre: pd.Series, post: pd.Series):
     print(f"  Saved: 11_rebranding_daily.png")
 
 
-def plot_feature_shift(data: pd.DataFrame):
-    features = ["Lag_1", "Diff_1", "Roll_Mean_7", "EWMA_7", "Seasonal_Strength"]
-    pre = data[data["Date"] < REBRAND_DATE]
-    post = data[data["Date"] >= REBRAND_DATE]
-
-    fig, axes = plt.subplots(1, 5, figsize=(18, 4))
-    for i, feat in enumerate(features):
-        pre_vals = pre[feat].clip(-10, 20)
-        post_vals = post[feat].clip(-10, 20)
-        axes[i].hist(pre_vals, bins=30, alpha=0.5, label="Pre", density=True, color="blue")
-        axes[i].hist(post_vals, bins=30, alpha=0.5, label="Post", density=True, color="red")
-        axes[i].set_title(feat, fontsize=10)
-        axes[i].legend(fontsize=8)
-    fig.suptitle("Feature Distribution Shift (Pre vs Post Rebrand)", fontsize=13, y=1.02)
-    fig.tight_layout()
-    fig.savefig(FIGURES_DIR / "12_rebranding_feature_shift.png", dpi=150, bbox_inches="tight")
-    plt.close(fig)
-    print(f"  Saved: 12_rebranding_feature_shift.png")
-
-
 def plot_dow_shift(df: pd.DataFrame):
     df["DOW"] = df["Date"].dt.dayofweek
     dow_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    pre = df[df["Date"] < REBRAND_DATE].groupby("DOW")["Quantity_Sold"].mean()
-    post = df[df["Date"] >= REBRAND_DATE].groupby("DOW")["Quantity_Sold"].mean()
+    pre = df[df["Date"] < REBRAND_DATE]
+    post = df[df["Date"] >= REBRAND_DATE]
+
+    pre_dow = pre.groupby("DOW")["Quantity_Sold"].mean()
+    post_dow = post.groupby("DOW")["Quantity_Sold"].mean()
 
     fig, ax = plt.subplots(figsize=(10, 5))
     x = np.arange(7)
     width = 0.35
-    ax.bar(x - width/2, [pre.get(i, 0) for i in range(7)], width, label="Pre-Rebrand", alpha=0.8, color="steelblue")
-    ax.bar(x + width/2, [post.get(i, 0) for i in range(7)], width, label="Post-Rebrand", alpha=0.8, color="darkgreen")
+    ax.bar(x - width / 2, [pre_dow.get(i, 0) for i in range(7)], width, label="Pre-Rebrand", alpha=0.8, color="steelblue")
+    ax.bar(x + width / 2, [post_dow.get(i, 0) for i in range(7)], width, label="Post-Rebrand", alpha=0.8, color="darkgreen")
     ax.set_xticks(x)
     ax.set_xticklabels(dow_names)
     ax.set_ylabel("Average Daily Quantity")
@@ -488,17 +314,15 @@ def plot_dow_shift(df: pd.DataFrame):
 
 
 def plot_item_impact(surge: pd.Series, contrib: pd.Series):
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    colors = ["#2ca02c" if v > 1 else "#d62728" for v in surge.values]
-    surge.plot(kind="barh", ax=axes[0], width=0.8, color=colors)
-    axes[0].axvline(x=1.0, color="black", linestyle="--")
-    axes[0].set_title("Surge Ratio per Product (Post/Pre)")
-    axes[0].set_xlabel("Ratio")
+    surge.head(15).plot(kind="barh", ax=axes[0], alpha=0.8, color="darkgreen")
+    axes[0].set_title("Top 15 Items by Lift Factor (Post/Pre)", fontsize=11)
+    axes[0].set_xlabel("Lift Factor")
 
-    contrib.head(10).plot(kind="barh", ax=axes[1], color="green", alpha=0.7)
-    axes[1].set_title("Top 10 Contributors (+unit/day)")
-    axes[1].set_xlabel("unit/day")
+    contrib.head(15).plot(kind="barh", ax=axes[1], alpha=0.8, color="steelblue")
+    axes[1].set_title("Top 15 Items by Absolute Lift (units/day)", fontsize=11)
+    axes[1].set_xlabel("Units/day increase")
 
     fig.tight_layout()
     fig.savefig(FIGURES_DIR / "14_rebranding_item_impact.png", dpi=150)
@@ -507,9 +331,8 @@ def plot_item_impact(surge: pd.Series, contrib: pd.Series):
 
 
 def plot_zero_inflation(df: pd.DataFrame):
-    daily = df.groupby(["Item", "Date"])["Quantity_Sold"].sum().reset_index()
-    pre = daily[daily["Date"] < REBRAND_DATE]["Quantity_Sold"]
-    post = daily[daily["Date"] >= REBRAND_DATE]["Quantity_Sold"]
+    pre = df[df["Date"] < REBRAND_DATE].groupby("Item")["Quantity_Sold"].mean()
+    post = df[df["Date"] >= REBRAND_DATE].groupby("Item")["Quantity_Sold"].mean()
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
@@ -535,11 +358,8 @@ def plot_zero_inflation(df: pd.DataFrame):
     print(f"  Saved: 15_rebranding_zero_inflation.png")
 
 
-# =============================================================================
-# MAIN
-# =============================================================================
 def main():
-    print("REBRANDING EFFECT ANALYSIS (ML Engineer Perspective)")
+    print("REBRANDING EFFECT ANALYSIS — Raw Data Patterns")
     print(SEPARATOR)
 
     df = load_data()
@@ -551,14 +371,10 @@ def main():
     post = daily[daily.index >= REBRAND_DATE]
 
     section_structural_break(daily, pre, post)
-
-    data = build_features(df)
-    section_feature_impact(data)
     section_prediction_decay(df)
     section_dow_shift(df)
     section_zero_inflation(df)
     section_category_heterogeneity(df)
-    section_model_implications(data)
 
     pre_items = set(df[df["Date"] < REBRAND_DATE]["Item"].unique())
     post_items = set(df[df["Date"] >= REBRAND_DATE]["Item"].unique())
@@ -589,7 +405,6 @@ def main():
     print(SEPARATOR)
 
     plot_daily_with_decay(daily, pre, post)
-    plot_feature_shift(data)
     plot_dow_shift(df)
     plot_item_impact(surge, contrib)
     plot_zero_inflation(df)
@@ -600,10 +415,10 @@ def main():
     print("KEY FINDINGS FOR MODELING")
     print(SEPARATOR)
     print("1. Strong structural break detected (Cohen's d > 0.8)")
-    print("2. Feature distributions shifted significantly post-rebranding")
-    print("3. Effect is broad-based (>90% products increased)")
-    print("4. Recommendation: Add 'IsPostRebrand' binary feature or train on post-data only")
-    print("5. Monitor prediction accuracy on post-rebrand period for drift")
+    print("2. Effect is broad-based (>90% products increased)")
+    print("3. Recommendation: train on post-rebrand data only")
+    print("4. Weekend lift > weekday lift — DOW features are critical")
+    print("5. Feature-level analysis: see features/feature_discovery.py")
 
 
 if __name__ == "__main__":
