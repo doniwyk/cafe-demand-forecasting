@@ -23,13 +23,13 @@ sys.path.insert(0, str(BASE_DIR))
 from inference.forecast import (
     load_item_data,
     build_item_features,
-    train_model,
+    train_models,
     compute_dow_stats,
     forecast_item,
     FEATURE_COLS,
-    CAFE_DB_URL,
     QUANTILE,
-    DEFAULT_MODEL_PARAMS,
+    DEFAULT_XGB_PARAMS,
+    FRI_SAT_UPWEIGHT,
 )
 
 TARGET_ITEM = "Kopi Susu Husgendam Ice"
@@ -42,6 +42,7 @@ ALL_CANDIDATE_FEATURES = [
     "Roll_Std_7",
     "EWMA_7", "EWMA_28",
     "Trend_7",
+    "Momentum",
     "DOW", "Is_Weekend",
     "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median",
     "Weekly_Ratio", "Seasonal_Diff",
@@ -76,6 +77,8 @@ def _build_all_candidates(df: pd.DataFrame) -> pd.DataFrame:
 
     dow_stats = compute_dow_stats(df)
     df = df.merge(dow_stats, on="DOW", how="left")
+
+    df["Momentum"] = ((df["Roll_Mean_7"] - df["DOW_Avg"]) / (df["DOW_Avg"] + 1)).fillna(0)
 
     df = df.fillna(0)
     df.replace([np.inf, -np.inf], 0, inplace=True)
@@ -191,8 +194,8 @@ def section_5_importance():
     df_feat = build_item_features(df.copy())
     features = [f for f in FEATURE_COLS if f in df_feat.columns]
 
-    model = train_model(df_feat, features)
-    importance = pd.Series(model.feature_importances_, index=features).sort_values(ascending=False)
+    xgb, _ = train_models(df_feat, features)
+    importance = pd.Series(xgb.feature_importances_, index=features).sort_values(ascending=False)
 
     print(f"\nItem: {TARGET_ITEM}")
     print(f"Model: XGBoost quantile (q={QUANTILE})")
@@ -217,10 +220,10 @@ def section_6_ablation():
     features_full = [f for f in FEATURE_COLS if f in df_feat.columns]
 
     groups = {
-        "Full model (15 features)": features_full,
+        f"Full model ({len(features_full)} features)": features_full,
         "Without DOW stats": [f for f in features_full if f not in ["DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median"]],
         "Without Lag features": [f for f in features_full if not f.startswith("Lag_")],
-        "Without EWMA/Roll/Trend": [f for f in features_full if not f.startswith(("EWMA_", "Roll_", "Trend_"))],
+        "Without EWMA/Roll/Trend/Momentum": [f for f in features_full if not f.startswith(("EWMA_", "Roll_", "Trend_", "Momentum"))],
         "Without DOW/Is_Weekend": [f for f in features_full if f not in ["DOW", "Is_Weekend"]],
     }
 
@@ -230,7 +233,7 @@ def section_6_ablation():
 
     for label, feats in groups.items():
         feats = [f for f in feats if f in df_feat.columns]
-        model = train_model(df_feat, feats)
+        xgb, rf = train_models(df_feat, feats)
         dow_stats = compute_dow_stats(df)
 
         last_date = df["Date"].max()
@@ -240,7 +243,7 @@ def section_6_ablation():
         sat_date = fri_date + pd.Timedelta(days=1)
         n_days = (sat_date - last_date).days + 1
 
-        fc = forecast_item(model, dow_stats, df, feats, n_days=n_days)
+        fc = forecast_item(xgb, rf, dow_stats, df, feats, n_days=n_days)
         fri_p = fc[fc["DOW"] == 4]["Predicted"].values
         sat_p = fc[fc["DOW"] == 5]["Predicted"].values
         fri_val = fri_p[0] if len(fri_p) > 0 else 0
@@ -266,7 +269,7 @@ def section_7_lag1_comparison():
     fri_sat_mask = non_zero["DOW"].isin([4, 5])
     sample_weight[fri_sat_mask] = 3.0
 
-    params = DEFAULT_MODEL_PARAMS.copy()
+    params = DEFAULT_XGB_PARAMS.copy()
 
     model_with = XGBRegressor(
         objective="reg:quantileerror", quantile_alpha=QUANTILE,

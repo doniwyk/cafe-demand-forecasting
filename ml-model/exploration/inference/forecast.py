@@ -48,17 +48,20 @@ FRI_SAT_UPWEIGHT = 3.0
 DEFAULT_XGB_PARAMS = {
     "n_estimators": 200,
     "max_depth": 3,
-    "learning_rate": 0.04,
-    "min_child_weight": 5,
+    "learning_rate": 0.02,
+    "min_child_weight": 1,
     "subsample": 0.8,
-    "colsample_bytree": 1.0,
+    "colsample_bytree": 0.8,
     "reg_alpha": 1.0,
-    "reg_lambda": 2.0,
+    "reg_lambda": 1.0,
 }
 
 DEFAULT_RF_PARAMS = {
-    "n_estimators": 200,
+    "n_estimators": 300,
     "max_depth": 7,
+    "min_samples_split": 10,
+    "min_samples_leaf": 1,
+    "max_features": 1.0,
 }
 
 
@@ -79,7 +82,8 @@ def _load_rf_params() -> dict:
     if not hasattr(_load_rf_params, "_cache"):
         if RF_TUNING_FILE.exists():
             with open(RF_TUNING_FILE) as f:
-                params = json.load(f)
+                data = json.load(f)
+            params = data.get("params", data)
             params["random_state"] = 42
             params["n_jobs"] = -1
             _load_rf_params._cache = params
@@ -119,6 +123,7 @@ FEATURE_COLS = [
     "Lag_7", "Lag_14", "Lag_28",
     "Roll_Mean_7", "Roll_Mean_28",
     "EWMA_7", "EWMA_28", "Trend_7",
+    "Momentum",
     "DOW", "Is_Weekend",
     "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median",
 ]
@@ -218,6 +223,9 @@ def build_item_features(df: pd.DataFrame) -> pd.DataFrame:
     dow_stats = compute_dow_stats(df)
     df = df.merge(dow_stats, on="DOW", how="left")
 
+    df["Momentum"] = ((df["Roll_Mean_7"] - df["DOW_Avg"]) / (df["DOW_Avg"] + 1)).fillna(0)
+    df.replace([np.inf, -np.inf], 0, inplace=True)
+
     df = df.fillna(0)
     df.replace([np.inf, -np.inf], 0, inplace=True)
     return df
@@ -244,6 +252,13 @@ def train_models(df: pd.DataFrame, features: list) -> tuple[XGBRegressor, Random
     rf.fit(non_zero[features], non_zero["Quantity_Sold"], sample_weight=sample_weight)
 
     return xgb, rf
+
+
+def _round_cups(value: float) -> int:
+    fractional = value - int(value)
+    if fractional >= 0.2:
+        return int(np.ceil(value))
+    return int(np.floor(value))
 
 
 def _dow_baseline(dow_stats: pd.DataFrame, dow: int, stat: str = "P75") -> float:
@@ -328,7 +343,9 @@ def forecast_single(item_name: str, df_all: pd.DataFrame | None = None, n_days: 
     dow_stats = compute_dow_stats(df)
     xgb, rf = train_models(df_feat, features)
 
-    return forecast_item(xgb, rf, dow_stats, df, features, n_days)
+    result = forecast_item(xgb, rf, dow_stats, df, features, n_days)
+    result["Predicted"] = result["Predicted"].apply(_round_cups)
+    return result
 
 
 def forecast_all(n_days: int = FORECAST_HORIZON) -> dict[str, pd.DataFrame]:
@@ -374,7 +391,7 @@ def print_forecast_table(results: dict[str, pd.DataFrame], top_n: int = 15):
         print(f"  {'-'*55}")
         for _, r in df.iterrows():
             print(f"  {r['Date'].strftime('%Y-%m-%d'):<12} {r['DOW_Name']:<10} "
-                  f"{r['XGB']:>7.1f} {r['RF']:>7.1f} {r['Baseline']:>9.1f} {r['Predicted']:>10.1f}")
+                  f"{r['XGB']:>7.1f} {r['RF']:>7.1f} {r['Baseline']:>9.1f} {r['Predicted']:>10d}")
 
 
 def save_results(results: dict[str, pd.DataFrame]):

@@ -27,13 +27,11 @@ from forecast import (
     train_models,
     forecast_item,
     FEATURE_COLS,
-    _dow_baseline,
-    WEEKEND_BLEND_MODEL,
-    WEEKDAY_BLEND_MODEL,
     QUANTILE,
     DOW_LOOKBACK_WEEKS,
     MIN_NONZERO_DAYS,
     _should_skip,
+    _load_blend_config,
 )
 
 DOW_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -227,10 +225,12 @@ def print_backtest_report(results: pd.DataFrame):
 
 
 def main():
+    blend_cfg = _load_blend_config()
     print("=" * 80)
     print("BACKTESTING: Blended Forecast Approach")
     print(f"Quantile: {QUANTILE} | DOW lookback: {DOW_LOOKBACK_WEEKS}w")
-    print(f"Blend: Fri/Sat={WEEKEND_BLEND_MODEL:.0%} model, Weekdays={WEEKDAY_BLEND_MODEL:.0%} model")
+    print(f"Blend: Fri/Sat={blend_cfg['weekend_model_w']:.0%} model, Weekdays={blend_cfg['weekday_model_w']:.0%} model")
+    print(f"Baseline: {blend_cfg['weekend_baseline']} | RF weight: {blend_cfg['rf_weight']}")
     print("=" * 80)
 
     results = run_backtest()
