@@ -868,6 +868,9 @@ python exploration/inference/backtest.py
 
 # Step 6: Deploy
 python exploration/inference/forecast.py
+
+# Thesis defense evidence (all metrics + case studies)
+python exploration/evaluation/defense_evidence.py
 ```
 
 Requires: `cafe_db` PostgreSQL running on `localhost:5433` with `cafe_forecasting` database.
