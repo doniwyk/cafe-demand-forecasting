@@ -1,8 +1,12 @@
+"""Local feature engineering + helpers — no dependency on src/."""
+from __future__ import annotations
+
 import pandas as pd
 import numpy as np
 
 
 def create_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Build feature matrix from daily item sales."""
     data = df.copy().sort_values(["Item", "Date"]).reset_index(drop=True)
 
     roll_short, roll_long = 7, 28
@@ -30,7 +34,6 @@ def create_features(df: pd.DataFrame) -> pd.DataFrame:
 
         roll7 = shifted.rolling(roll_short, min_periods=1).mean()
         roll28 = shifted.rolling(roll_long, min_periods=1).mean()
-        roll7_prev = shifted.rolling(roll_short, min_periods=roll_short).mean().shift(roll_short)
 
         data.loc[mask, "Trend_7"] = ((roll7 - roll28) / (roll28 + 1)).values
 
@@ -39,6 +42,37 @@ def create_features(df: pd.DataFrame) -> pd.DataFrame:
 
         data.loc[mask, "Price_Level"] = (shifted / (roll28 + 1)).values
 
+        # Seasonal lags — explicit weekly, monthly, 6-month patterns
+        lag7 = g.shift(7)
+        lag14 = g.shift(14)
+        lag28 = g.shift(28)
+        lag182 = g.shift(182)
+
+        data.loc[mask, "Lag_7"] = lag7.values
+        data.loc[mask, "Lag_14"] = lag14.values
+        data.loc[mask, "Lag_28"] = lag28.values
+        data.loc[mask, "Lag_182"] = lag182.values
+
+        # Seasonal ratios — is this week stronger/weaker than usual?
+        data.loc[mask, "Weekly_Ratio"] = (lag7 / (lag28 + 1)).values
+        data.loc[mask, "Monthly_Ratio"] = (lag28 / (lag182 + 1)).values
+        data.loc[mask, "Seasonal_Diff"] = (lag7 - lag28).values
+
+    data["DOW"] = data["Date"].dt.dayofweek
+    data["Is_Weekend"] = (data["DOW"] >= 5).astype(int)
+
     data = data.fillna(0)
     data.replace([np.inf, -np.inf], 0, inplace=True)
     return data
+
+
+def _split_train_val(df: pd.DataFrame, val_ratio: float = 0.15):
+    """Per-item temporal train/val split."""
+    train_parts: list[pd.DataFrame] = []
+    val_parts: list[pd.DataFrame] = []
+    for item in df["Item"].unique():
+        item_df = df[df["Item"] == item].sort_values("Date")
+        n_val = max(1, int(len(item_df) * val_ratio))
+        train_parts.append(item_df.iloc[: len(item_df) - n_val])
+        val_parts.append(item_df.iloc[len(item_df) - n_val :])
+    return pd.concat(train_parts, ignore_index=True), pd.concat(val_parts, ignore_index=True)

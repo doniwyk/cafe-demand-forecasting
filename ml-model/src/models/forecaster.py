@@ -21,28 +21,28 @@ _EARLY_STOPPING_ROUNDS = 30
 _BLEND_ALPHA = 0.5
 
 _BASE_GLOBAL_PARAMS = {
-    "objective": "count:poisson",
-    "n_estimators": 600,
+    "objective": "reg:pseudohubererror",
+    "n_estimators": 500,
     "learning_rate": 0.03,
-    "max_depth": 5,
+    "max_depth": 7,
     "min_child_weight": 3,
-    "subsample": 0.8,
-    "colsample_bytree": 0.7,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
     "reg_alpha": 0.5,
-    "reg_lambda": 1.0,
+    "reg_lambda": 2.0,
     "random_state": 42,
 }
 
 _BASE_ITEM_PARAMS = {
-    "objective": "count:poisson",
-    "n_estimators": 400,
+    "objective": "reg:pseudohubererror",
+    "n_estimators": 500,
     "learning_rate": 0.03,
-    "max_depth": 4,
+    "max_depth": 7,
     "min_child_weight": 3,
-    "subsample": 0.8,
-    "colsample_bytree": 0.7,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
     "reg_alpha": 0.5,
-    "reg_lambda": 1.0,
+    "reg_lambda": 2.0,
     "random_state": 42,
 }
 
