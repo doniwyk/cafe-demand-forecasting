@@ -230,9 +230,75 @@ def section_4_theoretical_limits(backtest_data):
     print(f"Items with lag-1 R² > 0.1: {(lag1_r2s > 0.1).sum()}/{len(lag1_r2s)}")
 
 
-def section_5_benchmark_comparison():
+def section_5_case_study(df_all):
     print(f"\n{SEP}")
-    print("SECTION 5: BENCHMARK COMPARISON")
+    print("SECTION 5: REAL CASE STUDY — Kopi Susu Husgendam Ice (May 29 – Jun 4)")
+    print(SEP)
+
+    from inference.forecast import forecast_item
+
+    item = "Kopi Susu Husgendam Ice"
+    df_item = df_all[df_all["Item"] == item].copy()
+    train_df = df_item.copy()
+    df_feat = build_item_features(train_df.copy())
+    features = [f for f in FEATURE_COLS if f in df_feat.columns]
+    dow_stats = compute_dow_stats(train_df)
+
+    xgb, rf = train_models(df_feat, features)
+    latest = train_df["Date"].max()
+    n_days = (pd.Timestamp("2026-06-04") - latest).days
+    fc = forecast_item(xgb, rf, dow_stats, train_df, features, n_days=n_days)
+
+    actuals = {
+        pd.Timestamp("2026-05-29"): 12, pd.Timestamp("2026-05-30"): 14,
+        pd.Timestamp("2026-05-31"): 7, pd.Timestamp("2026-06-01"): 6,
+        pd.Timestamp("2026-06-02"): 8, pd.Timestamp("2026-06-03"): 8,
+        pd.Timestamp("2026-06-04"): 13,
+    }
+    dow_names = {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"}
+
+    print(f"\nItem: {item}")
+    print(f"Training data: {len(train_df)} rows, latest date: {latest}")
+    print(f"This week avg: {np.mean(list(actuals.values())):.1f} cups/day (historical avg: 4.64)")
+    print()
+
+    print(f"{'Date':<10s} {'DOW':<5s} {'Pred':>6s} {'Actual':>7s} {'Error':>7s} {'AbsErr':>7s}  Note")
+    print("-" * 60)
+
+    errors = []
+    for _, row in fc.iterrows():
+        d = row["Date"]
+        if d in actuals:
+            actual = actuals[d]
+            pred = row["XGB"]
+            error = pred - actual
+            abs_err = abs(error)
+            errors.append(abs_err)
+            note = ""
+            if abs_err > 4:
+                note = "<-- SPIKE (model can't predict)"
+            elif abs_err < 1.5:
+                note = "<-- normal day (good prediction)"
+            print(f"{d.strftime('%Y-%m-%d'):<10s} {dow_names[d.dayofweek]:<5s} {pred:>6.2f} {actual:>7d} {error:>+7.2f} {abs_err:>7.2f}  {note}")
+
+    mae = np.mean(errors)
+    print(f"\nMAE: {mae:.2f} cups")
+    print(f"Sun-Wed MAE: {np.mean(errors[2:5]):.2f} (normal days — model works)")
+    print(f"Fri+Sat MAE: {np.mean(errors[:2]):.2f} (spike days — model underpredicts)")
+    print(f"Thu MAE: {errors[6]:.2f} (unpredicted spike)")
+
+    print(f"\nWhy R² is low — the squared error problem:")
+    print(f"  Normal days (Sun-Wed): squared errors = {[f'{e**2:.1f}' for e in errors[2:5]]}")
+    print(f"  Spike days (Fri+Sat):  squared errors = {[f'{e**2:.1f}' for e in errors[:2]]}")
+    print(f"  Thu spike:              squared error  = {errors[6]**2:.1f}")
+    print(f"  Total SS_res from this week alone: {sum(e**2 for e in errors):.1f}")
+    print(f"  A single spike day (Thu, error=6.3) contributes {errors[6]**2:.1f} to SS_res —")
+    print(f"  that's more than ALL normal days combined ({sum(e**2 for e in errors[2:5]):.1f}).")
+
+
+def section_6_benchmark_comparison():
+    print(f"\n{SEP}")
+    print("SECTION 6: BENCHMARK COMPARISON")
     print(SEP)
 
     print("\nSchmidt et al. (2022) restaurant:")
@@ -248,9 +314,9 @@ def section_5_benchmark_comparison():
     print("        and higher daily volume (more signal per item)")
 
 
-def section_6_target_summary():
+def section_7_target_summary():
     print(f"\n{SEP}")
-    print("SECTION 6: THESIS TARGET SUMMARY")
+    print("SECTION 7: THESIS TARGET SUMMARY")
     print(SEP)
 
     print(f"\n{'Target':<25s} {'Met?':>5s}  Root Cause")
@@ -337,8 +403,9 @@ def main():
     section_2_volume_classes(df_all, backtest_data)
     section_3_backtest_results(backtest_data)
     section_4_theoretical_limits(backtest_data)
-    section_5_benchmark_comparison()
-    section_6_target_summary()
+    section_5_case_study(df_all)
+    section_6_benchmark_comparison()
+    section_7_target_summary()
 
     print(f"\n{SEP}")
     print("DONE")

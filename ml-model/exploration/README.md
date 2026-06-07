@@ -731,6 +731,26 @@ Cafe items are discretionary — customers can skip a drink, order something els
 
 Our model (MAE=1.403) beats the naive forecast of "predict last week's same DOW" (MAE=1.795). This confirms the model adds value over a trivial baseline, but R² is low because the signal-to-noise ratio is low.
 
+**Evidence — real case study: Kopi Susu Husgendam Ice (May 29 – Jun 4, 2026):**
+
+The most recent week of actual data provides concrete proof of why R² is low:
+
+| Date | DOW | Predicted | Actual | Error | What happened |
+|------|-----|-----------|--------|-------|---------------|
+| 05-29 | Fri | 7.8 | 12 | -4.2 | Model predicted normal Fri. Actual was 2x higher. |
+| 05-30 | Sat | 9.4 | 14 | -4.6 | Model predicted normal Sat. Actual spiked to 14. |
+| 05-31 | Sun | 8.2 | 7 | +1.2 | Close match — normal day. |
+| 06-01 | Mon | 7.0 | 6 | +1.0 | Close match — normal day. |
+| 06-02 | Tue | 8.8 | 8 | +0.8 | Close match — normal day. |
+| 06-03 | Wed | 6.7 | 8 | -1.3 | Slightly low — normal range. |
+| 06-04 | Thu | 6.7 | 13 | -6.3 | Model predicted normal Thu. Actual was 2x higher. |
+
+**MAE: 2.77 cups** on a week averaging 9.7 cups/day. Sun–Wed errors are ±1.3 (good). But Fri, Sat, and Thu are off by 4–6 cups because the model can't predict random spikes.
+
+This is the **core R² problem**: the model predicts the expected range (7–9 cups), which is correct for normal days. But when actuals spike to 12–14, the squared error explodes. R² = 1 - SS_res/SS_tot penalizes these large errors heavily, even though the model's day-to-day predictions are reasonable.
+
+**Why the model can't predict spikes**: The features (EWMA, DOW stats, lag values) capture **historical averages**. A spike to 14 cups on Sat (when the model expects 8) is caused by events the data doesn't contain — weather, promotions, walk-in groups, word-of-mouth. No amount of feature engineering on lag values can predict these.
+
 ### Why MAE = 1.40 (target: ≤ 1.0)
 
 **Evidence — MAE is bounded by data granularity:**
