@@ -421,17 +421,42 @@ Items classified by cumulative volume: A (top 70%), B (70–90%), C (bottom 10%)
 
 ### Why is wMAPE so high (47–55%)?
 
-wMAPE = `sum(|actual - predicted|) / sum(actual) × 100%`. Several structural factors inflate it:
+wMAPE = `sum(|pred - actual|) / sum(actual)`. It's high because **the cafe sells small quantities per item per day**.
 
-1. **Small denominators.** Many items sell 0–3 cups/day. A prediction of 5 when actual is 2 gives |error|=3 and error/denominator = 3/2 = 150% for that row. One bad prediction on a low-volume item skews wMAPE heavily. Example: actual=1, pred=3 → 200% error, but only 2 cups off.
+**Actual data distribution (35,392 item-day rows):**
 
-2. **40% zero-quantity days.** When actual=0 and the model predicts 2, that's infinite percentage error (clamped to 100%). With 40% of rows being zero, this creates a large wMAPE floor that no model can overcome.
+| Daily qty | % of rows | Cumulative |
+|-----------|-----------|------------|
+| 1 cup | 49.9% | 49.9% |
+| 2 cups | 24.1% | 74.0% |
+| 3 cups | 11.9% | 85.9% |
+| 4 cups | 6.2% | 92.1% |
+| 5 cups | 3.3% | 95.4% |
+| 6+ cups | 4.6% | 100% |
 
-3. **Intermittent demand pattern.** Cafe items don't sell every day. An item that sells 5 cups on Monday and 0 on Tuesday has inherently unpredictable demand. The "correct" prediction for Tuesday is somewhere between 0 and 5, and any value will have high relative error.
+- **Average: 2.11 cups/day.** Median: 2 cups/day.
+- **86% of all rows sell 1–3 cups.** Only 4.6% of rows sell 6+ cups.
 
-4. **Per-item model (no pooling).** Each item gets its own model trained on ~1200 rows. Some items have very volatile patterns that can't be learned from this sample size.
+**The math:** wMAPE = avg absolute error / avg actual = MAE / 2.11.
 
-This is why MAE (1.08–1.28 cups) is the more meaningful metric — it measures absolute error in cups, not percentage. Being off by 1.3 cups on average is quite good for daily cafe forecasting. The wMAPE is structurally inflated by the long tail of low-volume, zero-heavy items.
+| MAE | wMAPE |
+|-----|-------|
+| 1.0 cup | 47% |
+| 1.28 cups (our XGB) | **61%** |
+
+For comparison, if the same MAE=1.28 were on a restaurant averaging 10 cups/day: wMAPE = 12.8%. Same absolute error, 5x lower wMAPE.
+
+**Concrete example — same 1 cup error, very different wMAPE:**
+
+| Actual | Predicted | Error (cups) | wMAPE |
+|--------|-----------|--------------|-------|
+| 1 | 2 | 1 | **100%** |
+| 2 | 3 | 1 | **50%** |
+| 30 | 31 | 1 | **3%** |
+
+50% of all rows sell exactly 1 cup. If the model predicts 2, that's 100% wMAPE for being just 1 cup off. This is a structural property of the data, not a model flaw.
+
+**MAE is the honest metric** for this problem — 1.3 cups average error on items selling ~2 cups/day. wMAPE is inflated by small denominators that no model can overcome.
 
 ### The paradox: RF wins averages, XGBoost wins consistency
 
