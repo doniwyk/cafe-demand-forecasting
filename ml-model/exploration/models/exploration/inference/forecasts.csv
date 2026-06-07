@@ -1,0 +1,407 @@
+Item,Date,DOW,DOW_Name,Model,Baseline,Predicted
+Air Mineral,2026-05-29,4,Friday,3.23,4.0,3.77
+Air Mineral,2026-05-30,5,Saturday,3.62,6.0,5.29
+Air Mineral,2026-05-31,6,Sunday,4.48,4.0,4.19
+Air Mineral,2026-06-01,0,Monday,3.46,4.0,3.79
+Air Mineral,2026-06-02,1,Tuesday,3.66,3.5,3.56
+Air Mineral,2026-06-03,2,Wednesday,3.6,3.0,3.24
+Air Mineral,2026-06-04,3,Thursday,2.53,3.0,2.81
+Anindita Honey Butter,2026-05-27,2,Wednesday,1.1,1.0,1.04
+Anindita Honey Butter,2026-05-28,3,Thursday,1.38,1.0,1.15
+Anindita Honey Butter,2026-05-29,4,Friday,1.47,1.5,1.49
+Anindita Honey Butter,2026-05-30,5,Saturday,2.18,3.0,2.75
+Anindita Honey Butter,2026-05-31,6,Sunday,1.02,1.0,1.01
+Anindita Honey Butter,2026-06-01,0,Monday,1.55,1.5,1.52
+Anindita Honey Butter,2026-06-02,1,Tuesday,1.18,1.0,1.07
+Arunika,2026-05-29,4,Friday,5.07,4.0,4.32
+Arunika,2026-05-30,5,Saturday,2.66,3.5,3.25
+Arunika,2026-05-31,6,Sunday,2.98,2.0,2.39
+Arunika,2026-06-01,0,Monday,2.92,2.0,2.37
+Arunika,2026-06-02,1,Tuesday,3.92,2.0,2.77
+Arunika,2026-06-03,2,Wednesday,5.15,2.0,3.26
+Arunika,2026-06-04,3,Thursday,4.22,3.0,3.49
+Basreng,2026-05-29,4,Friday,3.36,4.0,3.81
+Basreng,2026-05-30,5,Saturday,3.56,4.0,3.87
+Basreng,2026-05-31,6,Sunday,3.94,2.0,2.77
+Basreng,2026-06-01,0,Monday,1.88,2.0,1.95
+Basreng,2026-06-02,1,Tuesday,3.51,3.0,3.21
+Basreng,2026-06-03,2,Wednesday,2.76,3.0,2.9
+Basreng,2026-06-04,3,Thursday,2.65,2.5,2.56
+Black Hot,2026-05-27,2,Wednesday,1.36,2.0,1.74
+Black Hot,2026-05-28,3,Thursday,1.64,2.0,1.86
+Black Hot,2026-05-29,4,Friday,2.03,2.0,2.01
+Black Hot,2026-05-30,5,Saturday,1.57,3.0,2.57
+Black Hot,2026-05-31,6,Sunday,2.44,2.0,2.18
+Black Hot,2026-06-01,0,Monday,2.61,1.0,1.64
+Black Hot,2026-06-02,1,Tuesday,2.04,2.0,2.02
+Black Ice,2026-05-29,4,Friday,5.49,8.75,7.77
+Black Ice,2026-05-30,5,Saturday,6.64,5.0,5.49
+Black Ice,2026-05-31,6,Sunday,6.19,5.5,5.78
+Black Ice,2026-06-01,0,Monday,3.86,5.0,4.54
+Black Ice,2026-06-02,1,Tuesday,5.92,4.5,5.07
+Black Ice,2026-06-03,2,Wednesday,6.85,4.0,5.14
+Black Ice,2026-06-04,3,Thursday,5.09,3.5,4.14
+Candana Vanilla,2026-05-29,4,Friday,1.87,1.0,1.26
+Candana Vanilla,2026-05-30,5,Saturday,2.06,2.0,2.02
+Candana Vanilla,2026-05-31,6,Sunday,1.64,2.0,1.86
+Candana Vanilla,2026-06-01,0,Monday,2.43,2.0,2.17
+Candana Vanilla,2026-06-02,1,Tuesday,1.67,1.0,1.27
+Candana Vanilla,2026-06-03,2,Wednesday,2.07,1.0,1.43
+Candana Vanilla,2026-06-04,3,Thursday,1.19,1.0,1.07
+Cappucino Hot,2026-05-29,4,Friday,1.78,3.5,2.99
+Cappucino Hot,2026-05-30,5,Saturday,2.81,2.0,2.24
+Cappucino Hot,2026-05-31,6,Sunday,1.8,2.0,1.92
+Cappucino Hot,2026-06-01,0,Monday,1.81,2.0,1.92
+Cappucino Hot,2026-06-02,1,Tuesday,1.59,2.0,1.84
+Cappucino Hot,2026-06-03,2,Wednesday,2.05,2.0,2.02
+Cappucino Hot,2026-06-04,3,Thursday,1.82,1.0,1.33
+Cappucino Ice,2026-05-29,4,Friday,1.31,3.0,2.49
+Cappucino Ice,2026-05-30,5,Saturday,2.49,2.5,2.5
+Cappucino Ice,2026-05-31,6,Sunday,2.2,1.0,1.48
+Cappucino Ice,2026-06-01,0,Monday,1.08,1.0,1.03
+Cappucino Ice,2026-06-02,1,Tuesday,2.0,1.0,1.4
+Cappucino Ice,2026-06-03,2,Wednesday,2.03,1.0,1.41
+Cappucino Ice,2026-06-04,3,Thursday,1.81,2.0,1.92
+Chocolate Hot,2026-05-28,3,Thursday,1.71,1.0,1.28
+Chocolate Hot,2026-05-29,4,Friday,1.91,2.0,1.97
+Chocolate Hot,2026-05-30,5,Saturday,2.35,2.0,2.1
+Chocolate Hot,2026-05-31,6,Sunday,1.6,1.5,1.54
+Chocolate Hot,2026-06-01,0,Monday,2.08,1.0,1.43
+Chocolate Hot,2026-06-02,1,Tuesday,1.81,1.0,1.33
+Chocolate Hot,2026-06-03,2,Wednesday,1.58,1.5,1.53
+Chocolate Ice,2026-05-28,3,Thursday,4.41,3.0,3.57
+Chocolate Ice,2026-05-29,4,Friday,3.2,4.0,3.76
+Chocolate Ice,2026-05-30,5,Saturday,1.11,2.0,1.73
+Chocolate Ice,2026-05-31,6,Sunday,4.89,3.0,3.76
+Chocolate Ice,2026-06-01,0,Monday,3.2,3.0,3.08
+Chocolate Ice,2026-06-02,1,Tuesday,2.1,2.0,2.04
+Chocolate Ice,2026-06-03,2,Wednesday,3.13,2.0,2.45
+Cireng,2026-05-29,4,Friday,3.32,3.0,3.1
+Cireng,2026-05-30,5,Saturday,3.3,3.0,3.09
+Cireng,2026-05-31,6,Sunday,3.11,2.5,2.75
+Cireng,2026-06-01,0,Monday,1.87,2.0,1.95
+Cireng,2026-06-02,1,Tuesday,2.17,1.0,1.47
+Cireng,2026-06-03,2,Wednesday,2.9,2.0,2.36
+Cireng,2026-06-04,3,Thursday,2.85,2.0,2.34
+Cookies Original,2026-05-29,4,Friday,1.27,2.75,2.31
+Cookies Original,2026-05-30,5,Saturday,0.87,1.0,0.96
+Cookies Original,2026-05-31,6,Sunday,2.01,2.0,2.01
+Cookies Original,2026-06-01,0,Monday,1.93,1.0,1.37
+Cookies Original,2026-06-02,1,Tuesday,2.7,2.0,2.28
+Cookies Original,2026-06-03,2,Wednesday,2.24,1.0,1.49
+Cookies Original,2026-06-04,3,Thursday,1.66,2.0,1.87
+Donat,2026-05-24,6,Sunday,2.32,2.0,2.13
+Donat,2026-05-25,0,Monday,2.86,1.0,1.74
+Donat,2026-05-26,1,Tuesday,1.78,2.0,1.91
+Donat,2026-05-27,2,Wednesday,2.89,1.5,2.06
+Donat,2026-05-28,3,Thursday,2.02,1.5,1.71
+Donat,2026-05-29,4,Friday,2.53,2.5,2.51
+Donat,2026-05-30,5,Saturday,2.2,2.0,2.06
+Espresso,2026-05-28,3,Thursday,2.33,1.0,1.53
+Espresso,2026-05-29,4,Friday,1.36,1.5,1.46
+Espresso,2026-05-30,5,Saturday,1.48,2.0,1.84
+Espresso,2026-05-31,6,Sunday,2.1,1.0,1.44
+Espresso,2026-06-01,0,Monday,2.05,1.5,1.72
+Espresso,2026-06-02,1,Tuesday,2.31,1.0,1.53
+Espresso,2026-06-03,2,Wednesday,2.13,1.0,1.45
+Husgendam Platter,2026-05-29,4,Friday,3.74,4.0,3.92
+Husgendam Platter,2026-05-30,5,Saturday,3.02,5.0,4.41
+Husgendam Platter,2026-05-31,6,Sunday,3.28,3.0,3.11
+Husgendam Platter,2026-06-01,0,Monday,3.33,3.5,3.43
+Husgendam Platter,2026-06-02,1,Tuesday,4.7,3.0,3.68
+Husgendam Platter,2026-06-03,2,Wednesday,3.51,2.5,2.9
+Husgendam Platter,2026-06-04,3,Thursday,3.96,3.0,3.39
+Kasmaran,2026-05-29,4,Friday,2.54,3.0,2.86
+Kasmaran,2026-05-30,5,Saturday,3.23,2.0,2.37
+Kasmaran,2026-05-31,6,Sunday,3.36,1.0,1.94
+Kasmaran,2026-06-01,0,Monday,2.73,2.0,2.29
+Kasmaran,2026-06-02,1,Tuesday,2.45,2.0,2.18
+Kasmaran,2026-06-03,2,Wednesday,2.69,2.0,2.27
+Kasmaran,2026-06-04,3,Thursday,1.75,1.0,1.3
+Kenang,2026-05-28,3,Thursday,2.39,2.0,2.16
+Kenang,2026-05-29,4,Friday,1.76,2.0,1.93
+Kenang,2026-05-30,5,Saturday,2.31,3.5,3.14
+Kenang,2026-05-31,6,Sunday,2.9,1.0,1.76
+Kenang,2026-06-01,0,Monday,1.98,1.5,1.69
+Kenang,2026-06-02,1,Tuesday,2.88,2.0,2.35
+Kenang,2026-06-03,2,Wednesday,2.92,2.0,2.37
+Kentang,2026-05-29,4,Friday,1.68,3.75,3.13
+Kentang,2026-05-30,5,Saturday,1.27,4.0,3.18
+Kentang,2026-05-31,6,Sunday,3.66,4.0,3.86
+Kentang,2026-06-01,0,Monday,3.58,2.0,2.63
+Kentang,2026-06-02,1,Tuesday,2.13,2.0,2.05
+Kentang,2026-06-03,2,Wednesday,1.97,2.5,2.29
+Kentang,2026-06-04,3,Thursday,2.54,3.5,3.12
+Kinasih,2026-05-29,4,Friday,4.82,5.0,4.95
+Kinasih,2026-05-30,5,Saturday,6.73,7.0,6.92
+Kinasih,2026-05-31,6,Sunday,5.8,2.0,3.52
+Kinasih,2026-06-01,0,Monday,5.22,4.0,4.49
+Kinasih,2026-06-02,1,Tuesday,4.49,2.5,3.3
+Kinasih,2026-06-03,2,Wednesday,5.76,4.0,4.7
+Kinasih,2026-06-04,3,Thursday,6.08,3.0,4.23
+Kirana,2026-05-29,4,Friday,5.27,4.75,4.91
+Kirana,2026-05-30,5,Saturday,2.88,3.0,2.97
+Kirana,2026-05-31,6,Sunday,1.91,2.0,1.96
+Kirana,2026-06-01,0,Monday,2.57,2.0,2.23
+Kirana,2026-06-02,1,Tuesday,3.36,2.0,2.54
+Kirana,2026-06-03,2,Wednesday,4.89,3.5,4.06
+Kirana,2026-06-04,3,Thursday,2.38,1.0,1.55
+Kirana Strawberry,2026-05-29,4,Friday,1.36,1.75,1.63
+Kirana Strawberry,2026-05-30,5,Saturday,2.01,2.25,2.18
+Kirana Strawberry,2026-05-31,6,Sunday,1.54,1.0,1.22
+Kirana Strawberry,2026-06-01,0,Monday,1.16,1.0,1.06
+Kirana Strawberry,2026-06-02,1,Tuesday,1.13,1.0,1.05
+Kirana Strawberry,2026-06-03,2,Wednesday,1.01,1.0,1.0
+Kirana Strawberry,2026-06-04,3,Thursday,1.34,1.0,1.14
+Kopi Susu Husgendam Hot,2026-05-28,3,Thursday,2.02,1.0,1.41
+Kopi Susu Husgendam Hot,2026-05-29,4,Friday,1.24,4.5,3.52
+Kopi Susu Husgendam Hot,2026-05-30,5,Saturday,2.39,3.0,2.82
+Kopi Susu Husgendam Hot,2026-05-31,6,Sunday,2.04,2.0,2.01
+Kopi Susu Husgendam Hot,2026-06-01,0,Monday,2.78,3.0,2.91
+Kopi Susu Husgendam Hot,2026-06-02,1,Tuesday,2.42,6.0,4.57
+Kopi Susu Husgendam Hot,2026-06-03,2,Wednesday,3.1,2.0,2.44
+Kopi Susu Husgendam Ice,2026-05-29,4,Friday,6.06,10.5,9.17
+Kopi Susu Husgendam Ice,2026-05-30,5,Saturday,7.69,10.5,9.66
+Kopi Susu Husgendam Ice,2026-05-31,6,Sunday,10.76,7.0,8.5
+Kopi Susu Husgendam Ice,2026-06-01,0,Monday,8.87,5.5,6.85
+Kopi Susu Husgendam Ice,2026-06-02,1,Tuesday,9.18,7.5,8.17
+Kopi Susu Husgendam Ice,2026-06-03,2,Wednesday,7.85,5.5,6.44
+Kopi Susu Husgendam Ice,2026-06-04,3,Thursday,6.42,5.0,5.57
+Latte Hot,2026-05-29,4,Friday,0.97,1.25,1.17
+Latte Hot,2026-05-30,5,Saturday,1.34,1.0,1.1
+Latte Hot,2026-05-31,6,Sunday,1.29,1.0,1.12
+Latte Hot,2026-06-01,0,Monday,1.53,1.0,1.21
+Latte Hot,2026-06-02,1,Tuesday,0.9,1.0,0.96
+Latte Hot,2026-06-03,2,Wednesday,1.84,3.0,2.54
+Latte Hot,2026-06-04,3,Thursday,1.09,1.0,1.04
+Latte Ice,2026-05-29,4,Friday,1.39,2.0,1.82
+Latte Ice,2026-05-30,5,Saturday,1.34,1.25,1.28
+Latte Ice,2026-05-31,6,Sunday,1.79,1.0,1.32
+Latte Ice,2026-06-01,0,Monday,1.85,1.0,1.34
+Latte Ice,2026-06-02,1,Tuesday,1.75,2.0,1.9
+Latte Ice,2026-06-03,2,Wednesday,1.88,1.0,1.35
+Latte Ice,2026-06-04,3,Thursday,1.74,2.0,1.9
+Lemon Tea Hot,2026-05-29,4,Friday,1.8,2.0,1.94
+Lemon Tea Hot,2026-05-30,5,Saturday,1.57,3.0,2.57
+Lemon Tea Hot,2026-05-31,6,Sunday,1.33,1.5,1.43
+Lemon Tea Hot,2026-06-01,0,Monday,1.98,2.5,2.29
+Lemon Tea Hot,2026-06-02,1,Tuesday,2.51,1.0,1.6
+Lemon Tea Hot,2026-06-03,2,Wednesday,2.03,1.5,1.71
+Lemon Tea Hot,2026-06-04,3,Thursday,1.75,3.0,2.5
+Lemon Tea Ice,2026-05-29,4,Friday,3.02,4.0,3.71
+Lemon Tea Ice,2026-05-30,5,Saturday,3.18,2.75,2.88
+Lemon Tea Ice,2026-05-31,6,Sunday,2.3,4.0,3.32
+Lemon Tea Ice,2026-06-01,0,Monday,2.16,4.0,3.26
+Lemon Tea Ice,2026-06-02,1,Tuesday,2.94,2.0,2.37
+Lemon Tea Ice,2026-06-03,2,Wednesday,1.75,2.0,1.9
+Lemon Tea Ice,2026-06-04,3,Thursday,2.53,2.0,2.21
+Lychee Tea Hot,2026-05-28,3,Thursday,1.92,1.5,1.67
+Lychee Tea Hot,2026-05-29,4,Friday,1.7,2.0,1.91
+Lychee Tea Hot,2026-05-30,5,Saturday,1.65,3.0,2.6
+Lychee Tea Hot,2026-05-31,6,Sunday,1.57,1.0,1.23
+Lychee Tea Hot,2026-06-01,0,Monday,1.37,1.5,1.45
+Lychee Tea Hot,2026-06-02,1,Tuesday,1.41,2.0,1.77
+Lychee Tea Hot,2026-06-03,2,Wednesday,2.13,1.5,1.75
+Lychee Tea Ice,2026-05-29,4,Friday,4.26,5.0,4.78
+Lychee Tea Ice,2026-05-30,5,Saturday,4.63,7.0,6.29
+Lychee Tea Ice,2026-05-31,6,Sunday,5.01,4.0,4.4
+Lychee Tea Ice,2026-06-01,0,Monday,7.0,4.0,5.2
+Lychee Tea Ice,2026-06-02,1,Tuesday,4.14,3.0,3.46
+Lychee Tea Ice,2026-06-03,2,Wednesday,4.2,5.0,4.68
+Lychee Tea Ice,2026-06-04,3,Thursday,6.76,3.5,4.8
+Magic,2026-05-29,4,Friday,1.0,1.0,1.0
+Magic,2026-05-30,5,Saturday,1.62,1.0,1.18
+Magic,2026-05-31,6,Sunday,2.49,2.0,2.2
+Magic,2026-06-01,0,Monday,1.52,1.0,1.21
+Magic,2026-06-02,1,Tuesday,1.9,3.0,2.56
+Magic,2026-06-03,2,Wednesday,1.59,1.0,1.23
+Magic,2026-06-04,3,Thursday,1.96,1.0,1.38
+Matcha Hot,2026-05-27,2,Wednesday,1.48,1.0,1.19
+Matcha Hot,2026-05-28,3,Thursday,1.32,1.0,1.13
+Matcha Hot,2026-05-29,4,Friday,1.03,1.0,1.01
+Matcha Hot,2026-05-30,5,Saturday,1.02,1.0,1.01
+Matcha Hot,2026-05-31,6,Sunday,1.29,1.5,1.41
+Matcha Hot,2026-06-01,0,Monday,1.39,2.0,1.76
+Matcha Hot,2026-06-02,1,Tuesday,1.19,1.0,1.08
+Matcha Ice,2026-05-29,4,Friday,2.54,4.0,3.56
+Matcha Ice,2026-05-30,5,Saturday,3.43,3.5,3.48
+Matcha Ice,2026-05-31,6,Sunday,3.3,3.5,3.42
+Matcha Ice,2026-06-01,0,Monday,3.95,3.5,3.68
+Matcha Ice,2026-06-02,1,Tuesday,3.82,3.0,3.33
+Matcha Ice,2026-06-03,2,Wednesday,4.73,3.0,3.69
+Matcha Ice,2026-06-04,3,Thursday,3.88,3.0,3.35
+Mewangi Milk Tea Hot,2026-05-28,3,Thursday,2.56,1.5,1.92
+Mewangi Milk Tea Hot,2026-05-29,4,Friday,2.03,1.0,1.31
+Mewangi Milk Tea Hot,2026-05-30,5,Saturday,1.73,1.0,1.22
+Mewangi Milk Tea Hot,2026-05-31,6,Sunday,1.69,1.5,1.58
+Mewangi Milk Tea Hot,2026-06-01,0,Monday,1.77,1.0,1.31
+Mewangi Milk Tea Hot,2026-06-02,1,Tuesday,1.56,1.0,1.22
+Mewangi Milk Tea Hot,2026-06-03,2,Wednesday,1.35,1.0,1.14
+Mewangi Milk Tea Ice,2026-05-28,3,Thursday,3.21,3.0,3.08
+Mewangi Milk Tea Ice,2026-05-29,4,Friday,3.01,4.0,3.7
+Mewangi Milk Tea Ice,2026-05-30,5,Saturday,2.28,3.0,2.78
+Mewangi Milk Tea Ice,2026-05-31,6,Sunday,1.69,2.0,1.88
+Mewangi Milk Tea Ice,2026-06-01,0,Monday,2.42,2.0,2.17
+Mewangi Milk Tea Ice,2026-06-02,1,Tuesday,2.69,2.0,2.27
+Mewangi Milk Tea Ice,2026-06-03,2,Wednesday,4.16,3.0,3.46
+Mie Goreng,2026-05-29,4,Friday,1.78,2.75,2.46
+Mie Goreng,2026-05-30,5,Saturday,3.19,5.0,4.46
+Mie Goreng,2026-05-31,6,Sunday,1.94,2.0,1.98
+Mie Goreng,2026-06-01,0,Monday,3.26,1.0,1.9
+Mie Goreng,2026-06-02,1,Tuesday,2.4,2.0,2.16
+Mie Goreng,2026-06-03,2,Wednesday,2.75,2.0,2.3
+Mie Goreng,2026-06-04,3,Thursday,2.15,1.0,1.46
+Mie Rebus,2026-05-28,3,Thursday,3.32,1.0,1.93
+Mie Rebus,2026-05-29,4,Friday,1.82,2.0,1.95
+Mie Rebus,2026-05-30,5,Saturday,2.75,2.5,2.58
+Mie Rebus,2026-05-31,6,Sunday,2.47,1.0,1.59
+Mie Rebus,2026-06-01,0,Monday,1.6,1.0,1.24
+Mie Rebus,2026-06-02,1,Tuesday,2.65,2.0,2.26
+Mie Rebus,2026-06-03,2,Wednesday,1.83,2.0,1.93
+Nasi Ayam Chili Padi,2026-05-29,4,Friday,1.52,2.0,1.86
+Nasi Ayam Chili Padi,2026-05-30,5,Saturday,2.14,4.0,3.44
+Nasi Ayam Chili Padi,2026-05-31,6,Sunday,2.87,2.5,2.65
+Nasi Ayam Chili Padi,2026-06-01,0,Monday,2.29,2.0,2.12
+Nasi Ayam Chili Padi,2026-06-02,1,Tuesday,1.96,2.0,1.98
+Nasi Ayam Chili Padi,2026-06-03,2,Wednesday,1.95,2.0,1.98
+Nasi Ayam Chili Padi,2026-06-04,3,Thursday,2.26,1.0,1.51
+Nasi Ayam Curry,2026-05-28,3,Thursday,2.46,2.0,2.18
+Nasi Ayam Curry,2026-05-29,4,Friday,1.29,3.0,2.49
+Nasi Ayam Curry,2026-05-30,5,Saturday,2.19,2.0,2.06
+Nasi Ayam Curry,2026-05-31,6,Sunday,2.75,2.0,2.3
+Nasi Ayam Curry,2026-06-01,0,Monday,2.62,2.0,2.25
+Nasi Ayam Curry,2026-06-02,1,Tuesday,1.29,2.0,1.71
+Nasi Ayam Curry,2026-06-03,2,Wednesday,1.39,1.0,1.16
+Nasi Ayam Daun Jeruk,2026-05-29,4,Friday,2.12,3.5,3.08
+Nasi Ayam Daun Jeruk,2026-05-30,5,Saturday,3.96,6.0,5.39
+Nasi Ayam Daun Jeruk,2026-05-31,6,Sunday,2.73,3.0,2.89
+Nasi Ayam Daun Jeruk,2026-06-01,0,Monday,3.29,3.0,3.12
+Nasi Ayam Daun Jeruk,2026-06-02,1,Tuesday,3.84,5.0,4.54
+Nasi Ayam Daun Jeruk,2026-06-03,2,Wednesday,2.5,2.0,2.2
+Nasi Ayam Daun Jeruk,2026-06-04,3,Thursday,4.9,2.0,3.16
+Nasi Ayam Mentega,2026-05-29,4,Friday,1.15,3.0,2.45
+Nasi Ayam Mentega,2026-05-30,5,Saturday,2.22,3.0,2.77
+Nasi Ayam Mentega,2026-05-31,6,Sunday,2.69,2.0,2.28
+Nasi Ayam Mentega,2026-06-01,0,Monday,3.15,1.0,1.86
+Nasi Ayam Mentega,2026-06-02,1,Tuesday,2.59,1.5,1.94
+Nasi Ayam Mentega,2026-06-03,2,Wednesday,2.58,1.0,1.63
+Nasi Ayam Mentega,2026-06-04,3,Thursday,2.56,2.0,2.22
+Nasi Gila,2026-05-29,4,Friday,2.7,4.5,3.96
+Nasi Gila,2026-05-30,5,Saturday,3.28,4.0,3.78
+Nasi Gila,2026-05-31,6,Sunday,1.34,1.0,1.14
+Nasi Gila,2026-06-01,0,Monday,3.81,2.0,2.72
+Nasi Gila,2026-06-02,1,Tuesday,2.23,1.5,1.79
+Nasi Gila,2026-06-03,2,Wednesday,4.2,4.0,4.08
+Nasi Gila,2026-06-04,3,Thursday,3.33,2.0,2.53
+Nasi Goreng Jawa,2026-05-29,4,Friday,4.93,5.5,5.33
+Nasi Goreng Jawa,2026-05-30,5,Saturday,5.28,7.0,6.48
+Nasi Goreng Jawa,2026-05-31,6,Sunday,6.78,3.0,4.51
+Nasi Goreng Jawa,2026-06-01,0,Monday,4.71,3.0,3.69
+Nasi Goreng Jawa,2026-06-02,1,Tuesday,7.16,4.0,5.26
+Nasi Goreng Jawa,2026-06-03,2,Wednesday,8.42,3.5,5.47
+Nasi Goreng Jawa,2026-06-04,3,Thursday,5.41,3.0,3.96
+Nasi Goreng Kunyit,2026-05-25,0,Monday,1.58,1.5,1.53
+Nasi Goreng Kunyit,2026-05-26,1,Tuesday,1.34,1.0,1.13
+Nasi Goreng Kunyit,2026-05-27,2,Wednesday,1.25,1.0,1.1
+Nasi Goreng Kunyit,2026-05-28,3,Thursday,1.32,1.0,1.13
+Nasi Goreng Kunyit,2026-05-29,4,Friday,0.95,1.0,0.98
+Nasi Goreng Kunyit,2026-05-30,5,Saturday,0.98,1.25,1.17
+Nasi Goreng Kunyit,2026-05-31,6,Sunday,0.88,1.0,0.95
+New York Cheesecake,2026-05-29,4,Friday,1.25,5.5,4.23
+New York Cheesecake,2026-05-30,5,Saturday,2.34,3.25,2.98
+New York Cheesecake,2026-05-31,6,Sunday,2.49,4.0,3.4
+New York Cheesecake,2026-06-01,0,Monday,3.2,2.0,2.48
+New York Cheesecake,2026-06-02,1,Tuesday,2.32,2.0,2.13
+New York Cheesecake,2026-06-03,2,Wednesday,2.2,2.5,2.38
+New York Cheesecake,2026-06-04,3,Thursday,1.84,1.0,1.33
+Nirmala Hot,2026-05-28,3,Thursday,1.44,1.5,1.48
+Nirmala Hot,2026-05-29,4,Friday,2.61,1.25,1.66
+Nirmala Hot,2026-05-30,5,Saturday,2.58,1.5,1.82
+Nirmala Hot,2026-05-31,6,Sunday,2.07,1.0,1.43
+Nirmala Hot,2026-06-01,0,Monday,1.84,3.0,2.54
+Nirmala Hot,2026-06-02,1,Tuesday,2.37,1.0,1.55
+Nirmala Hot,2026-06-03,2,Wednesday,2.39,2.0,2.16
+Nirmala Ice,2026-05-29,4,Friday,2.82,3.25,3.12
+Nirmala Ice,2026-05-30,5,Saturday,3.57,3.0,3.17
+Nirmala Ice,2026-05-31,6,Sunday,2.19,2.0,2.08
+Nirmala Ice,2026-06-01,0,Monday,2.09,1.0,1.44
+Nirmala Ice,2026-06-02,1,Tuesday,2.75,3.0,2.9
+Nirmala Ice,2026-06-03,2,Wednesday,1.57,1.5,1.53
+Nirmala Ice,2026-06-04,3,Thursday,1.55,2.0,1.82
+Pisang Goreng Madu,2026-05-29,4,Friday,2.44,4.0,3.53
+Pisang Goreng Madu,2026-05-30,5,Saturday,4.25,5.0,4.78
+Pisang Goreng Madu,2026-05-31,6,Sunday,5.6,4.0,4.64
+Pisang Goreng Madu,2026-06-01,0,Monday,2.02,2.0,2.01
+Pisang Goreng Madu,2026-06-02,1,Tuesday,2.97,3.0,2.99
+Pisang Goreng Madu,2026-06-03,2,Wednesday,3.35,3.0,3.14
+Pisang Goreng Madu,2026-06-04,3,Thursday,3.11,2.0,2.44
+Puspa Matcha,2026-05-29,4,Friday,2.51,2.0,2.15
+Puspa Matcha,2026-05-30,5,Saturday,2.34,1.0,1.4
+Puspa Matcha,2026-05-31,6,Sunday,2.43,1.0,1.57
+Puspa Matcha,2026-06-01,0,Monday,1.63,1.0,1.25
+Puspa Matcha,2026-06-02,1,Tuesday,1.79,3.0,2.52
+Puspa Matcha,2026-06-03,2,Wednesday,1.37,1.0,1.15
+Puspa Matcha,2026-06-04,3,Thursday,1.19,1.0,1.08
+Rayu,2026-05-27,2,Wednesday,1.5,1.0,1.2
+Rayu,2026-05-28,3,Thursday,1.68,1.0,1.27
+Rayu,2026-05-29,4,Friday,1.34,2.0,1.8
+Rayu,2026-05-30,5,Saturday,1.77,1.0,1.23
+Rayu,2026-05-31,6,Sunday,1.58,2.0,1.83
+Rayu,2026-06-01,0,Monday,1.5,1.0,1.2
+Rayu,2026-06-02,1,Tuesday,0.78,1.0,0.91
+Singkong Keju,2026-05-28,3,Thursday,1.52,1.0,1.21
+Singkong Keju,2026-05-29,4,Friday,1.63,2.0,1.89
+Singkong Keju,2026-05-30,5,Saturday,1.81,1.0,1.24
+Singkong Keju,2026-05-31,6,Sunday,1.75,1.0,1.3
+Singkong Keju,2026-06-01,0,Monday,1.84,2.0,1.94
+Singkong Keju,2026-06-02,1,Tuesday,1.39,1.0,1.16
+Singkong Keju,2026-06-03,2,Wednesday,1.64,1.0,1.26
+Tahu Tuna,2026-05-28,3,Thursday,2.25,1.5,1.8
+Tahu Tuna,2026-05-29,4,Friday,2.74,3.25,3.1
+Tahu Tuna,2026-05-30,5,Saturday,2.69,5.25,4.48
+Tahu Tuna,2026-05-31,6,Sunday,1.81,2.0,1.92
+Tahu Tuna,2026-06-01,0,Monday,2.09,2.0,2.04
+Tahu Tuna,2026-06-02,1,Tuesday,2.29,3.0,2.72
+Tahu Tuna,2026-06-03,2,Wednesday,2.48,2.0,2.19
+Taro Hot,2026-05-26,1,Tuesday,1.01,1.0,1.0
+Taro Hot,2026-05-27,2,Wednesday,1.02,3.0,2.21
+Taro Hot,2026-05-28,3,Thursday,1.61,3.0,2.44
+Taro Hot,2026-05-29,4,Friday,1.35,1.5,1.46
+Taro Hot,2026-05-30,5,Saturday,1.12,1.0,1.03
+Taro Hot,2026-05-31,6,Sunday,1.15,1.0,1.06
+Taro Hot,2026-06-01,0,Monday,1.07,1.0,1.03
+Taro Ice,2026-05-27,2,Wednesday,1.25,2.0,1.7
+Taro Ice,2026-05-28,3,Thursday,1.36,1.5,1.44
+Taro Ice,2026-05-29,4,Friday,1.23,1.0,1.07
+Taro Ice,2026-05-30,5,Saturday,2.19,1.75,1.88
+Taro Ice,2026-05-31,6,Sunday,1.78,1.0,1.31
+Taro Ice,2026-06-01,0,Monday,1.38,1.0,1.15
+Taro Ice,2026-06-02,1,Tuesday,1.17,1.0,1.07
+Tempe Mendoan,2026-05-29,4,Friday,3.38,4.0,3.81
+Tempe Mendoan,2026-05-30,5,Saturday,3.59,4.0,3.88
+Tempe Mendoan,2026-05-31,6,Sunday,4.24,3.0,3.49
+Tempe Mendoan,2026-06-01,0,Monday,3.47,3.0,3.19
+Tempe Mendoan,2026-06-02,1,Tuesday,3.25,2.0,2.5
+Tempe Mendoan,2026-06-03,2,Wednesday,3.18,2.0,2.47
+Tempe Mendoan,2026-06-04,3,Thursday,2.67,1.0,1.67
+Tubruk,2026-05-28,3,Thursday,3.48,2.0,2.59
+Tubruk,2026-05-29,4,Friday,2.92,3.75,3.5
+Tubruk,2026-05-30,5,Saturday,4.67,3.5,3.85
+Tubruk,2026-05-31,6,Sunday,3.4,2.0,2.56
+Tubruk,2026-06-01,0,Monday,5.27,3.0,3.91
+Tubruk,2026-06-02,1,Tuesday,4.51,3.0,3.6
+Tubruk,2026-06-03,2,Wednesday,4.16,2.0,2.86
+Vietnam Drip,2026-05-29,4,Friday,1.75,3.0,2.63
+Vietnam Drip,2026-05-30,5,Saturday,2.59,4.5,3.93
+Vietnam Drip,2026-05-31,6,Sunday,2.38,3.0,2.75
+Vietnam Drip,2026-06-01,0,Monday,2.59,3.0,2.83
+Vietnam Drip,2026-06-02,1,Tuesday,2.07,2.0,2.03
+Vietnam Drip,2026-06-03,2,Wednesday,2.66,2.0,2.26
+Vietnam Drip,2026-06-04,3,Thursday,2.64,2.0,2.26
+Virya Choco Banana,2026-05-29,4,Friday,1.39,2.0,1.82
+Virya Choco Banana,2026-05-30,5,Saturday,1.34,2.0,1.8
+Virya Choco Banana,2026-05-31,6,Sunday,1.27,1.0,1.11
+Virya Choco Banana,2026-06-01,0,Monday,1.15,1.0,1.06
+Virya Choco Banana,2026-06-02,1,Tuesday,1.54,1.0,1.22
+Virya Choco Banana,2026-06-03,2,Wednesday,1.61,1.0,1.24
+Virya Choco Banana,2026-06-04,3,Thursday,0.93,1.0,0.97

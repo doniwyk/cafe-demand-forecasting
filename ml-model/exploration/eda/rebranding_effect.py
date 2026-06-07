@@ -144,6 +144,21 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
         data.loc[mask, "Price_Level"] = (shifted / (roll28 + 1)).values
 
+        data.loc[mask, "Lag_7"] = g.shift(7).values
+        data.loc[mask, "Lag_14"] = g.shift(14).values
+        data.loc[mask, "Lag_28"] = g.shift(28).values
+        data.loc[mask, "Lag_182"] = g.shift(182).values
+
+        lag7 = g.shift(7)
+        lag28 = g.shift(28)
+        lag182 = g.shift(182)
+        data.loc[mask, "Weekly_Ratio"] = (lag7 / (lag28 + 1)).values
+        data.loc[mask, "Monthly_Ratio"] = (lag28 / (lag182 + 1)).values
+        data.loc[mask, "Seasonal_Diff"] = (lag7 - lag28).values
+
+    data["DOW"] = data["Date"].dt.dayofweek
+    data["Is_Weekend"] = (data["DOW"] >= 5).astype(int)
+
     data = data.fillna(0).replace([np.inf, -np.inf], 0)
     data["IsPost"] = (data["Date"] >= REBRAND_DATE).astype(int)
     return data

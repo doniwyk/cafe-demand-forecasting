@@ -32,6 +32,7 @@ FEATURE_COLUMNS = [
     "Weekly_Ratio",
     "Monthly_Ratio",
     "Seasonal_Diff",
+    "DOW_Avg_4wk",
     "DOW",
     "Is_Weekend",
 ]
