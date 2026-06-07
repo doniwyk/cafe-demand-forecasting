@@ -3,7 +3,7 @@
 Demonstrates WHY each feature in FEATURE_COLS was chosen and why others
 were excluded. Run directly to see the analysis with real data.
 
-Run: python exploration/inference/feature_analysis.py
+Run: python exploration/features/feature_analysis.py
 """
 from __future__ import annotations
 

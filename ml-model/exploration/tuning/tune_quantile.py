@@ -10,7 +10,7 @@ Uses sequential grid search: tune one param at a time while keeping
 others at their current best. Evaluates with pinball loss at q=0.75
 on a held-out validation set.
 
-Run: python exploration/inference/tune_quantile.py
+Run: python exploration/tuning/tune_quantile.py
 """
 from __future__ import annotations
 
