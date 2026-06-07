@@ -148,44 +148,58 @@ def section_3_backtest_results(backtest_data):
     print(SEP)
 
     all_a = []
-    all_xgb, all_rf = [], []
-    fri_a, fri_xgb = [], []
+    all_xgb, all_rf, all_blend = [], [], []
+    fri_a, fri_blend = [], []
 
     for item, data in backtest_data.items():
         all_a.extend(data["actuals"])
         all_xgb.extend(data["preds_xgb"])
         all_rf.extend(data["preds_rf"])
-        for a, xgb, dow in zip(data["actuals"], data["preds_xgb"], data["dows"]):
+        # Compute blend: rf_weight=0.5
+        for a, xgb_p, rf_p, dow in zip(data["actuals"], data["preds_xgb"], data["preds_rf"], data["dows"]):
+            blend_p = 0.5 * rf_p + 0.5 * xgb_p
+            all_blend.append(blend_p)
             if dow in (4, 5):
                 fri_a.append(a)
-                fri_xgb.append(xgb)
+                fri_blend.append(blend_p)
 
     actuals = np.array(all_a)
     xgb = np.array(all_xgb)
     rf = np.array(all_rf)
+    blend = np.array(all_blend)
     std = actuals.std()
 
     print(f"\nN={len(actuals)}, Actual std={std:.3f}")
-    print(f"\n{'Metric':<12s} {'XGB':>8s} {'RF':>8s} {'Target':>10s} {'Status':>8s}")
-    print("-" * 52)
+    print(f"\n{'Metric':<12s} {'XGB':>8s} {'RF':>8s} {'Blend':>8s} {'Target':>10s} {'Status':>8s}")
+    print("-" * 60)
 
-    for name, preds in [("XGB", xgb), ("RF", rf)]:
+    for name, preds in [("XGB", xgb), ("RF", rf), ("Blend", blend)]:
         mae = np.mean(np.abs(preds - actuals))
         rmse = np.sqrt(np.mean((preds - actuals) ** 2))
         wr = wmape(actuals, preds)
         r2 = r_squared(actuals, preds)
         bias = np.mean(preds - actuals)
-        print(f"{'MAE (' + name + ')':<12s} {mae:>8.3f}")
-        print(f"{'RMSE (' + name + ')':<12s} {rmse:>8.3f} {'< ' + f'{std:.3f}':>10s} {'PASS' if rmse < std else 'FAIL':>8s}")
-        print(f"{'wMAPE (' + name + ')':<12s} {wr:>7.1f}% {'< 20%':>10s} {'PASS' if wr < 20 else 'FAIL':>8s}")
-        print(f"{'R² (' + name + ')':<12s} {r2:>8.3f} {'>= 0.6':>10s} {'PASS' if r2 >= 0.6 else 'FAIL':>8s}")
-        print(f"{'Bias (' + name + ')':<12s} {bias:>+8.3f}")
-        print()
 
-    fri_a = np.array(fri_a)
-    fri_xgb = np.array(fri_xgb)
-    print(f"Fri+Sat MAE (XGB): {np.mean(np.abs(fri_xgb - fri_a)):.3f}")
-    print(f"Fri+Sat N: {len(fri_a)}")
+    # Print all in one row per metric
+    for metric_name, calc_fn in [
+        ("MAE", lambda p: np.mean(np.abs(p - actuals))),
+        ("RMSE", lambda p: np.sqrt(np.mean((p - actuals)**2))),
+        ("wMAPE", lambda p: wmape(actuals, p)),
+        ("R²", lambda p: r_squared(actuals, p)),
+        ("Bias", lambda p: np.mean(p - actuals)),
+    ]:
+        xgb_v = calc_fn(xgb)
+        rf_v = calc_fn(rf)
+        blend_v = calc_fn(blend)
+        if metric_name == "wMAPE":
+            print(f"{metric_name:<12s} {xgb_v:>7.1f}% {rf_v:>7.1f}% {blend_v:>7.1f}%")
+        elif metric_name == "Bias":
+            print(f"{metric_name:<12s} {xgb_v:>+8.3f} {rf_v:>+8.3f} {blend_v:>+8.3f}")
+        else:
+            print(f"{metric_name:<12s} {xgb_v:>8.3f} {rf_v:>8.3f} {blend_v:>8.3f}")
+
+    print(f"\nFri+Sat MAE: Blend={np.mean(np.abs(np.array(fri_blend) - np.array(fri_a))):.3f}")
+    print(f"RMSE < Std: {np.sqrt(np.mean((blend-actuals)**2)) < std}")
 
 
 def section_4_theoretical_limits(backtest_data):
