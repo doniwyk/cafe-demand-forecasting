@@ -67,7 +67,8 @@ def _load_rf_params() -> dict:
     tuning_file = MODELS_DIR / "exploration" / "tuning" / "rf_best_params.json"
     if tuning_file.exists():
         with open(tuning_file) as f:
-            params = json.load(f)
+            data = json.load(f)
+        params = data.get("params", data)
         print(f"Loaded RF params from {tuning_file}")
         params["random_state"] = 42
         params["n_jobs"] = -1

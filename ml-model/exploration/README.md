@@ -386,14 +386,63 @@ With features and hyperparams decided, we compare XGB and RF on equal footing.
 
 **Method:** 3-fold expanding window CV on post-rebrand data, same 16 features, tuned hyperparams.
 
-**Metrics compared per fold:** RMSE, MAE, R², wMAPE, accuracy within ±20%, accuracy within ±50%, training time.
+### 3-Fold Cross-Validation (Average)
 
-**Includes ABC analysis:**
-- **A-Class:** Items contributing to top 70% of total volume (high-value items to get right)
-- **B-Class:** Next 20% (70–90% cumulative)
-- **C-Class:** Bottom 10%
+| Metric | XGBoost (q=0.75) | Random Forest | Winner |
+|--------|-------------------|---------------|--------|
+| RMSE | 1.57 | **1.52** | RF |
+| MAE | 1.13 | **0.99** | RF |
+| R² | 0.15 | **0.20** | RF |
+| wMAPE | 53.97% | **47.35%** | RF |
+| Within ±20% | **43.93%** | 34.83% | XGBoost |
+| Within ±50% | **82.27%** | 80.27% | XGBoost |
+| Training time | **0.40s** | 2.07s | XGBoost |
 
-Reports wMAPE per class, plus top 10 Class A items with individual accuracy.
+### Final Models on Full Data
+
+| Metric | XGBoost | RF |
+|--------|---------|-----|
+| R² | 0.165 | **0.236** |
+| wMAPE | 55.5% | **47.0%** |
+| MAE | 1.28 | **1.08** |
+| RMSE | 1.78 | **1.71** |
+| ±20% accuracy | **37.8%** | 33.5% |
+| ±50% accuracy | 76.4% | **78.7%** |
+
+### ABC Analysis
+
+Items classified by cumulative volume: A (top 70%), B (70–90%), C (bottom 10%).
+
+| Class | Items | XGB wMAPE | RF wMAPE | Top items |
+|-------|-------|-----------|----------|-----------|
+| A | 2 | 56.8% | 49.2% | Tubruk (5204 cups), Vietnam Drip (2587 cups) |
+| B | 2 | 54.9% | 45.3% | — |
+| C | 5 | 51.3% | 40.2% | — |
+
+### Why is wMAPE so high (47–55%)?
+
+wMAPE = `sum(|actual - predicted|) / sum(actual) × 100%`. Several structural factors inflate it:
+
+1. **Small denominators.** Many items sell 0–3 cups/day. A prediction of 5 when actual is 2 gives |error|=3 and error/denominator = 3/2 = 150% for that row. One bad prediction on a low-volume item skews wMAPE heavily. Example: actual=1, pred=3 → 200% error, but only 2 cups off.
+
+2. **40% zero-quantity days.** When actual=0 and the model predicts 2, that's infinite percentage error (clamped to 100%). With 40% of rows being zero, this creates a large wMAPE floor that no model can overcome.
+
+3. **Intermittent demand pattern.** Cafe items don't sell every day. An item that sells 5 cups on Monday and 0 on Tuesday has inherently unpredictable demand. The "correct" prediction for Tuesday is somewhere between 0 and 5, and any value will have high relative error.
+
+4. **Per-item model (no pooling).** Each item gets its own model trained on ~1200 rows. Some items have very volatile patterns that can't be learned from this sample size.
+
+This is why MAE (1.08–1.28 cups) is the more meaningful metric — it measures absolute error in cups, not percentage. Being off by 1.3 cups on average is quite good for daily cafe forecasting. The wMAPE is structurally inflated by the long tail of low-volume, zero-heavy items.
+
+### The paradox: RF wins averages, XGBoost wins consistency
+
+RF wins on every average metric (lower MAE, higher R², better wMAPE), but XGBoost wins on accuracy buckets (±20% and ±50%). This happens because:
+- RF predicts the **conditional mean** — it's closer to actual on average, but its errors are symmetric (over and under)
+- XGBoost predicts the **75th percentile** — it systematically overpredicts, so its absolute errors are smaller in magnitude (the quantile "floor" prevents large underpredictions)
+
+For supply planning, we use **XGB-only** because:
+1. Pinball loss at q=0.75 penalizes underprediction — XGB optimizes this directly
+2. The blended pipeline already corrects overprediction via DOW baseline blending
+3. RF's mean prediction dilutes the quantile signal when blended (rf_weight=0.0 wins in tuning)
 
 **Output:** Console report + `models/exploration/training/xgboost_model.pkl`, `rf_model.pkl`, `comparison_metadata.json`
 
