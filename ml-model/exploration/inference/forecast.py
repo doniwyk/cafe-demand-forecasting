@@ -37,6 +37,7 @@ CAFE_DB_URL = os.getenv(
 TUNING_DIR = MODELS_DIR / "exploration" / "tuning"
 XGB_TUNING_FILE = TUNING_DIR / "quantile_best_params.json"
 RF_TUNING_FILE = TUNING_DIR / "rf_best_params.json"
+BLEND_TUNING_FILE = TUNING_DIR / "blend_best_params.json"
 
 QUANTILE = 0.75
 DOW_LOOKBACK_WEEKS = 12
@@ -88,14 +89,31 @@ def _load_rf_params() -> dict:
             _load_rf_params._cache = {**DEFAULT_RF_PARAMS, "random_state": 42, "n_jobs": -1}
     return _load_rf_params._cache
 
+DEFAULT_BLEND_CONFIG = {
+    "weekend_baseline": "P75",
+    "weekend_model_w": 0.3,
+    "weekday_model_w": 0.4,
+    "rf_weight": 0.5,
+}
+
+
+def _load_blend_config() -> dict:
+    if not hasattr(_load_blend_config, "_cache"):
+        if BLEND_TUNING_FILE.exists():
+            with open(BLEND_TUNING_FILE) as f:
+                tuned = json.load(f)
+            _load_blend_config._cache = tuned.get("best_config", DEFAULT_BLEND_CONFIG)
+            print(f"Loaded blend config from {BLEND_TUNING_FILE}")
+        else:
+            print("No blend tuning file found, using defaults")
+            _load_blend_config._cache = DEFAULT_BLEND_CONFIG
+    return _load_blend_config._cache
+
+
 SKIP_PREFIXES = [
     "Add ", "Filter", "FIlter", "V60",
 ]
 DISCONTINUED_ITEMS = ["Menawan"]
-
-WEEKEND_BLEND_MODEL = 0.3
-WEEKDAY_BLEND_MODEL = 0.4
-MODEL_BLEND_RF = 0.5
 
 FEATURE_COLS = [
     "Lag_7", "Lag_14", "Lag_28",
@@ -165,10 +183,11 @@ def compute_dow_stats(df: pd.DataFrame, lookback_weeks: int = DOW_LOOKBACK_WEEKS
         DOW_Avg="mean",
         DOW_P75=lambda x: x.quantile(0.75),
         DOW_P90=lambda x: x.quantile(0.90),
+        DOW_P95=lambda x: x.quantile(0.95),
         DOW_Std="std",
         DOW_Median="median",
     ).reset_index()
-    stats.columns = ["DOW", "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median"]
+    stats.columns = ["DOW", "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_P95", "DOW_Std", "DOW_Median"]
     stats = stats.fillna(0)
     return stats
 
@@ -227,13 +246,14 @@ def train_models(df: pd.DataFrame, features: list) -> tuple[XGBRegressor, Random
     return xgb, rf
 
 
-def _dow_baseline(dow_stats: pd.DataFrame, dow: int) -> float:
+def _dow_baseline(dow_stats: pd.DataFrame, dow: int, stat: str = "P75") -> float:
     row = dow_stats[dow_stats["DOW"] == dow]
     if row.empty:
         return 3.0
     row = row.iloc[0]
     if dow in (4, 5):
-        return row["DOW_P75"]
+        col = f"DOW_{stat}"
+        return row[col] if col in row.index else row["DOW_P75"]
     return row["DOW_Median"]
 
 
@@ -245,6 +265,8 @@ def forecast_item(
     features: list,
     n_days: int = FORECAST_HORIZON,
 ) -> pd.DataFrame:
+    blend_cfg = _load_blend_config()
+
     last_date = df_hist["Date"].max()
     forecast_dates = [last_date + timedelta(days=d) for d in range(1, n_days + 1)]
 
@@ -265,12 +287,13 @@ def forecast_item(
 
         xgb_pred = max(0, xgb.predict(row[features])[0])
         rf_pred = max(0, rf.predict(row[features])[0])
-        model_pred = MODEL_BLEND_RF * rf_pred + (1 - MODEL_BLEND_RF) * xgb_pred
+        rf_w = blend_cfg.get("rf_weight", 0.0)
+        model_pred = rf_w * rf_pred + (1 - rf_w) * xgb_pred
 
         dow = fd.dayofweek
-        baseline = _dow_baseline(dow_stats, dow)
+        baseline = _dow_baseline(dow_stats, dow, blend_cfg.get("weekend_baseline", "P75"))
 
-        blend_w = WEEKEND_BLEND_MODEL if dow in (4, 5) else WEEKDAY_BLEND_MODEL
+        blend_w = blend_cfg.get("weekend_model_w", 0.3) if dow in (4, 5) else blend_cfg.get("weekday_model_w", 0.4)
         blended = blend_w * model_pred + (1 - blend_w) * baseline
 
         results.append({
@@ -377,11 +400,7 @@ def save_results(results: dict[str, pd.DataFrame]):
         "forecast_horizon": FORECAST_HORIZON,
         "quantile": QUANTILE,
         "dow_lookback_weeks": DOW_LOOKBACK_WEEKS,
-        "blend_weights": {
-            "fri_sat_model": WEEKEND_BLEND_MODEL,
-            "weekday_model": WEEKDAY_BLEND_MODEL,
-            "model_blend_rf": MODEL_BLEND_RF,
-        },
+        "blend_config": _load_blend_config(),
         "features": FEATURE_COLS,
     }
     with open(output_dir / "forecast_metadata.json", "w") as f:
@@ -389,11 +408,11 @@ def save_results(results: dict[str, pd.DataFrame]):
 
 
 def main():
+    blend_cfg = _load_blend_config()
     print("=" * 80)
     print("PRODUCTION INFERENCE: All Items")
     print(f"Quantile: {QUANTILE} | Horizon: {FORECAST_HORIZON} days | DOW lookback: {DOW_LOOKBACK_WEEKS} weeks")
-    print(f"Blend: Fri/Sat={WEEKEND_BLEND_MODEL:.0%} model, Weekdays={WEEKDAY_BLEND_MODEL:.0%} model")
-    print(f"Model blend: {MODEL_BLEND_RF:.0%} RF + {1-MODEL_BLEND_RF:.0%} XGB")
+    print(f"Blend config: {blend_cfg}")
     print("=" * 80)
 
     results = forecast_all()
