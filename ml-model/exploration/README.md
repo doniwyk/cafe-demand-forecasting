@@ -56,7 +56,17 @@ python exploration/eda/data_exploration.py
 - 97% of items average 1–3 cups/day — only 2 items average above 3. High CV means simple averages won't work — we need models that handle variance.
 - 66 items → after filtering discontinued (Menawan) and sparse items (<60 non-zero days), we forecast **58 items**.
 
-**Output:** Console report + 5 plots in `figures/data_exploration/`
+**Plots:**
+
+| Plot | What it shows |
+|------|---------------|
+| ![Daily Sales](figures/data_exploration/01_daily_sales.png) | Total daily sales over 4.5 years — clear upward trend post-rebrand |
+| ![Monthly Sales](figures/data_exploration/02_monthly_sales.png) | Monthly aggregates — seasonal patterns visible |
+| ![Day of Week](figures/data_exploration/03_day_of_week.png) | Average qty by DOW — Sat/Sun slightly higher, but overall flat (~2.0–2.2) |
+| ![Top Items](figures/data_exploration/04_top_items.png) | Top 15 items by volume — Kopi Susu Husgendam Ice dominates |
+| ![Quantity Distribution](figures/data_exploration/06_quantity_distribution.png) | **Key plot:** 86% of rows sell 1–3 cups. Avg 2.1 cups/day. Proves wMAPE is structurally inflated. |
+
+**Output:** Console report + 6 plots in `figures/data_exploration/`
 
 ### 1b. Rebranding Effect
 
@@ -82,6 +92,15 @@ python exploration/eda/rebranding_effect.py
 The Cohen's d of 1.675 means the pre- and post-rebrand distributions barely overlap. Including pre-rebrand data would teach the model patterns that no longer exist. The lift is also growing month-over-month, so using old data would drag predictions downward.
 
 **Additional insight:** Weekend lift > weekday lift tells us that **DOW features will be important** — the rebrand amplified an existing weekend pattern. This motivates our later decision to use separate blend weights for Fri/Sat vs weekdays.
+
+**Plots:**
+
+| Plot | What it shows |
+|------|---------------|
+| ![Rebrand Daily](figures/rebranding_effect/11_rebranding_daily.png) | Daily sales with rebrand vertical line — clear structural break |
+| ![DOW Shift](figures/rebranding_effect/13_rebranding_dow_shift.png) | Pre vs post DOW averages — weekend amplified more than weekday |
+| ![Item Impact](figures/rebranding_effect/14_rebranding_item_impact.png) | Top items by lift factor — broad-based, not driven by single product |
+| ![Zero Inflation](figures/rebranding_effect/15_rebranding_zero_inflation.png) | P(Qty > threshold) pre vs post — post-rebrand sells more at every threshold |
 
 **Output:** Console report + 4 plots in `figures/rebranding_effect/`
 
@@ -264,6 +283,15 @@ The signal for "is this Fri/Sat going to be high?" is in how strong the recent w
 | DOW_Median | Median on same DOW | DOW typical value |
 
 All features use only past data (shifted by 1+ day) — no target leakage. DOW stats use the last 12 weeks of non-zero days only (cafe closures are excluded).
+
+**Plots (from earlier feature discovery, in `figures/feature_discovery/`):**
+
+| Plot | What it shows |
+|------|---------------|
+| ![Autocorrelation](figures/feature_discovery/07_autocorrelation.png) | Lag-7 is the dominant signal — weekly pattern is key |
+| ![Feature Correlation](figures/feature_discovery/09_feature_correlation.png) | Collinearity heatmap — Roll_Mean_28/EWMA_28 highly correlated but both kept |
+| ![Feature Importance](figures/feature_discovery/10_feature_importance.png) | XGB importance ranking — EWMA_28, Roll_Mean_28, DOW_Avg top 3 |
+| ![Model Comparison](figures/feature_discovery/12_model_comparison.png) | Feature set comparisons — 16-feature set performance |
 
 ---
 
@@ -599,7 +627,10 @@ exploration/
 │   └── evaluate.py            #   Expanding-window CV + holdout eval for old global/item models
 │                                #   Depends on deleted training/data.py and old pickle models
 │                                #   Superseded by inference/backtest.py
-├── figures/                   # Generated plots from EDA
+├── figures/                   # Generated plots (see each step for descriptions)
+│   ├── data_exploration/      #   6 plots: daily sales, monthly, DOW, top items, qty distribution
+│   ├── rebranding_effect/     #   4 plots: daily break, DOW shift, item impact, zero inflation
+│   └── feature_discovery/     #   8 plots: autocorrelation, correlation, importance, model comparison
 └── models/                    # Saved params + outputs (gitignored)
     └── exploration/
         └── tuning/
