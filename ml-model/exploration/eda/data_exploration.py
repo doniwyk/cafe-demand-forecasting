@@ -300,6 +300,47 @@ def section_zero_days(df: pd.DataFrame):
             print(f"  {item:<35s}  {count:3d} zero days / {total_days} total ({count/total_days*100:.1f}%)")
 
 
+def section_quantity_distribution(df: pd.DataFrame):
+    print(f"\n{SEPARATOR}")
+    print("QUANTITY DISTRIBUTION")
+    print(SEPARATOR)
+
+    qty = df["Quantity_Sold"]
+    print(f"\n  Mean: {qty.mean():.2f}  |  Median: {qty.median():.0f}  |  Std: {qty.std():.2f}")
+    print(f"  Min: {qty.min()}  |  Max: {qty.max()}  |  P75: {qty.quantile(0.75):.0f}  |  P90: {qty.quantile(0.90):.0f}")
+    print(f"  Skewness: {qty.skew():.2f}  |  Kurtosis: {qty.kurtosis():.2f}")
+
+    print(f"\n  Histogram (item-day rows):")
+    print(f"  {'Qty':>4s}  {'Count':>7s}  {'Pct':>6s}  {'Cumul':>6s}")
+    print(f"  {'-'*30}")
+
+    cumul = 0
+    for val in range(0, 12):
+        count = (qty == val).sum()
+        pct = count / len(qty) * 100
+        cumul += pct
+        bar = "#" * int(pct / 2)
+        print(f"  {val:>4d}  {count:>7d}  {pct:>5.1f}%  {cumul:>5.1f}%  {bar}")
+
+    count_11plus = (qty >= 11).sum()
+    pct_11plus = count_11plus / len(qty) * 100
+    cumul += pct_11plus
+    print(f"  {'11+':>4s}  {count_11plus:>7d}  {pct_11plus:>5.1f}%  {cumul:>5.1f}%")
+
+    n_1_to_3 = ((qty >= 1) & (qty <= 3)).sum()
+    print(f"\n  Key insight: {(qty <= 3).sum()/len(qty)*100:.1f}% of rows sell 1-3 cups/day (avg {qty.mean():.2f})")
+    print(f"  This means even a 1-cup error produces 47% wMAPE (1/{qty.mean():.2f}={1/qty.mean()*100:.0f}%)")
+    print(f"  wMAPE is structurally inflated by small denominators — MAE (cups) is the honest metric.")
+
+    item_avg = df.groupby("Item")["Quantity_Sold"].mean()
+    print(f"\n  Per-item daily averages:")
+    print(f"    Items avg 1-3 cups/day: {((item_avg >= 1) & (item_avg <= 3)).sum()}/{len(item_avg)} ({((item_avg >= 1) & (item_avg <= 3)).sum()/len(item_avg)*100:.0f}%)")
+    print(f"    Items avg 3-5 cups/day: {((item_avg > 3) & (item_avg <= 5)).sum()}/{len(item_avg)}")
+    print(f"    Items avg > 5 cups/day: {(item_avg > 5).sum()}/{len(item_avg)}")
+    print(f"    Top item: {item_avg.idxmax()} ({item_avg.max():.2f} cups/day)")
+    print(f"    Bottom item: {item_avg.idxmin()} ({item_avg.min():.2f} cups/day)")
+
+
 def section_data_quality(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
     print("DATA QUALITY CHECKS")
@@ -409,6 +450,45 @@ def plot_zero_pct_by_item(df: pd.DataFrame):
     print(f"  Saved: 05_zero_pct_by_item.png")
 
 
+def plot_quantity_distribution(df: pd.DataFrame):
+    qty = df["Quantity_Sold"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    counts = qty.value_counts().sort_index()
+    top = counts.head(11).copy()
+    top.index = top.index.astype(int)
+    if (qty >= 11).any():
+        top.loc["11+"] = (qty >= 11).sum()
+
+    colors = ["#e74c3c" if i >= 6 else "#3498db" for i in range(len(top))]
+    axes[0].bar(range(len(top)), top.values, color=colors, alpha=0.8)
+    axes[0].set_xticks(range(len(top)))
+    axes[0].set_xticklabels(top.index)
+    axes[0].set_xlabel("Quantity Sold (cups/day)")
+    axes[0].set_ylabel("Number of Rows")
+    axes[0].set_title("Quantity Distribution (Item-Day Rows)")
+
+    cumul_pct = top.values.cumsum() / len(qty) * 100
+    axes[1].plot(range(len(top)), cumul_pct, "o-", color="#2c3e50", linewidth=2, markersize=6)
+    axes[1].axhline(y=86, color="#e74c3c", linestyle="--", alpha=0.5, label="86% (qty<=3)")
+    axes[1].axhline(y=95, color="#f39c12", linestyle="--", alpha=0.5, label="95% (qty<=5)")
+    axes[1].set_xticks(range(len(top)))
+    axes[1].set_xticklabels(top.index)
+    axes[1].set_xlabel("Quantity Sold (cups/day)")
+    axes[1].set_ylabel("Cumulative %")
+    axes[1].set_title("Cumulative Distribution")
+    axes[1].set_ylim(0, 105)
+    axes[1].legend()
+
+    fig.suptitle(f"Daily Item Sales: avg={qty.mean():.2f}, median={qty.median():.0f} | 86% sell 1-3 cups",
+                 fontsize=13, fontweight="bold", y=1.02)
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "06_quantity_distribution.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  Saved: 06_quantity_distribution.png")
+
+
 def generate_plots(df: pd.DataFrame):
     print(f"\n{SEPARATOR}")
     print("GENERATING PLOTS")
@@ -419,6 +499,7 @@ def generate_plots(df: pd.DataFrame):
     plot_day_of_week(df)
     plot_top_items(df)
     plot_zero_pct_by_item(df)
+    plot_quantity_distribution(df)
 
     print(f"\nAll plots saved to: {FIGURES_DIR}")
 
@@ -435,6 +516,7 @@ def main():
     section_item_analysis(df)
     section_missing_data(df)
     section_zero_days(df)
+    section_quantity_distribution(df)
     section_data_quality(df)
     generate_plots(df)
 
