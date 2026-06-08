@@ -541,31 +541,33 @@ def main():
     feature_cols = get_feature_cols(full)
     print(f"    {len(feature_cols)} features, {len(full)} rows")
 
-    # 3. Optional: compare models first
-    if args.compare:
-        best_model_type, best_params = compare_models(full, feature_cols)
-    else:
-        best_model_type, best_params = "xgb", {"n_estimators": 200, "max_depth": 4,
-            "learning_rate": 0.1, "subsample": 0.8, "colsample_bytree": 0.8,
-            "reg_alpha": 0.5, "reg_lambda": 0.5, "min_child_weight": 1}
-
-    # 4. Train final model
-    print(f"\n[3] Training {best_model_type.upper()}...")
+    # 3. Train both models (XGBoost + RF for comparison per thesis goal)
+    print("\n[3] Training XGBoost + Random Forest...")
     X, y = full[feature_cols].fillna(0), full["Quantity"]
-    if best_model_type == "xgb":
-        model = xgb.XGBRegressor(
-            objective="count:poisson", random_state=RANDOM_SEED, verbosity=0,
-            **{k: v for k, v in best_params.items()
-               if k not in ("objective",)})
-    else:
-        model = RandomForestRegressor(
-            random_state=RANDOM_SEED, n_jobs=-1,
-            **{k: v for k, v in best_params.items()})
-    model.fit(X, y)
 
-    # Save model
-    with open(os.path.join(MODELS_DIR, "forecast_model.pkl"), "wb") as f:
-        pickle.dump(model, f)
+    xgb_model = xgb.XGBRegressor(
+        objective="count:poisson", n_estimators=200, max_depth=4,
+        learning_rate=0.1, subsample=0.8, colsample_bytree=0.8,
+        reg_alpha=0.5, reg_lambda=0.5, random_state=RANDOM_SEED, verbosity=0)
+    xgb_model.fit(X, y)
+
+    rf_model = RandomForestRegressor(
+        n_estimators=200, max_depth=10, min_samples_leaf=5,
+        random_state=RANDOM_SEED, n_jobs=-1)
+    rf_model.fit(X, y)
+
+    # Optional: run full comparison backtest
+    if args.compare:
+        compare_models(full, feature_cols)
+
+    # Use XGBoost for forecasting (better on all metrics, see Bab VI)
+    model = xgb_model
+
+    # Save models
+    with open(os.path.join(MODELS_DIR, "forecast_model_xgb.pkl"), "wb") as f:
+        pickle.dump(xgb_model, f)
+    with open(os.path.join(MODELS_DIR, "forecast_model_rf.pkl"), "wb") as f:
+        pickle.dump(rf_model, f)
 
     # 4. Setup forecaster
     items = sorted(full["Item"].unique())
