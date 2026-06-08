@@ -10,6 +10,7 @@ Best configuration from exploration_v2:
 
 Usage:
   python forecast.py [--days 7] [--margin 3 --spoilage 1]
+  python forecast.py --compare  # run XGBoost vs RF comparison first
 """
 import os, sys, warnings, argparse, pickle
 warnings.filterwarnings("ignore")
@@ -17,6 +18,8 @@ import pandas as pd, numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
 import xgboost as xgb
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
 
 # --- Paths ---
 ROOT = Path(__file__).resolve().parent
@@ -340,6 +343,172 @@ def compute_buffer(full, items, margin_lost=3, spoilage_cost=1):
     return buffers
 
 
+def compare_models(full, feature_cols):
+    """Train XGBoost and Random Forest, tune both, compare at each stage.
+    Uses 8-week expanding window backtest."""
+    from sklearn.model_selection import ParameterGrid
+
+    all_dates = sorted(full["Date_Only"].unique())
+    test_start = all_dates[-1] - timedelta(days=7 * 8)
+
+    # --- Stage 1: Baseline (no tuning) ---
+    print("\n" + "=" * 55)
+    print("STAGE 1: BASELINE (no tuning)")
+    print("=" * 55)
+
+    xgb_baseline = xgb.XGBRegressor(
+        objective="count:poisson", n_estimators=200, max_depth=4,
+        learning_rate=0.1, subsample=0.8, colsample_bytree=0.8,
+        reg_alpha=0.5, reg_lambda=0.5, random_state=RANDOM_SEED, verbosity=0)
+    rf_baseline = RandomForestRegressor(
+        n_estimators=200, max_depth=10, min_samples_leaf=5,
+        random_state=RANDOM_SEED, n_jobs=-1)
+
+    xgb_maes, rf_maes = [], []
+    xgb_r2s, rf_r2s = [], []
+
+    for w in range(8):
+        ws = test_start + timedelta(days=7 * w)
+        we = ws + timedelta(days=6)
+        tr = full[full["Date_Only"] < ws]
+        te = full[(full["Date_Only"] >= ws) & (full["Date_Only"] <= we)]
+        if len(te) < 10: continue
+
+        Xtr, ytr = tr[feature_cols].fillna(0), tr["Quantity"]
+        Xte, yte = te[feature_cols].fillna(0), te["Quantity"]
+
+        xgb_baseline.fit(Xtr, ytr)
+        xgb_p = np.maximum(xgb_baseline.predict(Xte), 0)
+        xgb_maes.append(mean_absolute_error(yte, xgb_p))
+        nz = yte > 0
+        if nz.sum() > 5: xgb_r2s.append(r2_score(yte[nz], xgb_p[nz]))
+
+        rf_baseline.fit(Xtr, ytr)
+        rf_p = np.maximum(rf_baseline.predict(Xte), 0)
+        rf_maes.append(mean_absolute_error(yte, rf_p))
+        if nz.sum() > 5: rf_r2s.append(r2_score(yte[nz], rf_p[nz]))
+
+    print(f"  {'Model':<20} {'MAE':>8} {'R2_nonzero':>10}")
+    print(f"  {'-'*38}")
+    print(f"  {'XGBoost Poisson':<20} {np.mean(xgb_maes):>8.4f} {np.mean(xgb_r2s):>10.4f}")
+    print(f"  {'Random Forest':<20} {np.mean(rf_maes):>8.4f} {np.mean(rf_r2s):>10.4f}")
+
+    # --- Stage 2: Hyperparameter Tuning ---
+    print("\n" + "=" * 55)
+    print("STAGE 2: HYPERPARAMETER TUNING")
+    print("=" * 55)
+
+    # XGBoost tuning
+    print("\n  Tuning XGBoost...")
+    xgb_grid = [
+        {"max_depth": [3, 4, 5, 6], "learning_rate": [0.03, 0.05, 0.1],
+         "n_estimators": [200, 300], "subsample": [0.8], "colsample_bytree": [0.8],
+         "reg_alpha": [0.5], "reg_lambda": [0.5], "min_child_weight": [1]},
+        {"max_depth": ["best"], "learning_rate": ["best"], "n_estimators": ["best"],
+         "subsample": [0.6, 0.8, 1.0], "colsample_bytree": [0.6, 0.8, 1.0],
+         "reg_alpha": [0.5], "reg_lambda": [0.5], "min_child_weight": [1]},
+    ]
+
+    xgb_best_params = {"max_depth": 4, "learning_rate": 0.1, "n_estimators": 200,
+                       "subsample": 0.8, "colsample_bytree": 0.8,
+                       "reg_alpha": 0.5, "reg_lambda": 0.5, "min_child_weight": 1}
+    xgb_best_mae = np.mean(xgb_maes)
+
+    val_start = all_dates[-1] - timedelta(days=7 * 3)
+    for rnd, grid in enumerate(xgb_grid):
+        resolved = {}
+        for k, v in grid.items():
+            if v == ["best"]: resolved[k] = [xgb_best_params[k]]
+            else: resolved[k] = v
+        for params in ParameterGrid(resolved):
+            maes = []
+            for w in range(3):
+                ws = val_start + timedelta(days=7 * w)
+                we = ws + timedelta(days=6)
+                tr = full[full["Date_Only"] < ws]
+                te = full[(full["Date_Only"] >= ws) & (full["Date_Only"] <= we)]
+                if len(te) < 10: continue
+                m = xgb.XGBRegressor(objective="count:poisson", random_state=RANDOM_SEED,
+                                     verbosity=0, **params)
+                m.fit(tr[feature_cols].fillna(0), tr["Quantity"])
+                p = np.maximum(m.predict(te[feature_cols].fillna(0)), 0)
+                maes.append(mean_absolute_error(te["Quantity"], p))
+            if np.mean(maes) < xgb_best_mae:
+                xgb_best_mae = np.mean(maes)
+                xgb_best_params = {**params}
+    print(f"  Best XGBoost: MAE={xgb_best_mae:.4f}  params={xgb_best_params}")
+
+    # RF tuning (simplified)
+    print("\n  Tuning Random Forest...")
+    rf_best_mae = np.mean(rf_maes)
+    rf_grid = {"n_estimators": [100, 200, 300], "max_depth": [5, 7, 10],
+               "min_samples_leaf": [1, 5, 10]}
+    rf_best_params = {"n_estimators": 200, "max_depth": 10, "min_samples_leaf": 5}
+    for params in ParameterGrid(rf_grid):
+        maes = []
+        for w in range(3):
+            ws = val_start + timedelta(days=7 * w)
+            we = ws + timedelta(days=6)
+            tr = full[full["Date_Only"] < ws]
+            te = full[(full["Date_Only"] >= ws) & (full["Date_Only"] <= we)]
+            if len(te) < 10: continue
+            m = RandomForestRegressor(random_state=RANDOM_SEED, n_jobs=-1, **params)
+            m.fit(tr[feature_cols].fillna(0), tr["Quantity"])
+            p = np.maximum(m.predict(te[feature_cols].fillna(0)), 0)
+            maes.append(mean_absolute_error(te["Quantity"], p))
+        if np.mean(maes) < rf_best_mae:
+            rf_best_mae = np.mean(maes)
+            rf_best_params = {**params}
+    print(f"  Best RF:       MAE={rf_best_mae:.4f}  params={rf_best_params}")
+
+    # --- Stage 3: Final comparison with tuned params ---
+    print("\n" + "=" * 55)
+    print("STAGE 3: FINAL COMPARISON (tuned)")
+    print("=" * 55)
+
+    xgb_tuned = xgb.XGBRegressor(objective="count:poisson", random_state=RANDOM_SEED,
+                                 verbosity=0, **xgb_best_params)
+    rf_tuned = RandomForestRegressor(random_state=RANDOM_SEED, n_jobs=-1, **rf_best_params)
+
+    xgb_t_maes, rf_t_maes = [], []
+    xgb_t_r2s, rf_t_r2s = [], []
+
+    for w in range(8):
+        ws = test_start + timedelta(days=7 * w)
+        we = ws + timedelta(days=6)
+        tr = full[full["Date_Only"] < ws]
+        te = full[(full["Date_Only"] >= ws) & (full["Date_Only"] <= we)]
+        if len(te) < 10: continue
+        Xtr, ytr = tr[feature_cols].fillna(0), tr["Quantity"]
+        Xte, yte = te[feature_cols].fillna(0), te["Quantity"]
+
+        xgb_tuned.fit(Xtr, ytr)
+        xgb_p = np.maximum(xgb_tuned.predict(Xte), 0)
+        xgb_t_maes.append(mean_absolute_error(yte, xgb_p))
+        nz = yte > 0
+        if nz.sum() > 5: xgb_t_r2s.append(r2_score(yte[nz], xgb_p[nz]))
+
+        rf_tuned.fit(Xtr, ytr)
+        rf_p = np.maximum(rf_tuned.predict(Xte), 0)
+        rf_t_maes.append(mean_absolute_error(yte, rf_p))
+        if nz.sum() > 5: rf_t_r2s.append(r2_score(yte[nz], rf_p[nz]))
+
+    print(f"  {'Model':<20} {'Baseline MAE':>13} {'Tuned MAE':>10} {'R2_nonzero':>10}")
+    print(f"  {'-'*53}")
+    print(f"  {'XGBoost Poisson':<20} {np.mean(xgb_maes):>13.4f} {np.mean(xgb_t_maes):>10.4f} {np.mean(xgb_t_r2s):>10.4f}")
+    print(f"  {'Random Forest':<20} {np.mean(rf_maes):>13.4f} {np.mean(rf_t_maes):>10.4f} {np.mean(rf_t_r2s):>10.4f}")
+
+    # Select best
+    xgb_final_mae = np.mean(xgb_t_maes)
+    rf_final_mae = np.mean(rf_t_maes)
+    if xgb_final_mae <= rf_final_mae:
+        print(f"\n  Selected: XGBoost Poisson (MAE={xgb_final_mae:.4f} vs RF={rf_final_mae:.4f})")
+        return "xgb", xgb_best_params
+    else:
+        print(f"\n  Selected: Random Forest (MAE={rf_final_mae:.4f} vs XGB={xgb_final_mae:.4f})")
+        return "rf", rf_best_params
+
+
 def main():
     parser = argparse.ArgumentParser(description="Cafe daily demand forecast")
     parser.add_argument("--days", type=int, default=7)
@@ -349,6 +518,8 @@ def main():
     parser.add_argument("--spoilage", type=float, default=1,
                        help="Spoilage cost per unsold cup (default 1)")
     parser.add_argument("--output", type=str, default=None)
+    parser.add_argument("--compare", action="store_true",
+                       help="Run XGBoost vs RF comparison before forecasting")
     args = parser.parse_args()
 
     print("=" * 55)
@@ -370,13 +541,26 @@ def main():
     feature_cols = get_feature_cols(full)
     print(f"    {len(feature_cols)} features, {len(full)} rows")
 
-    # 3. Train
-    print("[3] Training model...")
+    # 3. Optional: compare models first
+    if args.compare:
+        best_model_type, best_params = compare_models(full, feature_cols)
+    else:
+        best_model_type, best_params = "xgb", {"n_estimators": 200, "max_depth": 4,
+            "learning_rate": 0.1, "subsample": 0.8, "colsample_bytree": 0.8,
+            "reg_alpha": 0.5, "reg_lambda": 0.5, "min_child_weight": 1}
+
+    # 4. Train final model
+    print(f"\n[3] Training {best_model_type.upper()}...")
     X, y = full[feature_cols].fillna(0), full["Quantity"]
-    model = xgb.XGBRegressor(
-        objective="count:poisson", n_estimators=200, max_depth=4,
-        learning_rate=0.1, subsample=0.8, colsample_bytree=0.8,
-        reg_alpha=0.5, reg_lambda=0.5, random_state=RANDOM_SEED, verbosity=0)
+    if best_model_type == "xgb":
+        model = xgb.XGBRegressor(
+            objective="count:poisson", random_state=RANDOM_SEED, verbosity=0,
+            **{k: v for k, v in best_params.items()
+               if k not in ("objective",)})
+    else:
+        model = RandomForestRegressor(
+            random_state=RANDOM_SEED, n_jobs=-1,
+            **{k: v for k, v in best_params.items()})
     model.fit(X, y)
 
     # Save model
@@ -412,7 +596,7 @@ def main():
     start = (last_date + timedelta(days=1)) if not args.start_date else \
             datetime.strptime(args.start_date, "%Y-%m-%d")
 
-    # 6. Forecast
+    # 5. Forecast
     print(f"[4] Forecasting {args.days} days from {start.date()}...")
     all_rows = []
     for d in range(args.days):
