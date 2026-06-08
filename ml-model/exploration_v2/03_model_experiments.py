@@ -37,7 +37,7 @@ from config import (
 sns.set_style("whitegrid")
 np.random.seed(RANDOM_SEED)
 
-OUT = os.path.join(FIGURES_DIR, "v2_models")
+OUT = os.path.join(FIGURES_DIR, "v2_features")
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
@@ -524,18 +524,83 @@ def run_feature_ablation(full, feature_cols):
     abl_df = pd.DataFrame(ablation)
     abl_df.to_csv(os.path.join(TABLES_DIR, "v2_ablation.csv"), index=False)
 
-    # Plot
-    fig, ax = plt.subplots(figsize=(10, 5))
-    colors = ["red" if d > 0 else "green" for d in abl_df["MAE_delta"]]
-    ax.barh(abl_df["removed_group"], abl_df["MAE_delta"], color=colors)
-    ax.axvline(0, color="black", linewidth=0.5)
-    ax.set_xlabel("MAE Change (remove = worse if positive)")
-    ax.set_title("Feature Group Ablation")
+    # Plot: ablation results
+    grouped = {}
+    for _, row in abl_df.iterrows():
+        grouped[row["removed_group"]] = row["MAE_delta"]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    groups_plot = list(grouped.keys())
+    values_plot = list(grouped.values())
+    colors_abl = ['#E74C3C' if v > 0 else '#27AE60' for v in values_plot]
+    bars = ax.barh(groups_plot, values_plot, color=colors_abl)
+    ax.axvline(0, color='black', linewidth=0.8)
+    ax.set_xlabel('Δ MAE (cups) — positive = worse when removed', fontsize=11)
+    ax.set_title('Feature Group Ablation — Impact on Model Accuracy', fontsize=14, fontweight='bold')
+    for bar, val in zip(bars, values_plot):
+        ax.text(bar.get_width() + (0.01 if val > 0 else -0.04),
+                bar.get_y() + bar.get_height()/2,
+                f'{val:+.3f}', va='center', fontsize=10, fontweight='bold')
+    ax.invert_yaxis()
     plt.tight_layout()
-    fig.savefig(os.path.join(OUT, "ablation.png"), dpi=150)
+    fig.savefig(os.path.join(OUT, "ablation_results.png"), dpi=200, bbox_inches='tight')
     plt.close()
 
     return abl_df
+
+
+def plot_xgb_feature_importance(full, feature_cols):
+    """Generate XGBoost feature importance plot."""
+    from datetime import timedelta
+    cutoff = full["Date_Only"].max() - timedelta(days=60)
+    train = full[full["Date_Only"] <= cutoff]
+
+    model = xgb.XGBRegressor(
+        objective="count:poisson", n_estimators=200, max_depth=4,
+        learning_rate=0.1, subsample=0.8, colsample_bytree=0.8,
+        reg_alpha=0.5, reg_lambda=0.5,
+        random_state=RANDOM_SEED, verbosity=0,
+    )
+    model.fit(train[feature_cols].fillna(0), train["Quantity"])
+    imp = pd.Series(model.feature_importances_, index=feature_cols).sort_values(ascending=False)
+
+    top25 = imp.head(25)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    colors = []
+    for feat in top25.index:
+        if feat in ['Days_Since_Last_Sale', 'Sales_Last_7D']: colors.append('#E74C3C')
+        elif 'Roll' in feat or 'EWMA' in feat or 'Trend' in feat or 'WoW' in feat: colors.append('#3498DB')
+        elif feat.startswith('Lag_'): colors.append('#2ECC71')
+        elif feat in ['DOW','Is_Weekend','Month','Year','WeekOfYear','DayOfMonth','Quarter',
+                       'MonthStart','MonthEnd','Is_Holiday_Season','WeekOfMonth','DaysFromStart',
+                       'DOW_Sin','DOW_Cos','Month_Sin','Month_Cos']: colors.append('#F39C12')
+        elif feat.startswith('Day_'): colors.append('#9B59B6')
+        elif feat in ['Days_Since_First_Sale','Item_Rank','Item_Rank_Pct']: colors.append('#1ABC9C')
+        elif feat.startswith('Item_'): colors.append('#95A5A6')
+        else: colors.append('#7F8C8D')
+
+    ax.barh(range(len(top25)), top25.values, color=colors)
+    ax.set_yticks(range(len(top25)))
+    ax.set_yticklabels(top25.index, fontsize=9)
+    ax.invert_yaxis()
+    ax.set_xlabel('Feature Importance (gain)', fontsize=12)
+    ax.set_title('XGBoost Feature Importance — Top 25 Features', fontsize=14, fontweight='bold')
+
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor='#E74C3C', label='Recency'),
+        Patch(facecolor='#3498DB', label='Rolling/EWMA'),
+        Patch(facecolor='#2ECC71', label='Lags'),
+        Patch(facecolor='#F39C12', label='Temporal'),
+        Patch(facecolor='#9B59B6', label='Cross-item'),
+        Patch(facecolor='#1ABC9C', label='Lifecycle'),
+        Patch(facecolor='#95A5A6', label='Item Dummies'),
+    ]
+    ax.legend(handles=legend_elements, loc='lower right', fontsize=9, framealpha=0.9)
+    plt.tight_layout()
+    fig.savefig(os.path.join(OUT, "feature_importance_xgb.png"), dpi=200, bbox_inches='tight')
+    plt.close()
+    print("  → saved feature_importance_xgb.png")
 
 
 # ---------------------------------------------------------------------------
@@ -556,6 +621,10 @@ def main():
 
     # Feature ablation
     abl_df = run_feature_ablation(full, feature_cols)
+    print()
+
+    # XGBoost feature importance
+    plot_xgb_feature_importance(full, feature_cols)
     print()
 
     # Per-item analysis

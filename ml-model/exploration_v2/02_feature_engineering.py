@@ -336,18 +336,39 @@ def analyze_features(full, feature_cols):
         print(mi_scores.head(15).to_string())
         mi_scores.to_csv(os.path.join(TABLES_DIR, "v2_mutual_info.csv"))
 
-        # Plot
-        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-        sale_corr.head(15).plot(kind="barh", ax=axes[0], color="steelblue")
-        axes[0].set_title("Correlation with Is_Sale")
-        axes[0].set_xlabel("Pearson r")
-        mi_scores.head(15).sort_values().plot(kind="barh", ax=axes[1], color="darkorange")
-        axes[1].set_title("Mutual Information with Is_Sale")
-        axes[1].set_xlabel("MI Score")
+        # Plot: Mutual Information (better version)
+        fig, ax = plt.subplots(figsize=(10, 7))
+        mi_plot = mi_scores.head(20)
+        colors_mi = ['#E74C3C' if 'Days_Since_Last' in f or 'Sales_Last_7D' in f else
+                      '#3498DB' if 'Roll' in f or 'EWMA' in f or 'Trend' in f else
+                      '#2ECC71' if 'Lag_' in f else '#F39C12'
+                      for f in mi_plot.index]
+        ax.barh(range(len(mi_plot)), mi_plot.values, color=colors_mi)
+        ax.set_yticks(range(len(mi_plot)))
+        ax.set_yticklabels(mi_plot.index, fontsize=9)
+        ax.invert_yaxis()
+        ax.set_xlabel('Mutual Information (nats)', fontsize=12)
+        ax.set_title('Mutual Information with Is_Sale', fontsize=14, fontweight='bold')
         plt.tight_layout()
-        fig.savefig(os.path.join(OUT, "feature_importance.png"), dpi=150)
+        fig.savefig(os.path.join(OUT, "mutual_information.png"), dpi=200, bbox_inches='tight')
         plt.close()
-        print("  → saved feature_importance.png")
+        print("  → saved mutual_information.png")
+
+        # Plot: Correlation matrix (top 25 features by abs correlation with Quantity)
+        non_item_cols = [c for c in numeric_cols if not c.startswith('Item_')]
+        top_corr = sale_only[non_item_cols + ['Quantity']].corr()['Quantity'].drop('Quantity')
+        top_25 = top_corr.abs().sort_values(ascending=False).head(25).index.tolist()
+        corr_mat = analysis[top_25].corr()
+        fig, ax = plt.subplots(figsize=(14, 12))
+        mask = np.triu(np.ones_like(corr_mat, dtype=bool), k=1)
+        sns.heatmap(corr_mat, mask=mask, annot=True, fmt='.2f', cmap='RdBu_r',
+                    center=0, vmin=-1, vmax=1, square=True, linewidths=0.5,
+                    cbar_kws={'shrink': 0.6, 'label': 'Pearson r'}, ax=ax)
+        ax.set_title('Feature Correlation Matrix (Top 25 Features)', fontsize=14, fontweight='bold')
+        plt.tight_layout()
+        fig.savefig(os.path.join(OUT, "correlation_matrix.png"), dpi=200, bbox_inches='tight')
+        plt.close()
+        print("  → saved correlation_matrix.png")
     except ImportError:
         print("  sklearn not available, skipping MI")
 
