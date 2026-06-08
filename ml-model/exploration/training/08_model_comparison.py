@@ -33,7 +33,7 @@ from inference.forecast import (
     FRI_SAT_UPWEIGHT,
 )
 from config import MODELS_DIR
-from metrics import compute_item_metrics, generate_abc_analysis, print_abc_report
+from metrics import compute_item_metrics, generate_abc_analysis
 
 SEP = "=" * 70
 MIN_NONZERO_DAYS = 60
@@ -48,9 +48,7 @@ def _load_quantile_params() -> dict:
         with open(tuning_file) as f:
             tuned = json.load(f)
         params = tuned.get("params", {})
-        print(f"Loaded tuned params from {tuning_file}")
         return params
-    print("No tuning file found, using defaults")
     return {
         "n_estimators": 200,
         "max_depth": 3,
@@ -69,17 +67,14 @@ def _load_rf_params() -> dict:
         with open(tuning_file) as f:
             data = json.load(f)
         params = data.get("params", data)
-        print(f"Loaded RF params from {tuning_file}")
         params["random_state"] = 42
         params["n_jobs"] = -1
         return params
-    print("No RF tuning file, using defaults")
     return {"n_estimators": 200, "max_depth": 7, "random_state": 42, "n_jobs": -1}
 
 
 def load_and_build_features() -> pd.DataFrame:
     df_all = load_all_items()
-    print(f"\nBuilding features for {df_all['Item'].nunique()} items...")
 
     all_feat = []
     items = sorted(df_all["Item"].unique())
@@ -93,7 +88,6 @@ def load_and_build_features() -> pd.DataFrame:
 
     combined = pd.concat(all_feat, ignore_index=True)
     combined = combined[combined["Quantity_Sold"] > 0].copy()
-    print(f"Feature matrix: {len(combined):,} rows, {combined['Item'].nunique()} items")
     return combined
 
 
@@ -133,9 +127,13 @@ def train_xgboost_fold(train: pd.DataFrame, val: pd.DataFrame, features: list) -
 
 
 def train_rf_fold(train: pd.DataFrame, val: pd.DataFrame, features: list) -> dict:
+    sample_weight = np.ones(len(train))
+    fri_sat = train["DOW"].isin([4, 5])
+    sample_weight[fri_sat] = FRI_SAT_UPWEIGHT
+
     params = _load_rf_params()
     model = RandomForestRegressor(**params)
-    model.fit(train[features], train["Quantity_Sold"])
+    model.fit(train[features], train["Quantity_Sold"], sample_weight=sample_weight)
 
     pred = np.maximum(0, model.predict(val[features]))
     return {"predictions": pred, "model": model}
@@ -148,12 +146,6 @@ def run_cv(df: pd.DataFrame, features: list):
     rf_all_metrics = []
 
     for fold_idx, (train, val) in enumerate(folds):
-        print(f"\n{'='*70}")
-        print(f"FOLD {fold_idx + 1}/{N_FOLDS}")
-        print(f"Train: {train['Date'].min().date()} to {train['Date'].max().date()} ({len(train):,} rows)")
-        print(f"Val:   {val['Date'].min().date()} to {val['Date'].max().date()} ({len(val):,} rows)")
-        print(f"{'='*70}")
-
         t0 = time.time()
         xgb_result = train_xgboost_fold(train, val, features)
         xgb_time = time.time() - t0
@@ -174,12 +166,6 @@ def run_cv(df: pd.DataFrame, features: list):
 
         xgb_all_metrics.append(xgb_metrics)
         rf_all_metrics.append(rf_metrics)
-
-        print(f"\n  {'Metric':<25s} {'XGBoost':>10s} {'RF':>10s}")
-        print(f"  {'-'*50}")
-        for key in ["rmse", "mae", "r2", "wmape", "periods_within_20pct", "periods_within_50pct"]:
-            print(f"  {key:<25s} {xgb_metrics[key]:>10.2f} {rf_metrics[key]:>10.2f}")
-        print(f"  {'time (s)':<25s} {xgb_metrics['time']:>10.1f} {rf_metrics['time']:>10.1f}")
 
     print(f"\n{SEP}")
     print("CROSS-VALIDATION SUMMARY (avg across folds)")
@@ -202,14 +188,9 @@ def run_cv(df: pd.DataFrame, features: list):
 
 
 def train_final_models(df: pd.DataFrame, features: list):
-    print(f"\n{SEP}")
-    print("TRAINING FINAL MODELS ON FULL DATA")
-    print(SEP)
-
     n_val = max(1, int(len(df) * VAL_RATIO))
     train = df.iloc[:-n_val]
     val = df.iloc[-n_val:]
-    print(f"Train: {len(train):,} rows | Val: {len(val):,} rows")
 
     xgb_result = train_xgboost_fold(train, val, features)
     rf_result = train_rf_fold(train, val, features)
@@ -221,9 +202,6 @@ def train_final_models(df: pd.DataFrame, features: list):
 
     xgb_analysis = generate_abc_analysis(val_xgb)
     rf_analysis = generate_abc_analysis(val_rf)
-
-    print_abc_report(xgb_analysis, "XGBOOST QUANTILE")
-    print_abc_report(rf_analysis, "RANDOM FOREST")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -245,19 +223,12 @@ def train_final_models(df: pd.DataFrame, features: list):
     with open(OUTPUT_DIR / "comparison_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2, default=str)
 
-    print(f"\nModels saved to: {OUTPUT_DIR}")
     return xgb_analysis, rf_analysis
 
 
 def main():
-    print(SEP)
-    print("MODEL COMPARISON: XGBoost (quantile) vs Random Forest")
-    print(f"Features: {len(FEATURE_COLS)} | Quantile: {QUANTILE} | Folds: {N_FOLDS}")
-    print(SEP)
-
     df = load_and_build_features()
     features = [f for f in FEATURE_COLS if f in df.columns]
-    print(f"Using {len(features)} features: {features}")
 
     xgb_cv, rf_cv = run_cv(df, features)
     train_final_models(df, features)

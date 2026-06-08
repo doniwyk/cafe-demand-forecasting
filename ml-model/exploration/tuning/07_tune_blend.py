@@ -40,7 +40,6 @@ from inference.forecast import (
 from config import MODELS_DIR
 
 TUNING_DIR = MODELS_DIR / "exploration" / "tuning"
-SEP = "=" * 70
 
 TEST_PERIODS = [
     ("2026-03-15", "2026-03-21"),
@@ -193,39 +192,21 @@ def _precompute_predictions(df_all: pd.DataFrame) -> list:
                     "dow_stats": ds_map[dow],
                 })
 
-        print(f"  Period {p_idx+1}: {len(all_preds)} predictions so far")
-
     return all_preds
 
 
 def main():
-    print(SEP)
-    print("BLEND WEIGHT TUNING (Sequential Search)")
-    print(f"Quantile: {QUANTILE} | Metric: pinball loss + MAE")
-    print(f"Test periods: {len(TEST_PERIODS)}")
-    print(SEP)
-
-    print("\nLoading data and pre-computing predictions...")
     df_all = load_all_items()
     all_preds = _precompute_predictions(df_all)
-    print(f"\nTotal predictions: {len(all_preds)}")
 
     best = _default_config()
-
-    print(f"\n{SEP}")
-    print("SEQUENTIAL GRID SEARCH")
-    print(SEP)
 
     baseline_cfg = best.copy()
     baseline_m = evaluate_config(all_preds,
         baseline_cfg["weekend_baseline"], baseline_cfg["weekend_model_w"],
         baseline_cfg["weekday_model_w"], baseline_cfg["rf_weight"])
-    print(f"\nBaseline: {baseline_cfg}")
-    print(f"  pinball={baseline_m['pinball']:.4f} MAE={baseline_m['mae']:.2f} "
-          f"FriSatMAE={baseline_m['fri_sat_mae']:.2f} bias={baseline_m['bias']:+.2f}")
 
     for param, values in SEARCH_SPACE.items():
-        print(f"\nTuning {param}: {values}")
         best_loss = float("inf")
         best_val = best[param]
 
@@ -236,29 +217,15 @@ def main():
                 cfg["weekend_baseline"], cfg["weekend_model_w"],
                 cfg["weekday_model_w"], cfg["rf_weight"],
             )
-            marker = " <- best" if m["pinball"] < best_loss else ""
-            print(f"  {param}={str(val):>5s}  pinball={m['pinball']:.4f} MAE={m['mae']:.2f} "
-                  f"FriSatMAE={m['fri_sat_mae']:.2f} bias={m['bias']:+.2f}{marker}")
             if m["pinball"] < best_loss:
                 best_loss = m["pinball"]
                 best_val = val
 
         best[param] = best_val
-        print(f"  => Best {param}={best_val} (pinball={best_loss:.4f})")
 
     final_m = evaluate_config(all_preds,
         best["weekend_baseline"], best["weekend_model_w"],
         best["weekday_model_w"], best["rf_weight"])
-
-    print(f"\n{SEP}")
-    print("FINAL TUNED BLEND CONFIG")
-    print(SEP)
-    for k, v in best.items():
-        print(f"  {k}: {v}")
-    print(f"\n  pinball={final_m['pinball']:.4f} MAE={final_m['mae']:.2f} "
-          f"FriSatMAE={final_m['fri_sat_mae']:.2f} bias={final_m['bias']:+.2f}")
-    print(f"\n  vs baseline: pinball {baseline_m['pinball']:.4f} -> {final_m['pinball']:.4f} "
-          f"({(baseline_m['pinball'] - final_m['pinball']) / baseline_m['pinball'] * 100:+.1f}%)")
 
     output = {
         "best_config": best,
@@ -272,7 +239,10 @@ def main():
     TUNING_DIR.mkdir(parents=True, exist_ok=True)
     with open(TUNING_DIR / "blend_best_params.json", "w") as f:
         json.dump(output, f, indent=2)
-    print(f"\nSaved to: {TUNING_DIR / 'blend_best_params.json'}")
+
+    print(f"Blend tune done: {best} | pinball {baseline_m['pinball']:.4f} -> {final_m['pinball']:.4f} "
+          f"({(baseline_m['pinball'] - final_m['pinball']) / baseline_m['pinball'] * 100:+.1f}%) "
+          f"-> saved {TUNING_DIR / 'blend_best_params.json'}")
 
     return best
 

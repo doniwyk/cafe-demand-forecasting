@@ -108,27 +108,21 @@ def tune_sequential(train: pd.DataFrame, val_df: pd.DataFrame, features: list) -
     print()
 
     for param, values in search_space.items():
-        print(f"Tuning {param}: testing {values}")
         best_loss = float("inf")
         best_val = best[param]
-        results = []
 
         for v in values:
             params = best.copy()
             params[param] = v
             try:
                 loss = eval_params(params, train, val_df, features)
-                results.append((v, loss))
-                marker = " <- best" if loss < best_loss else ""
-                print(f"  {param}={v:>6}  pinball={loss:.4f}{marker}")
                 if loss < best_loss:
                     best_loss = loss
                     best_val = v
-            except Exception as e:
-                print(f"  {param}={v:>6}  FAILED: {e}")
+            except Exception:
+                pass
 
         best[param] = best_val
-        print(f"  => Best {param}={best_val} (pinball={best_loss:.4f})\n")
 
     return best
 
@@ -167,26 +161,17 @@ def cross_validate_params(
         mae = float(np.abs(val["Quantity_Sold"] - pred).mean())
 
         metrics.append({"pinball": pb, "rmse": rmse, "mae": mae})
-        print(f"  Fold {i+1}: pinball={pb:.4f} | RMSE={rmse:.4f} | MAE={mae:.4f}")
 
     avg = {k: np.mean([m[k] for m in metrics]) for k in metrics[0]}
-    print(f"\n  Avg: pinball={avg['pinball']:.4f} | RMSE={avg['rmse']:.4f} | MAE={avg['mae']:.4f}")
     return avg
 
 
 def main():
-    print(SEP)
-    print(f"QUANTILE XGBOOST TUNING — {TARGET_ITEM}")
-    print(f"Objective: reg:quantileerror (q={QUANTILE})")
-    print(f"Evaluation: pinball loss")
-    print(SEP)
-
     df = load_item_data(TARGET_ITEM)
     df_feat = build_item_features(df.copy())
     features = [f for f in FEATURE_COLS if f in df_feat.columns]
 
     train, val = make_train_val(df_feat)
-    print(f"\nInitial params (before tuning):")
     baseline = {
         "objective": "reg:quantileerror",
         "quantile_alpha": QUANTILE,
@@ -194,27 +179,16 @@ def main():
         "min_child_weight": 5, "subsample": 0.8, "colsample_bytree": 0.8,
         "reg_alpha": 1.0, "reg_lambda": 2.0,
     }
-    for k, v in baseline.items():
-        print(f"  {k}: {v}")
     baseline_loss = eval_params(baseline, train, val, features)
-    print(f"\nBaseline pinball loss: {baseline_loss:.4f}")
 
-    print(f"\n{SEP}")
-    print("SEQUENTIAL GRID SEARCH")
-    print(SEP)
     best = tune_sequential(train, val, features)
 
     best_loss = eval_params(best, train, val, features)
-    print(f"\nTuned pinball loss: {best_loss:.4f}")
-    print(f"Improvement: {(baseline_loss - best_loss) / baseline_loss * 100:+.1f}%")
-
     cv_metrics = cross_validate_params(df_feat, features, best)
 
-    print(f"\n{SEP}")
-    print("FINAL TUNED PARAMETERS")
-    print(SEP)
-    for k, v in best.items():
-        print(f"  {k}: {v}")
+    print(f"XGBoost tuning complete. Pinball: {baseline_loss:.4f} -> {best_loss:.4f} ({(baseline_loss - best_loss) / baseline_loss * 100:+.1f}%)")
+    print(f"CV: pinball={cv_metrics['pinball']:.4f} RMSE={cv_metrics['rmse']:.2f} MAE={cv_metrics['mae']:.2f}")
+    print(f"Best params: {best}")
 
     TUNING_DIR.mkdir(parents=True, exist_ok=True)
     output = {

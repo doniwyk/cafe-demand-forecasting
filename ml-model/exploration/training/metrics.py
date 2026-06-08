@@ -118,10 +118,10 @@ def print_abc_report(analysis: Dict[str, Any], model_name: str):
     print("\n" + "=" * 90)
     print(f"{model_name} MODEL PERFORMANCE")
     print("=" * 90)
-    print(f"Global R2              : {gm['r2']:.4f}")
-    print(f"Global wMAPE           : {gm['wmape']:.2f}%")
-    print(f"Global MAE             : {gm['mae']:.2f}")
     print(f"Global RMSE            : {gm['rmse']:.2f}")
+    print(f"Global MAE             : {gm['mae']:.2f}")
+    print(f"Global R²              : {gm['r2']:.4f}")
+    print(f"Global wMAPE           : {gm['wmape']:.1f}%")
     print(f"Median Period Accuracy : {gm['median_period_accuracy']:.1f}%")
     print(f"Days within ±20%       : {gm['periods_within_20pct']:.1f}%")
     print(f"Days within ±50%       : {gm['periods_within_50pct']:.1f}%")
@@ -134,7 +134,8 @@ def print_abc_report(analysis: Dict[str, Any], model_name: str):
         cm = analysis["class_metrics"][c]
         print(
             f"{c}-Class | Items: {cm['n_items']:2d} | "
-            f"wMAPE: {cm['wmape']:5.1f}%"
+            f"RMSE: {cm['rmse']:>5.2f} | MAE: {cm['mae']:>4.2f} | "
+            f"R²: {cm['r2']:>5.3f} | wMAPE: {cm['wmape']:>5.1f}%"
         )
 
     print("\nTOP 10 CLASS A ITEMS")

@@ -1,0 +1,24 @@
+{
+  "item": "Kopi Susu Husgendam Ice",
+  "objective": "mse",
+  "params": {
+    "n_estimators": 300,
+    "max_depth": 7,
+    "min_samples_split": 10,
+    "min_samples_leaf": 1,
+    "max_features": 1.0,
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "baseline_cv_mse": 2.81,
+  "tuned_cv_mse": 2.31,
+  "features": [
+    "Lag_7", "Lag_14", "Lag_28",
+    "Roll_Mean_7", "Roll_Mean_28",
+    "EWMA_7", "EWMA_28", "Trend_7",
+    "Momentum",
+    "DOW", "Is_Weekend",
+    "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median"
+  ],
+  "fri_sat_upweight": 3.0
+}

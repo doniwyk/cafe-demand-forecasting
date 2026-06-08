@@ -33,7 +33,7 @@ The data comes from a cafe POS system (PostgreSQL `cafe_forecasting` at `localho
 ### 1a. Data Exploration
 
 ```bash
-python exploration/eda/data_exploration.py
+python exploration/eda/01_data_exploration.py
 ```
 
 **What it does:** Loads raw sales from the POS database, filters to paid orders only, then runs 6 analytical sections.
@@ -71,7 +71,7 @@ python exploration/eda/data_exploration.py
 ### 1b. Rebranding Effect
 
 ```bash
-python exploration/eda/rebranding_effect.py
+python exploration/eda/03_rebranding_effect.py
 ```
 
 **What it does:** The cafe was rebranded on May 1, 2025. This script runs 6 statistical analyses to determine if pre-rebrand data is usable for training.
@@ -123,7 +123,7 @@ The Cohen's d of 1.675 means the pre- and post-rebrand distributions barely over
 ## Step 2: Feature Analysis — Which Features Carry Signal
 
 ```bash
-python exploration/features/feature_analysis.py
+python exploration/features/04_feature_analysis.py
 ```
 
 With EDA telling us to use post-rebrand data only and that DOW patterns matter, we now need to decide **which features to feed the model**. We start with 23 candidate features and use evidence to narrow down.
@@ -316,7 +316,7 @@ With features decided, we tune the model and blend hyperparameters. Every parame
 ### 3a. Quantile XGBoost Tuning
 
 ```bash
-python exploration/tuning/tune_quantile.py
+python exploration/tuning/05_tune_quantile.py
 ```
 
 **Why quantile regression?** Standard MSE/Huber loss regresses to the mean. For supply planning, underpredicting is worse than overpredicting (stockout vs waste). Quantile regression at q=0.75 pushes predictions toward the upper range — the model predicts "what quantity will be exceeded only 25% of the time."
@@ -376,7 +376,7 @@ Tuned separately with same methodology:
 ### 3c. Blend Weight Tuning
 
 ```bash
-python exploration/tuning/tune_blend.py
+python exploration/tuning/07_tune_blend.py
 ```
 
 The forecast is a blend of model prediction + DOW statistical baseline. We need to find:
@@ -429,7 +429,7 @@ Pinball loss improved 6.4% from baseline (0.659 → 0.617).
 ## Step 4: Model Comparison — XGBoost vs Random Forest
 
 ```bash
-python exploration/training/model_comparison.py
+python exploration/training/08_model_comparison.py
 ```
 
 With features and hyperparams decided, we compare XGB and RF on equal footing.
@@ -528,7 +528,7 @@ For supply planning, we use **XGB-only** because:
 ## Step 5: Evaluation — Backtest on Historical Data
 
 ```bash
-python exploration/inference/backtest.py
+python exploration/inference/10_backtest.py
 ```
 
 Before deploying, we validate the entire pipeline on data the model hasn't seen.
@@ -646,7 +646,7 @@ exploration/
 ├── evaluation/                # Legacy: initial model evaluation (superseded)
 │   └── evaluate.py            #   Expanding-window CV + holdout eval for old global/item models
 │                                #   Depends on deleted training/data.py and old pickle models
-│                                #   Superseded by inference/backtest.py
+│                                #   Superseded by inference/10_backtest.py
 ├── figures/                   # Generated plots (see each step for descriptions)
 │   ├── data_exploration/      #   6 plots: daily sales, monthly, DOW, top items, qty distribution
 │   ├── rebranding_effect/     #   4 plots: daily break, DOW shift, item impact, zero inflation
@@ -844,7 +844,7 @@ The targets assume restaurant-scale demand (50+ units/day). At our scale (avg 2.
 
 ## Legacy: `evaluation/evaluate.py`
 
-This was the initial evaluation module, written before the current pipeline. It is **superseded** by `inference/backtest.py`.
+This was the initial evaluation module, written before the current pipeline. It is **superseded** by `inference/10_backtest.py`.
 
 **What it did:**
 - Evaluated old global + per-item pickle models (XGBoost and RF) using expanding-window CV (3 folds) and a true 20% holdout set
@@ -859,7 +859,7 @@ This was the initial evaluation module, written before the current pipeline. It 
 - Had no DOW baseline blending
 - Evaluated on rounded predictions, which inflated metrics
 
-The current pipeline achieves better results with fewer features (16 vs 23), quantile regression (q=0.75 instead of MSE), and DOW baseline blending — all validated by `inference/backtest.py`.
+The current pipeline achieves better results with fewer features (16 vs 23), quantile regression (q=0.75 instead of MSE), and DOW baseline blending — all validated by `inference/10_backtest.py`.
 
 ---
 
@@ -870,27 +870,27 @@ The current pipeline achieves better results with fewer features (16 vs 23), qua
 conda activate cafe
 
 # Step 1: EDA
-python exploration/eda/data_exploration.py
-python exploration/eda/rebranding_effect.py
+python exploration/eda/01_data_exploration.py
+python exploration/eda/03_rebranding_effect.py
 
 # Step 2: Feature analysis
-python exploration/features/feature_analysis.py
+python exploration/features/04_feature_analysis.py
 
 # Step 3: Tuning
-python exploration/tuning/tune_quantile.py
-python exploration/tuning/tune_blend.py
+python exploration/tuning/05_tune_quantile.py
+python exploration/tuning/07_tune_blend.py
 
 # Step 4: Model comparison
-python exploration/training/model_comparison.py
+python exploration/training/08_model_comparison.py
 
 # Step 5: Evaluation
-python exploration/inference/backtest.py
+python exploration/inference/10_backtest.py
 
 # Step 6: Deploy
 python exploration/inference/forecast.py
 
 # Thesis defense evidence (all metrics + case studies)
-python exploration/evaluation/defense_evidence.py
+python exploration/evaluation/09_defense_evidence.py
 ```
 
 Requires: `cafe_db` PostgreSQL running on `localhost:5433` with `cafe_forecasting` database.

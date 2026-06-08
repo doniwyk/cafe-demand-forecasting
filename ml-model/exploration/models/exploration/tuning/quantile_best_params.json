@@ -1,0 +1,31 @@
+{
+  "item": "Kopi Susu Husgendam Ice",
+  "quantile": 0.75,
+  "objective": "reg:quantileerror",
+  "params": {
+    "n_estimators": 200,
+    "max_depth": 3,
+    "learning_rate": 0.02,
+    "min_child_weight": 1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "reg_alpha": 1.0,
+    "reg_lambda": 1.0
+  },
+  "baseline_pinball": 1.659,
+  "tuned_pinball": 1.552,
+  "cv_metrics": {
+    "pinball": 1.312,
+    "rmse": 3.27,
+    "mae": 2.53
+  },
+  "features": [
+    "Lag_7", "Lag_14", "Lag_28",
+    "Roll_Mean_7", "Roll_Mean_28",
+    "EWMA_7", "EWMA_28", "Trend_7",
+    "Momentum",
+    "DOW", "Is_Weekend",
+    "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_Std", "DOW_Median"
+  ],
+  "fri_sat_upweight": 3.0
+}

@@ -9,7 +9,7 @@ Fri/Sat: XGB + RF average, blended with DOW_P75 baseline
 Weekdays: XGB + RF average, blended with DOW_Median baseline
 
 Backtested across 5 historical periods:
-  - Overall MAE: ~1.4 | Fri/Sat MAE: ~3.4
+  - Overall MAE: ~1.4 | Fri/Sat MAE: ~1.5
   - Slight overprediction bias is intentional for supply planning.
 """
 from __future__ import annotations
@@ -28,6 +28,7 @@ import sys
 sys.path.insert(0, str(BASE_DIR))
 
 from config import MODELS_DIR
+from inference.bom import RawMaterialProcessor
 
 CAFE_DB_URL = os.getenv(
     "CAFE_DB_URL",
@@ -71,9 +72,7 @@ def _load_xgb_params() -> dict:
             with open(XGB_TUNING_FILE) as f:
                 tuned = json.load(f)
             _load_xgb_params._cache = tuned.get("params", {})
-            print(f"Loaded XGB params from {XGB_TUNING_FILE}")
         else:
-            print("No XGB tuning file found, using defaults")
             _load_xgb_params._cache = DEFAULT_XGB_PARAMS
     return _load_xgb_params._cache
 
@@ -87,16 +86,14 @@ def _load_rf_params() -> dict:
             params["random_state"] = 42
             params["n_jobs"] = -1
             _load_rf_params._cache = params
-            print(f"Loaded RF params from {RF_TUNING_FILE}")
         else:
-            print("No RF tuning file found, using defaults")
             _load_rf_params._cache = {**DEFAULT_RF_PARAMS, "random_state": 42, "n_jobs": -1}
     return _load_rf_params._cache
 
 DEFAULT_BLEND_CONFIG = {
     "weekend_baseline": "P75",
-    "weekend_model_w": 0.3,
-    "weekday_model_w": 0.4,
+    "weekend_model_w": 0.8,
+    "weekday_model_w": 0.6,
     "rf_weight": 0.5,
 }
 
@@ -107,9 +104,7 @@ def _load_blend_config() -> dict:
             with open(BLEND_TUNING_FILE) as f:
                 tuned = json.load(f)
             _load_blend_config._cache = tuned.get("best_config", DEFAULT_BLEND_CONFIG)
-            print(f"Loaded blend config from {BLEND_TUNING_FILE}")
         else:
-            print("No blend tuning file found, using defaults")
             _load_blend_config._cache = DEFAULT_BLEND_CONFIG
     return _load_blend_config._cache
 
@@ -254,6 +249,41 @@ def train_models(df: pd.DataFrame, features: list) -> tuple[XGBRegressor, Random
     return xgb, rf
 
 
+def compute_global_dow_stats(df_all: pd.DataFrame) -> pd.DataFrame:
+    """DOW statistics pooled across ALL items as fallback baseline."""
+    df_all = df_all[df_all["Quantity_Sold"] > 0].copy()
+    if len(df_all) == 0:
+        return pd.DataFrame({"DOW": range(7)}).fillna(0)
+    cutoff = df_all["Date"].max() - pd.Timedelta(weeks=DOW_LOOKBACK_WEEKS)
+    recent = df_all[df_all["Date"] >= cutoff]
+    stats = recent.groupby(recent["Date"].dt.dayofweek)["Quantity_Sold"].agg(
+        DOW_Avg="mean",
+        DOW_P75=lambda x: x.quantile(0.75),
+        DOW_P90=lambda x: x.quantile(0.90),
+        DOW_P95=lambda x: x.quantile(0.95),
+        DOW_Std="std",
+        DOW_Median="median",
+    ).reset_index()
+    stats.columns = ["DOW", "DOW_Avg", "DOW_P75", "DOW_P90", "DOW_P95", "DOW_Std", "DOW_Median"]
+    return stats.fillna(0)
+
+
+def train_global_models(df_all: pd.DataFrame) -> tuple[XGBRegressor, RandomForestRegressor]:
+    """Train models on ALL items pooled together as fallback for low-data items."""
+    all_feat = []
+    for item in df_all["Item"].unique():
+        item_df = df_all[df_all["Item"] == item].copy()
+        if len(item_df) < 2:
+            continue
+        feat_df = build_item_features(item_df)
+        all_feat.append(feat_df)
+    pooled = pd.concat(all_feat, ignore_index=True)
+    pooled = pooled[pooled["Quantity_Sold"] > 0].copy()
+    features = [f for f in FEATURE_COLS if f in pooled.columns]
+    print(f"  Global model training: {len(pooled):,} rows from {df_all['Item'].nunique()} items")
+    return train_models(pooled, features)
+
+
 def _round_cups(value: float) -> int:
     fractional = value - int(value)
     if fractional >= 0.2:
@@ -308,7 +338,7 @@ def forecast_item(
         dow = fd.dayofweek
         baseline = _dow_baseline(dow_stats, dow, blend_cfg.get("weekend_baseline", "P75"))
 
-        blend_w = blend_cfg.get("weekend_model_w", 0.3) if dow in (4, 5) else blend_cfg.get("weekday_model_w", 0.4)
+        blend_w = blend_cfg.get("weekend_model_w", 0.8) if dow in (4, 5) else blend_cfg.get("weekday_model_w", 0.6)
         blended = blend_w * model_pred + (1 - blend_w) * baseline
 
         results.append({
@@ -327,21 +357,35 @@ def forecast_item(
     return pd.DataFrame(results)
 
 
-def forecast_single(item_name: str, df_all: pd.DataFrame | None = None, n_days: int = FORECAST_HORIZON):
+def forecast_single(
+    item_name: str,
+    df_all: pd.DataFrame | None = None,
+    n_days: int = FORECAST_HORIZON,
+    global_models: tuple[XGBRegressor, RandomForestRegressor] | None = None,
+    global_dow_stats: pd.DataFrame | None = None,
+) -> pd.DataFrame | None:
     df = load_item_data(item_name, df_all)
-    if df is None or len(df) < MIN_NONZERO_DAYS:
-        print(f"  Skipping '{item_name}': insufficient data ({len(df) if df is not None else 0} days)")
+    if df is None or len(df) == 0:
+        print(f"  Skipping '{item_name}': no data")
         return None
 
     nonzero = (df["Quantity_Sold"] > 0).sum()
-    if nonzero < MIN_NONZERO_DAYS:
+
+    if nonzero >= MIN_NONZERO_DAYS:
+        df_feat = build_item_features(df.copy())
+        features = [f for f in FEATURE_COLS if f in df_feat.columns]
+        dow_stats = compute_dow_stats(df)
+        xgb, rf = train_models(df_feat, features)
+    elif global_models is not None:
+        xgb, rf = global_models
+        features = [f for f in FEATURE_COLS]
+        dow_stats = compute_dow_stats(df)
+        if dow_stats["DOW_Avg"].sum() == 0 and global_dow_stats is not None:
+            dow_stats = global_dow_stats
+        print(f"  Using global model for '{item_name}' ({nonzero} non-zero days)")
+    else:
         print(f"  Skipping '{item_name}': only {nonzero} non-zero days")
         return None
-
-    df_feat = build_item_features(df.copy())
-    features = [f for f in FEATURE_COLS if f in df_feat.columns]
-    dow_stats = compute_dow_stats(df)
-    xgb, rf = train_models(df_feat, features)
 
     result = forecast_item(xgb, rf, dow_stats, df, features, n_days)
     result["Predicted"] = result["Predicted"].apply(_round_cups)
@@ -354,13 +398,18 @@ def forecast_all(n_days: int = FORECAST_HORIZON) -> dict[str, pd.DataFrame]:
     items = sorted(df_all["Item"].unique())
     print(f"\nForecasting {len(items)} items...")
 
+    print("Training global fallback models...")
+    global_xgb, global_rf = train_global_models(df_all)
+    global_dow = compute_global_dow_stats(df_all)
+    global_models = (global_xgb, global_rf)
+
     results = {}
     skipped = []
     for idx, item in enumerate(items):
         if (idx + 1) % 10 == 0 or idx == 0:
             print(f"  [{idx + 1}/{len(items)}] {item}")
 
-        result = forecast_single(item, df_all, n_days)
+        result = forecast_single(item, df_all, n_days, global_models, global_dow)
         if result is not None:
             results[item] = result
         else:
@@ -394,7 +443,56 @@ def print_forecast_table(results: dict[str, pd.DataFrame], top_n: int = 15):
                   f"{r['XGB']:>7.1f} {r['RF']:>7.1f} {r['Baseline']:>9.1f} {r['Predicted']:>10d}")
 
 
-def save_results(results: dict[str, pd.DataFrame]):
+def convert_forecast_to_bom(
+    results: dict[str, pd.DataFrame],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Convert forecasted item sales into raw material requirements.
+
+    Returns:
+        (daily_bom_df, aggregated_bom_df)
+        - daily_bom_df: Date, Raw_Material, Quantity_Required, Unit
+        - aggregated_bom_df: Raw_Material, Total_Required, Unit (summed across all dates)
+    """
+    all_forecasts = []
+    for item, df in results.items():
+        df_copy = df[["Date", "Predicted"]].copy()
+        df_copy["Item"] = item
+        all_forecasts.append(df_copy)
+
+    if not all_forecasts:
+        return pd.DataFrame(), pd.DataFrame()
+
+    combined = pd.concat(all_forecasts, ignore_index=True)
+
+    print(f"Converting forecasts to material requirements...")
+    processor = RawMaterialProcessor()
+    daily_bom = processor.compute_material_requirements(combined)
+
+    if daily_bom.empty:
+        return daily_bom, pd.DataFrame()
+
+    agg_bom = processor.aggregate_by_material(daily_bom)
+    return daily_bom, agg_bom
+
+
+def print_bom_summary(agg_bom: pd.DataFrame, top_n: int = 20):
+    if agg_bom.empty:
+        return
+
+    print("\n" + "=" * 80)
+    print(f"TOP {top_n} RAW MATERIAL REQUIREMENTS (aggregated across all forecast days)")
+    print("=" * 80)
+    print(f"  {'Material':<30} {'Total Qty':>12} {'Unit':<10}")
+    print(f"  {'-'*52}")
+    for _, row in agg_bom.head(top_n).iterrows():
+        print(f"  {row['Raw_Material']:<30} {row['Total_Required']:>12.1f} {row['Unit']:<10}")
+
+
+def save_results(
+    results: dict[str, pd.DataFrame],
+    daily_bom: pd.DataFrame | None = None,
+    agg_bom: pd.DataFrame | None = None,
+):
     output_dir = MODELS_DIR / "inference"
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -410,6 +508,14 @@ def save_results(results: dict[str, pd.DataFrame]):
         combined.to_csv(output_dir / "forecasts.csv", index=False)
         print(f"Saved {len(combined)} forecast rows to {output_dir / 'forecasts.csv'}")
 
+    if daily_bom is not None and not daily_bom.empty:
+        daily_bom.to_csv(output_dir / "bom_daily.csv", index=False)
+        print(f"Saved {len(daily_bom)} daily BOM rows to {output_dir / 'bom_daily.csv'}")
+
+    if agg_bom is not None and not agg_bom.empty:
+        agg_bom.to_csv(output_dir / "bom_aggregated.csv", index=False)
+        print(f"Saved {len(agg_bom)} aggregated BOM rows to {output_dir / 'bom_aggregated.csv'}")
+
     metadata = {
         "generated_at": pd.Timestamp.now().isoformat(),
         "n_items": len(results),
@@ -419,6 +525,7 @@ def save_results(results: dict[str, pd.DataFrame]):
         "dow_lookback_weeks": DOW_LOOKBACK_WEEKS,
         "blend_config": _load_blend_config(),
         "features": FEATURE_COLS,
+        "n_raw_materials": len(agg_bom) if agg_bom is not None and not agg_bom.empty else 0,
     }
     with open(output_dir / "forecast_metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
@@ -426,16 +533,10 @@ def save_results(results: dict[str, pd.DataFrame]):
 
 def main():
     blend_cfg = _load_blend_config()
-    print("=" * 80)
-    print("PRODUCTION INFERENCE: All Items")
-    print(f"Quantile: {QUANTILE} | Horizon: {FORECAST_HORIZON} days | DOW lookback: {DOW_LOOKBACK_WEEKS} weeks")
-    print(f"Blend config: {blend_cfg}")
-    print("=" * 80)
-
+    print(f"Forecast: quantile={QUANTILE} horizon={FORECAST_HORIZON}d blend={blend_cfg}")
     results = forecast_all()
-    print_forecast_table(results)
-    save_results(results)
-
+    daily_bom, agg_bom = convert_forecast_to_bom(results)
+    save_results(results, daily_bom, agg_bom)
     return results
 
 

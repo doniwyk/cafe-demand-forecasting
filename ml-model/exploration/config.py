@@ -4,6 +4,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 PROCESSED_DIR = DATA_DIR / "processed"
+RAW_DIR = DATA_DIR / "raw"
+BOM_DIR = RAW_DIR / "bom"
+MENU_BOM_PATH = BOM_DIR / "menu_bom.csv"
+CONDIMENT_BOM_PATH = BOM_DIR / "condiment_bom.csv"
 SALES_FORECASTING_DIR = PROCESSED_DIR / "sales_forecasting"
 MODELS_DIR = PROJECT_ROOT / "models"
 
