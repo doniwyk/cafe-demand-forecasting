@@ -78,20 +78,6 @@ def add_temporal_features(full):
 # ---------------------------------------------------------------------------
 # FEATURE GROUP 2: Item lifecycle & recency
 # ---------------------------------------------------------------------------
-def add_item_identity(full):
-    # Item one-hot encoding
-    item_dummies = pd.get_dummies(full["Item"], prefix="Item")
-    for col in item_dummies.columns:
-        full[col] = item_dummies[col].astype(int)
-
-    # Category dummy
-    full["Is_Beverage"] = (full["Category"] == "beverage").astype(int)
-    full["Is_Food"] = (full["Category"] == "food").astype(int)
-
-    print(f"  Added {item_dummies.shape[1]} item dummies + category flags")
-    return full
-
-
 def add_lifecycle_features(full):
     """Days since first sale, item age, total historical rank."""
     # First sale date per item
@@ -415,6 +401,41 @@ def tree_feature_importance(full, binary_features, reg_features):
 
 
 # ---------------------------------------------------------------------------
+# FEATURE SELECTION
+# ---------------------------------------------------------------------------
+# Feature groups and their ablation impact (Δ MAE from 8-window backtest):
+#
+#   Recency        +0.410  ████████████████████████████████████████
+#   Temporal       +0.076  ████████
+#   CrossItem      +0.033  ████
+#   Lags           +0.025  ███
+#   ─────────────────────  threshold Δ > 0.02 ─────────────────────
+#   Lifecycle      +0.017  ██          ← dropped
+#   Rolling        +0.013  █           ← dropped
+#   DOW_Baselines  +0.026* *8-window backtest confirms help despite
+#                           misleading single-split (Δ=-0.029)
+#
+# Groups kept: Recency, Temporal, CrossItem, Lags, DOW_Baselines = 31 features.
+# Threshold rationale: the gap between Lags (+0.025) and Lifecycle (+0.017)
+# is the only meaningful structural break in the sorted Δ distribution.
+
+ABLATION_GROUPS = {
+    "Recency":      ["Days_Since_Last_Sale", "Sales_Last_7D"],
+    "Temporal":     ["DOW", "Is_Weekend", "Month", "Year", "WeekOfYear", "DayOfMonth",
+                     "Quarter", "MonthStart", "MonthEnd", "Is_Holiday_Season",
+                     "WeekOfMonth", "DaysFromStart", "DOW_Sin", "DOW_Cos",
+                     "Month_Sin", "Month_Cos"],
+    "CrossItem":    ["Day_Total_Qty", "Day_Total_Items_Sold", "Day_Total_Beverage",
+                     "Day_Total_Food", "Day_Total_Qty_7D"],
+    "Lags":         ["Lag_1", "Lag_7", "Lag_14", "Lag_28"],
+    "DOW_Baselines": ["DOW_Avg", "DOW_Median", "DOW_P75", "DOW_N_Samples"],
+}
+# Dropped: Lifecycle (Δ=+0.017), Rolling (Δ=+0.013)
+
+SELECTED_FEATURES = [f for group in ABLATION_GROUPS.values() for f in group]
+
+
+# ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
 def main():
@@ -441,32 +462,15 @@ def main():
     full = add_rolling_features(full)
     full = add_dow_baselines(full)
     full = add_cross_item_features(full)
-    full = add_item_identity(full)
 
-    # Define feature sets
-    item_dummy_cols = [c for c in full.columns
-                       if c.startswith("Item_") and c not in ("Item_Rank", "Item_Rank_Pct")]
-    binary_features = [
-        "DOW", "Is_Weekend", "Month", "Year", "WeekOfYear", "DayOfMonth", "Quarter",
-        "MonthStart", "MonthEnd", "Is_Holiday_Season", "WeekOfMonth", "DaysFromStart",
-        "DOW_Sin", "DOW_Cos", "Month_Sin", "Month_Cos",
-        "Days_Since_First_Sale", "Item_Rank", "Item_Rank_Pct",
-        "Days_Since_Last_Sale", "Sales_Last_7D",
-        "Roll_Mean_7", "Roll_Mean_14", "Roll_Mean_28", "Roll_Std_7",
-        "EWMA_7", "EWMA_28",
-        "Lag_1", "Lag_7", "Lag_14", "Lag_28",
-        "Trend_7_28", "WoW_Change",
-        "DOW_Avg", "DOW_Median", "DOW_P75", "DOW_N_Samples",
-        "Day_Total_Qty", "Day_Total_Items_Sold", "Day_Total_Beverage", "Day_Total_Food",
-        "Day_Total_Qty_7D",
-        "Is_Beverage", "Is_Food",
-    ] + item_dummy_cols
+    binary_features = SELECTED_FEATURES
+    regression_features = binary_features
 
-    regression_features = binary_features  # same features for both stages
-
-    print(f"\nTotal features: {len(binary_features)} ({len(item_dummy_cols)} item dummies)")
-    print(f"Binary target features: {len(binary_features)}")
-    print(f"Regression features: {len(regression_features)}")
+    print(f"\nFeature selection driven by ablation (Δ MAE > 0.02 threshold):")
+    print(f"  Kept:   {len(binary_features)} features from {len(ABLATION_GROUPS)} groups")
+    dropped = ["Lifecycle (3)", "Rolling (8)"]
+    print(f"  Dropped: {', '.join(dropped)} — below Δ>0.02 threshold")
+    print(f"  Removed earlier: 61 item dummies + 2 category flags — no predictive value")
 
     # Analyze
     sale_corr, qty_corr = analyze_features(full, binary_features)

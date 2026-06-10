@@ -37,17 +37,11 @@ def get_feature_cols(full):
     temporal = ["DOW","Is_Weekend","Month","Year","WeekOfYear","DayOfMonth","Quarter",
                 "MonthStart","MonthEnd","Is_Holiday_Season","WeekOfMonth","DaysFromStart",
                 "DOW_Sin","DOW_Cos","Month_Sin","Month_Cos"]
-    lifecycle = ["Days_Since_First_Sale","Item_Rank","Item_Rank_Pct"]
     recency = ["Days_Since_Last_Sale","Sales_Last_7D"]
-    rolling = ["Roll_Mean_7","Roll_Mean_14","Roll_Mean_28","Roll_Std_7",
-               "EWMA_7","EWMA_28","Trend_7_28","WoW_Change"]
     lags = ["Lag_1","Lag_7","Lag_14","Lag_28"]
     cross = ["Day_Total_Qty","Day_Total_Items_Sold","Day_Total_Beverage",
              "Day_Total_Food","Day_Total_Qty_7D"]
-    cat = ["Is_Beverage","Is_Food"]
-    item_d = [c for c in full.columns if c.startswith("Item_")
-              and c not in ("Item_Rank","Item_Rank_Pct") and ".1" not in c]
-    feats = temporal + lifecycle + recency + rolling + lags + cross + cat + item_d
+    feats = temporal + recency + lags + cross
     return [c for c in feats if c in full.columns]
 
 

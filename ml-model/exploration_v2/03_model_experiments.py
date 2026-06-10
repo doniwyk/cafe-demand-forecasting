@@ -55,25 +55,22 @@ def load_feature_matrix():
 
 
 def get_feature_columns(full):
-    """Features that are numeric and not target/ID."""
-    item_dummies = [c for c in full.columns if c.startswith("Item_") and c not in (
-        "Item_Rank", "Item_Rank_Pct") and ".1" not in c]
+    """
+    Features are selected by ablation: Δ MAE > 0.02 threshold.
+    Groups: Recency, Temporal, CrossItem, Lags, DOW_Baselines = 31 features.
+    Dropped: Lifecycle (Δ=+0.017), Rolling (Δ=+0.013).
+    """
     temporal = ["DOW", "Is_Weekend", "Month", "Year", "WeekOfYear", "DayOfMonth",
                 "Quarter", "MonthStart", "MonthEnd", "Is_Holiday_Season",
                 "WeekOfMonth", "DaysFromStart", "DOW_Sin", "DOW_Cos",
                 "Month_Sin", "Month_Cos"]
-    lifecycle = ["Days_Since_First_Sale", "Item_Rank", "Item_Rank_Pct"]
     recency = ["Days_Since_Last_Sale", "Sales_Last_7D"]
-    rolling = ["Roll_Mean_7", "Roll_Mean_14", "Roll_Mean_28", "Roll_Std_7",
-               "EWMA_7", "EWMA_28", "Trend_7_28", "WoW_Change"]
     lags = ["Lag_1", "Lag_7", "Lag_14", "Lag_28"]
     dow_baselines = ["DOW_Avg", "DOW_Median", "DOW_P75", "DOW_N_Samples"]
     cross = ["Day_Total_Qty", "Day_Total_Items_Sold", "Day_Total_Beverage",
              "Day_Total_Food", "Day_Total_Qty_7D"]
-    cat_flags = ["Is_Beverage", "Is_Food"]
 
-    all_feats = (temporal + lifecycle + recency + rolling + lags +
-                 dow_baselines + cross + cat_flags + item_dummies)
+    all_feats = temporal + recency + lags + dow_baselines + cross
     available = list(dict.fromkeys([c for c in all_feats if c in full.columns]))
     return available
 
@@ -467,23 +464,19 @@ def run_model_comparison(full, feature_cols):
 # FEATURE ABLATION
 # ---------------------------------------------------------------------------
 def run_feature_ablation(full, feature_cols):
-    """Remove feature groups one at a time to measure contribution."""
-    print("\n=== FEATURE GROUP ABLATION ===")
+    """Run feature ablation for both XGBoost and Random Forest."""
+    print("\n=== FEATURE GROUP ABLATION (XGBoost + RF) ===")
 
     groups = {
         "Temporal": ["DOW", "Is_Weekend", "Month", "Year", "WeekOfYear", "DayOfMonth",
                      "Quarter", "MonthStart", "MonthEnd", "Is_Holiday_Season",
                      "WeekOfMonth", "DaysFromStart", "DOW_Sin", "DOW_Cos",
                      "Month_Sin", "Month_Cos"],
-        "Lifecycle": ["Days_Since_First_Sale", "Item_Rank", "Item_Rank_Pct"],
         "Recency": ["Days_Since_Last_Sale", "Sales_Last_7D"],
-        "Rolling": ["Roll_Mean_7", "Roll_Mean_14", "Roll_Mean_28", "Roll_Std_7",
-                    "EWMA_7", "EWMA_28", "Trend_7_28", "WoW_Change"],
         "Lags": ["Lag_1", "Lag_7", "Lag_14", "Lag_28"],
         "DOW_Baselines": ["DOW_Avg", "DOW_Median", "DOW_P75", "DOW_N_Samples"],
         "CrossItem": ["Day_Total_Qty", "Day_Total_Items_Sold", "Day_Total_Beverage",
                       "Day_Total_Food", "Day_Total_Qty_7D"],
-        "ItemDummies": [c for c in feature_cols if c.startswith("Item_") or c in ("Is_Beverage", "Is_Food")],
     }
 
     available_groups = {k: [f for f in v if f in feature_cols] for k, v in groups.items()}
@@ -497,56 +490,78 @@ def run_feature_ablation(full, feature_cols):
         train = train.iloc[:len(test)]
 
     base_features = [f for f in feature_cols if f in full.columns]
-    base_model = SingleStageModel(model_type="xgb", use_poisson=False)
-    base_model.fit(train, train["Quantity"], features=base_features)
-    base_mae = mean_absolute_error(test["Quantity"], base_model.predict(test))
-    print(f"  All features ({len(base_features)}): MAE = {base_mae:.3f}")
+    X_tr = train[base_features].fillna(0)
+    y_tr = train["Quantity"]
+    X_te = test[base_features].fillna(0)
+    y_te = test["Quantity"]
 
     ablation = []
-    for group_name, group_feats in available_groups.items():
-        if not group_feats:
-            continue
-        reduced = [f for f in base_features if f not in group_feats]
-        if not reduced:
-            continue
-        model = SingleStageModel(model_type="xgb", use_poisson=False)
-        model.fit(train, train["Quantity"], features=reduced)
-        mae = mean_absolute_error(test["Quantity"], model.predict(test))
-        delta = mae - base_mae
-        ablation.append({
-            "removed_group": group_name,
-            "n_removed": len(group_feats),
-            "MAE": mae,
-            "MAE_delta": delta,
-        })
-        print(f"  Without {group_name} ({len(group_feats)} feats): MAE = {mae:.3f}  (Δ={delta:+.3f})")
+
+    for model_label, build_fn in [
+        ("XGB_Single", lambda: SingleStageModel(model_type="xgb", use_poisson=False)),
+        ("RF",         lambda: SingleStageModel(model_type="rf" if RandomForestRegressor else "rf", use_poisson=False)),
+    ]:
+        base_model = build_fn()
+        base_model.fit(train, train["Quantity"], features=base_features)
+        base_mae = mean_absolute_error(y_te, base_model.predict(test))
+        print(f"\n  [{model_label}] All features ({len(base_features)}): MAE = {base_mae:.3f}")
+
+        for group_name, group_feats in available_groups.items():
+            if not group_feats:
+                continue
+            reduced = [f for f in base_features if f not in group_feats]
+            if not reduced:
+                continue
+            model = build_fn()
+            model.fit(train, train["Quantity"], features=reduced)
+            mae = mean_absolute_error(test["Quantity"], model.predict(test))
+            delta = mae - base_mae
+            ablation.append({
+                "model": model_label,
+                "removed_group": group_name,
+                "n_removed": len(group_feats),
+                "MAE": mae,
+                "MAE_delta": delta,
+            })
+            sign = "+" if delta > 0 else ""
+            print(f"    Without {group_name} ({len(group_feats)} feats): MAE = {mae:.3f}  (Δ={sign}{delta:.3f})")
 
     abl_df = pd.DataFrame(ablation)
     abl_df.to_csv(os.path.join(TABLES_DIR, "v2_ablation.csv"), index=False)
 
-    # Plot: ablation results
-    grouped = {}
-    for _, row in abl_df.iterrows():
-        grouped[row["removed_group"]] = row["MAE_delta"]
+    # Plot: side-by-side comparison
+    pivot = abl_df.pivot(index="removed_group", columns="model", values="MAE_delta")
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    groups_plot = list(grouped.keys())
-    values_plot = list(grouped.values())
-    colors_abl = ['#E74C3C' if v > 0 else '#27AE60' for v in values_plot]
-    bars = ax.barh(groups_plot, values_plot, color=colors_abl)
-    ax.axvline(0, color='black', linewidth=0.8)
-    ax.set_xlabel('Δ MAE (cups) — positive = worse when removed', fontsize=11)
-    ax.set_title('Feature Group Ablation — Impact on Model Accuracy', fontsize=14, fontweight='bold')
-    for bar, val in zip(bars, values_plot):
-        ax.text(bar.get_width() + (0.01 if val > 0 else -0.04),
-                bar.get_y() + bar.get_height()/2,
-                f'{val:+.3f}', va='center', fontsize=10, fontweight='bold')
-    ax.invert_yaxis()
+    for ax, model_col in zip(axes, ["XGB_Single", "RF"]):
+        deltas = pivot[model_col].reindex(pivot.index[::-1])
+        colors_abl = ['#E74C3C' if v > 0 else '#27AE60' for v in deltas.values]
+        bars = ax.barh(range(len(deltas)), deltas.values, color=colors_abl)
+        ax.axvline(0, color='black', linewidth=0.8)
+        ax.set_title(f'{model_col}', fontsize=13, fontweight='bold')
+        if ax == axes[0]:
+            ax.set_ylabel('Removed Group', fontsize=11)
+        ax.set_yticklabels([])
+        for bar, val in zip(bars, deltas.values):
+            ax.text(bar.get_width() + (0.01 if val > 0 else -0.03),
+                    bar.get_y() + bar.get_height()/2,
+                    f'{val:+.3f}', va='center', fontsize=9, fontweight='bold')
+
+    axes[0].set_yticklabels(deltas.index, fontsize=9)
+    fig.supxlabel('Δ MAE (cups)', fontsize=11, y=0.02)
+    fig.suptitle('Feature Group Ablation — XGBoost vs Random Forest', fontsize=14, fontweight='bold')
     plt.tight_layout()
+
+    # Add group labels between the two plots
+    handles = [plt.Rectangle((0,0),1,1,facecolor='#E74C3C'), plt.Rectangle((0,0),1,1,facecolor='#27AE60')]
+    labels = ['Harmful when removed (kept feature is useful)', 'Helpful when removed (feature is harmful)']
+    fig.legend(handles, labels, loc='lower center', ncol=2, fontsize=9, frameon=False)
+
     fig.savefig(os.path.join(OUT, "ablation_results.png"), dpi=200, bbox_inches='tight')
     plt.close()
+    print("  → saved ablation_results.png (XGBoost vs RF comparison)")
 
-    return abl_df
+    return abl_df, pivot
 
 
 def plot_xgb_feature_importance(full, feature_cols):

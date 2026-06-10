@@ -37,14 +37,11 @@ MAX_WINDOW = 60
 TEMPORAL = ["DOW","Is_Weekend","Month","Year","WeekOfYear","DayOfMonth",
             "Quarter","MonthStart","MonthEnd","Is_Holiday_Season",
             "WeekOfMonth","DaysFromStart","DOW_Sin","DOW_Cos","Month_Sin","Month_Cos"]
-LIFECYCLE = ["Days_Since_First_Sale","Item_Rank","Item_Rank_Pct"]
 RECENCY = ["Days_Since_Last_Sale","Sales_Last_7D"]
-ROLLING = ["Roll_Mean_7","Roll_Mean_14","Roll_Mean_28","Roll_Std_7",
-           "EWMA_7","EWMA_28","Trend_7_28","WoW_Change"]
 LAGS = ["Lag_1","Lag_7","Lag_14","Lag_28"]
 CROSS = ["Day_Total_Qty","Day_Total_Items_Sold","Day_Total_Beverage",
          "Day_Total_Food","Day_Total_Qty_7D"]
-CAT = ["Is_Beverage","Is_Food"]
+
 
 # --- hus_db connection ---
 HUS_DB_URL = os.getenv("HUS_DB_URL", "postgresql://user:password@localhost:5432/hus_db")
@@ -140,24 +137,7 @@ def build_features(full):
     full["Month_Sin"] = np.sin(2*np.pi*full["Month"]/12)
     full["Month_Cos"] = np.cos(2*np.pi*full["Month"]/12)
 
-    # Lifecycle
-    fd = {}
-    for item in items:
-        s = full[(full["Item"]==item)&(full["Quantity"]>0)]
-        if len(s) > 0: fd[item] = s["Date_Only"].min()
-    full["Days_Since_First_Sale"] = full.apply(
-        lambda r: (r["Date_Only"]-fd.get(r["Item"],r["Date_Only"])).days, axis=1)
-    ranks = full.groupby("Item")["Quantity"].sum().rank(ascending=False)
-    full["Item_Rank"] = full["Item"].map(ranks)
-    full["Item_Rank_Pct"] = full["Item_Rank"]/ranks.max()
-
-    # Item dummies
-    dummies = pd.get_dummies(full["Item"], prefix="Item")
-    for c in dummies.columns: full[c] = dummies[c].astype(int)
-    full["Is_Beverage"] = (full["Category"]=="beverage").astype(int)
-    full["Is_Food"] = (full["Category"]=="food").astype(int)
-
-    # Recency + rolling + lags (per item, shift(1) no leakage)
+    # Recency + lags (per item, shift(1) no leakage)
     full = full.sort_values(["Item","Date_Only"]).reset_index(drop=True)
     for item in items:
         m = full["Item"]==item; idxs = full[m].index; q = full.loc[m,"Quantity"].values
@@ -171,22 +151,11 @@ def build_features(full):
             s7d[i] = int(sum(1 for j in range(max(0,i-7),i) if q[j]>0))
         full.loc[m,"Days_Since_Last_Sale"] = days_since
         full.loc[m,"Sales_Last_7D"] = s7d
-        # Rolling & lags
-        qs = pd.Series(q); shifted = qs.shift(1)
-        full.loc[m,"Lag_1"] = qs.shift(1).fillna(0).values
-        full.loc[m,"Lag_7"] = qs.shift(7).fillna(0).values
-        full.loc[m,"Lag_14"] = qs.shift(14).fillna(0).values
-        full.loc[m,"Lag_28"] = qs.shift(28).fillna(0).values
-        full.loc[m,"Roll_Mean_7"] = shifted.rolling(7,min_periods=1).mean().fillna(0).values
-        full.loc[m,"Roll_Mean_14"] = shifted.rolling(14,min_periods=1).mean().fillna(0).values
-        full.loc[m,"Roll_Mean_28"] = shifted.rolling(28,min_periods=1).mean().fillna(0).values
-        full.loc[m,"Roll_Std_7"] = shifted.rolling(7,min_periods=2).std().fillna(0).values
-        full.loc[m,"EWMA_7"] = shifted.ewm(span=7,min_periods=1).mean().fillna(0).values
-        full.loc[m,"EWMA_28"] = shifted.ewm(span=28,min_periods=1).mean().fillna(0).values
-        r7 = full.loc[m,"Roll_Mean_7"].values; r28 = full.loc[m,"Roll_Mean_28"].values
-        full.loc[m,"Trend_7_28"] = np.clip((r7-r28)/(r28+0.1),-5,5)
-        full.loc[m,"WoW_Change"] = np.clip(
-            (pd.Series(r7)-pd.Series(r7).shift(7))/(pd.Series(r7).shift(7)+0.1),-5,5).fillna(0).values
+        # Lags
+        full.loc[m,"Lag_1"] = pd.Series(q).shift(1).fillna(0).values
+        full.loc[m,"Lag_7"] = pd.Series(q).shift(7).fillna(0).values
+        full.loc[m,"Lag_14"] = pd.Series(q).shift(14).fillna(0).values
+        full.loc[m,"Lag_28"] = pd.Series(q).shift(28).fillna(0).values
 
     # Cross-item (shifted 1 day)
     daily = full.groupby("Date_Only").agg(
@@ -203,9 +172,7 @@ def build_features(full):
 
 
 def get_feature_cols(full):
-    item_d = [c for c in full.columns if c.startswith("Item_")
-              and c not in ("Item_Rank","Item_Rank_Pct") and ".1" not in c]
-    feats = TEMPORAL + LIFECYCLE + RECENCY + ROLLING + LAGS + CROSS + CAT + item_d
+    feats = TEMPORAL + RECENCY + LAGS + CROSS
     return [c for c in feats if c in full.columns]
 
 
@@ -237,38 +204,25 @@ class Forecaster:
             if qty[i] > 0: d = n-1-i; break
         return float(min(d,999)), int(sum(1 for q in qty[-7:] if q>0))
 
-    def _rolling(self, qty):
+    def _lags(self, qty):
         n = len(qty)
-        if n == 0: return {f:0.0 for f in ["Lag_1","Lag_7","Lag_14","Lag_28",
-            "Roll_Mean_7","Roll_Mean_14","Roll_Mean_28","Roll_Std_7",
-            "EWMA_7","EWMA_28","Trend_7_28","WoW_Change"]}
-        s = pd.Series(qty); sh = s.shift(1)
+        s = pd.Series(qty)
         return {
-            "Lag_1": float(s.iloc[-1]) if n>=1 else 0, "Lag_7": float(s.iloc[-7]) if n>=7 else 0,
-            "Lag_14": float(s.iloc[-14]) if n>=14 else 0, "Lag_28": float(s.iloc[-28]) if n>=28 else 0,
-            "Roll_Mean_7": float(sh.rolling(7,min_periods=1).mean().iloc[-1]),
-            "Roll_Mean_14": float(sh.rolling(14,min_periods=1).mean().iloc[-1]),
-            "Roll_Mean_28": float(sh.rolling(28,min_periods=1).mean().iloc[-1]),
-            "Roll_Std_7": float(sh.rolling(7,min_periods=2).std().fillna(0).iloc[-1]),
-            "EWMA_7": float(sh.ewm(span=7,min_periods=1).mean().iloc[-1]),
-            "EWMA_28": float(sh.ewm(span=28,min_periods=1).mean().iloc[-1]),
-            "Trend_7_28": np.clip((float(sh.rolling(7,min_periods=1).mean().iloc[-1]) -
-                                    float(sh.rolling(28,min_periods=1).mean().iloc[-1])) /
-                                   (float(sh.rolling(28,min_periods=1).mean().iloc[-1])+0.1), -5, 5),
-            "WoW_Change": 0.0,
+            "Lag_1": float(s.iloc[-1]) if n>=1 else 0,
+            "Lag_7": float(s.iloc[-7]) if n>=7 else 0,
+            "Lag_14": float(s.iloc[-14]) if n>=14 else 0,
+            "Lag_28": float(s.iloc[-28]) if n>=28 else 0,
         }
 
     def build(self, date, prev_day=None):
         rows = []; ts = pd.Timestamp(date)
         for item in self.items:
             m = self.meta[item]
-            qty_r = list(self.qty_history.get(item,[0.0]))   # updated — for recency
-            qty_f = list(self.frozen_qty.get(item,[0.0]))     # frozen — for rolling
+            qty_r = list(self.qty_history.get(item,[0.0]))
             dsl, s7d = self._recency(np.array(qty_r))
             dow = ts.dayofweek
-            # Weekend reset: don't penalize items absent on the slow anchor day
             if dow >= 4: dsl = 0.0; s7d = max(s7d, 1)
-            roll = self._rolling(np.array(qty_f))
+            lags = self._lags(self.frozen_qty.get(item, np.array([0.0])))
             pdv = prev_day or {}
             row = {
                 "DOW":dow, "Is_Weekend":1 if dow>=5 else 0,
@@ -280,18 +234,13 @@ class Forecaster:
                 "DaysFromStart":(ts-pd.Timestamp("2022-01-01")).days,
                 "DOW_Sin":np.sin(2*np.pi*dow/7), "DOW_Cos":np.cos(2*np.pi*dow/7),
                 "Month_Sin":np.sin(2*np.pi*ts.month/12), "Month_Cos":np.cos(2*np.pi*ts.month/12),
-                "Days_Since_First_Sale":(ts-m["first_sale_date"]).days,
-                "Item_Rank":m["rank"], "Item_Rank_Pct":m["rank_pct"],
-                "Days_Since_Last_Sale":dsl, "Sales_Last_7D":s7d, **roll,
+                "Days_Since_Last_Sale":dsl, "Sales_Last_7D":s7d, **lags,
                 "Day_Total_Qty":pdv.get("total_qty",0),
                 "Day_Total_Items_Sold":float(pdv.get("total_items",0)),
                 "Day_Total_Beverage":pdv.get("total_bev",0),
                 "Day_Total_Food":pdv.get("total_food",0),
                 "Day_Total_Qty_7D":pdv.get("total_qty_7d",0),
-                "Is_Beverage":1 if m["category"]=="beverage" else 0,
-                "Is_Food":1 if m["category"]=="food" else 0,
             }
-            for it in self.items: row[f"Item_{it}"] = 1 if it==item else 0
             rows.append(row)
         return pd.DataFrame(rows)
 
