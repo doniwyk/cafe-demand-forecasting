@@ -36,9 +36,12 @@
 }
 
 // ---------- Figure / Table Captions ----------
-#show figure.caption: it => {
-  set text(size: 8pt)
-  align(center, it)
+#show figure: it => {
+  v(0.5em)
+  align(center, text(size: 8pt)[#it.supplement #it.numbering. #it.caption.body])
+  v(0.3em)
+  it.body
+  v(0.5em)
 }
 
 // ============================================================
@@ -57,9 +60,7 @@
 // ============================================================
 #align(center)[
   #text(size: 14pt, weight: "bold")[
-    Penerapan Algoritma Machine Learning dalam\
-    Peramalan Permintaan Produk pada Coffee Shop\
-    Berbasis Data Historis Transaksi
+    Penerapan Algoritma Machine Learning dalam Peramalan Permintaan Produk pada Coffee Shop Berbasis Data Historis Transaksi
   ]
 ]
 #v(0.5em)
@@ -68,12 +69,16 @@
 // AUTHORS
 // ============================================================
 #align(center)[
-  #text(weight: "bold")[Doni Wahyu Kurniawan#super[1]]
+  #text(weight: "bold")[ Endah Septa Sintiya#super[1]]
+  #text(weight: "bold")[Yoppy Yunhasnawa#super[2]]
+  #text(weight: "bold")[Doni Wahyu Kurniawan#super[3]]
 ]
 #v(0.3em)
 #align(center)[
-  #super[1]Program Studi Teknik Informatika, Jurusan Teknologi Informasi, Politeknik Negeri Malang, Indonesia\
+  #super[1] #super[2]Program Studi Teknik Informatika, Jurusan Teknologi Informasi, #super[3]Politeknik Negeri Malang, Indonesia\
   #super[1]doniwyk\@gmail.com
+  #super[2]xxx\@xxx.xxx
+  #super[3]xxx\@xxx.xxx
 ]
 #v(1em)
 #line(length: 100%, stroke: 0.5pt)
