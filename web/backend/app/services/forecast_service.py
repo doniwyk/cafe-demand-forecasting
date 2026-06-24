@@ -261,3 +261,53 @@ async def _get_or_generate_forecast(
     result_df = await asyncio.to_thread(_run)
     _forecast_cache = result_df.copy()
     return result_df
+
+
+async def export_forecasts_csv(
+    session: AsyncSession,
+    item: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> str:
+    repo = ForecastRepository(session)
+    original_df = await repo.get_sales_dataframe()
+    if original_df.empty:
+        return "Date,Item,Predicted,Actual,Buffer,Supply\n"
+
+    df = original_df.copy()
+    df = await filter_sales_to_training_cutoff(session, df)
+    df = _resample_daily(df)
+    if df.empty:
+        return "Date,Item,Predicted,Actual,Buffer,Supply\n"
+
+    forecast_weeks = _compute_forecast_weeks(df, end_date)
+    result_df = await _get_or_generate_forecast(df, forecast_weeks)
+    result_df = _filter_forecast(result_df, start_date, end_date, item)
+
+    actual_df = original_df.copy()
+    if start_date:
+        actual_df = actual_df[actual_df["Date"] >= pd.to_datetime(start_date)]
+    if end_date:
+        actual_df = actual_df[actual_df["Date"] <= pd.to_datetime(end_date)]
+    if item:
+        actual_df = actual_df[actual_df["Item"] == item]
+
+    pred_data = result_df[["Date", "Item", "Predicted", "Error_Std", "Buffer", "Supply"]].copy()
+    actual_data = actual_df[["Date", "Item", "Quantity_Sold"]].copy()
+    merged = pd.merge(pred_data, actual_data, on=["Date", "Item"], how="outer")
+    merged["Predicted"] = merged["Predicted"].fillna(0)
+    merged["Quantity_Sold"] = merged["Quantity_Sold"].fillna(0)
+    merged["Buffer"] = merged["Buffer"].fillna(0)
+    merged["Supply"] = merged["Supply"].fillna(0)
+    merged = merged.sort_values(["Date", "Item"])
+
+    lines = ["Date,Item,Predicted,Actual,Buffer,Supply"]
+    for _, row in merged.iterrows():
+        d = str(pd.to_datetime(row["Date"]).date())
+        it = str(row["Item"])
+        pred = round(float(row["Predicted"]), 2)
+        act = round(float(row["Quantity_Sold"]), 2)
+        buf = round(float(row["Buffer"]), 2)
+        sup = round(float(row["Supply"]), 2)
+        lines.append(f"{d},{it},{pred},{act},{buf},{sup}")
+    return "\n".join(lines)

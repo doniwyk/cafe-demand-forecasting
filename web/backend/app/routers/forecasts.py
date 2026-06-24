@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_session
@@ -26,7 +27,11 @@ async def get_forecasts(
     end_date: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10000, ge=1, le=100000),
+    export: str | None = Query(None),
 ):
+    if export == "1":
+        csv_text = await forecast_service.export_forecasts_csv(session, item, start_date, end_date)
+        return PlainTextResponse(csv_text, media_type="text/csv")
     return await forecast_service.get_forecasts(session, item, start_date, end_date, page, page_size)
 
 

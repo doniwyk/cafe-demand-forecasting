@@ -1,10 +1,13 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useForecasts, useForecastSummary } from "@/features/forecasts/hooks/use-forecasts";
 import { format, parseISO, addDays } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { ItemSelector } from "@/features/forecasts/components/item-selector";
 import { ForecastChart } from "@/features/forecasts/components/forecast-chart";
 import { ForecastTable } from "@/features/forecasts/components/forecast-table";
+import { getToken } from "@/lib/request";
+import { Button } from "@/components/ui/button";
+import { DownloadIcon } from "lucide-react";
 
 export function ForecastsPage() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -100,6 +103,29 @@ export function ForecastsPage() {
     return { predicted: Math.round(pred), actual: Math.round(act), buffer: Math.round(buf) };
   }, [forecasts.data]);
 
+  const handleExportCsv = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    const params = new URLSearchParams();
+    if (selectedItem) params.set("item", selectedItem);
+    if (dateRange.from) params.set("start_date", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange.to) params.set("end_date", format(dateRange.to, "yyyy-MM-dd"));
+    params.set("export", "1");
+
+    const res = await fetch(`/api/forecasts?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const text = await res.text();
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `forecast${selectedItem ? "-" + selectedItem.replace(/\s+/g, "-") : ""}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [selectedItem, dateRange]);
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
       <ItemSelector
@@ -110,20 +136,28 @@ export function ForecastsPage() {
       />
 
       {totals && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-lg border p-4">
-            <p className="text-xs text-muted-foreground">{t("forecasts.totalPredicted")}</p>
-            <p className="text-2xl font-bold">{totals.predicted.toLocaleString()}</p>
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-lg border p-4">
+              <p className="text-xs text-muted-foreground">{t("forecasts.totalPredicted")}</p>
+              <p className="text-2xl font-bold">{totals.predicted.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <p className="text-xs text-muted-foreground">{t("forecasts.totalActual")}</p>
+              <p className="text-2xl font-bold">{totals.actual.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <p className="text-xs text-muted-foreground">{t("forecasts.totalBuffer")}</p>
+              <p className="text-2xl font-bold">{totals.buffer.toLocaleString()}</p>
+            </div>
           </div>
-          <div className="rounded-lg border p-4">
-            <p className="text-xs text-muted-foreground">{t("forecasts.totalActual")}</p>
-            <p className="text-2xl font-bold">{totals.actual.toLocaleString()}</p>
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={handleExportCsv}>
+              <DownloadIcon className="size-4" />
+              {t("common.exportCsv")}
+            </Button>
           </div>
-          <div className="rounded-lg border p-4">
-            <p className="text-xs text-muted-foreground">{t("forecasts.totalBuffer")}</p>
-            <p className="text-2xl font-bold">{totals.buffer.toLocaleString()}</p>
-          </div>
-        </div>
+        </>
       )}
 
       <ForecastChart
