@@ -25,3 +25,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+/* cache bust */
+/* v2 */

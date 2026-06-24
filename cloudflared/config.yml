@@ -1,0 +1,10 @@
+tunnel: jti-port
+credentials-file: /etc/cloudflared/credentials.json
+ingress:
+  - hostname: husgencast.doniwyk.my.id
+    service: http://frontend:3000
+  - hostname: husgencast-api.doniwyk.my.id
+    service: http://backend:8001
+  - hostname: jti-port.doniwyk.my.id
+    service: http://localhost:8082
+  - service: http_status:404
