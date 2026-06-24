@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { DataTablePagination } from "@/components/data-table-pagination";
 import { useCallback } from "react";
 import { format } from "date-fns";
+import { getToken } from "@/lib/request";
 
 interface MaterialTableProps {
   isLoading: boolean;
@@ -39,7 +40,7 @@ export function MaterialTable({
   const { t } = useTranslation();
 
   const exportCsv = useCallback(async () => {
-    const token = localStorage.getItem("access_token");
+    const token = getToken();
     const params = new URLSearchParams();
     if (dateRange.from) params.set("start_date", format(dateRange.from, "yyyy-MM-dd"));
     if (dateRange.to) params.set("end_date", format(dateRange.to, "yyyy-MM-dd"));
