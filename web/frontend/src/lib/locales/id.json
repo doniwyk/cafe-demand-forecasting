@@ -106,7 +106,10 @@
     "item": "Item",
     "date": "Tanggal",
     "dateRange": "Rentang Tanggal",
-    "selectDateRange": "Pilih rentang tanggal"
+    "selectDateRange": "Pilih rentang tanggal",
+    "totalPredicted": "Total Prediksi",
+    "totalActual": "Total Aktual",
+    "totalBuffer": "Total Buffer"
   },
   "materials": {
     "materialFilter": "Filter Material",

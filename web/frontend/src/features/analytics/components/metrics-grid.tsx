@@ -27,28 +27,18 @@ export function MetricsGrid({ metrics }: { metrics: Record<string, number> | und
     },
     {
       label: t("analytics.mae"),
-      value: metrics["mae"]?.toFixed(1) ?? "-",
+      value: metrics["mae"]?.toFixed(3) ?? "-",
       description: t("analytics.maeDesc"),
     },
     {
       label: t("analytics.rmse"),
-      value: metrics["rmse"]?.toFixed(2) ?? "-",
+      value: metrics["rmse"]?.toFixed(3) ?? "-",
       description: t("analytics.rmseDesc"),
-    },
-    {
-      label: t("analytics.periodsWithin20pct"),
-      value: `${(metrics["periods_within_20pct"] ?? 0).toFixed(1)}%`,
-      description: t("analytics.periodsWithin20pctDesc"),
-    },
-    {
-      label: t("analytics.periodsWithin50pct"),
-      value: `${(metrics["periods_within_50pct"] ?? 0).toFixed(1)}%`,
-      description: t("analytics.periodsWithin50pctDesc"),
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-2">
       {items.map((m) => (
         <div key={m.label} className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground">{m.label}</p>

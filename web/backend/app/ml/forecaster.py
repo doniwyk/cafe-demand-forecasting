@@ -69,8 +69,8 @@ class Forecaster:
                 **lags,
                 "Day_Total_Qty": cross.get("total_qty", 0.0),
                 "Day_Total_Items_Sold": cross.get("total_items", 0.0),
-                "Day_Total_Beverage": 0.0,
-                "Day_Total_Food": 0.0,
+                "Day_Total_Beverage": cross.get("total_bev", 0.0),
+                "Day_Total_Food": cross.get("total_food", 0.0),
                 "Day_Total_Qty_7D": cross.get("total_qty_7d", 0.0),
                 "Category": "unknown",
             })

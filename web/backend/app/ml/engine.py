@@ -105,12 +105,15 @@ def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12) -> pd.DataFrame:
     abc_class = _classify_abc(data)
 
     last_day = data[data["Date"] == max_date]
+    last_7 = data[data["Date"] > max_date - pd.Timedelta(days=7)]
+    dt = last_7.groupby("Date")["Quantity_Sold"].sum().values
     cross = {
         "total_qty": float(last_day["Quantity_Sold"].sum()),
         "total_items": float((last_day["Quantity_Sold"] > 0).sum()),
-        "total_qty_7d": float(last_day["Quantity_Sold"].sum()),
+        "total_bev": float(last_day[last_day["Category"] == "beverage"]["Quantity_Sold"].sum()) if "Category" in last_day.columns else 0.0,
+        "total_food": float(last_day[last_day["Category"] == "food"]["Quantity_Sold"].sum()) if "Category" in last_day.columns else 0.0,
+        "total_qty_7d": float(np.mean(dt)) if len(dt) > 0 else float(last_day["Quantity_Sold"].sum()),
     }
-    totals: list[float] = [cross["total_qty"]]
 
     predictions: list[dict] = []
     for next_date in future_dates:
@@ -120,19 +123,23 @@ def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12) -> pd.DataFrame:
         feats = [c for c in FEATURE_COLUMNS if c in Xf.columns]
         preds = np.maximum(_model.predict(Xf[feats].fillna(0)), 0)
 
+        forecaster.update(preds)
+
+        rng = np.random.default_rng(int(ts.timestamp()))
+        daily_shake = rng.normal(1.0, 0.15)
+        shaken = np.maximum(preds * daily_shake, 0)
+        sampled = np.maximum(rng.poisson(shaken), 0)
+
         for i, item in enumerate(forecaster.items):
             error_std, buffer, z = _compute_buffer(item, abc_class)
             predictions.append({
                 "Date": next_date,
                 "Item": item,
-                "Predicted": round(float(preds[i]), 2),
+                "Predicted": round(float(sampled[i]), 2),
                 "Error_Std": error_std,
                 "Buffer": buffer,
-                "Supply": round(float(preds[i]) + buffer, 1),
+                "Supply": round(float(sampled[i]) + buffer, 1),
             })
-
-        cross = forecaster.update(preds)
-        forecaster.update_cross_7d(cross, totals)
 
     result = pd.DataFrame(predictions)
     print(f"[xgboost] Recursive forecast for {weeks * 7} days")

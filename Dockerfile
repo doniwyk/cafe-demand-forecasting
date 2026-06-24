@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY web/backend/requirements.txt .
 RUN grep -v "^xgboost" requirements.txt > /tmp/requirements-base.txt && \
     pip install --no-cache-dir -r /tmp/requirements-base.txt && \
-    pip install --no-cache-dir --no-deps xgboost
+    pip install --no-cache-dir --no-deps xgboost==2.1.4
 
 FROM python:3.10-slim
 

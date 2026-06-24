@@ -83,7 +83,7 @@ export function DashboardPage() {
                           </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          MAE {m.mae.toFixed(2)}
+                          MAE {m.mae.toFixed(3)}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="w-48">
@@ -93,13 +93,9 @@ export function DashboardPage() {
                           <span className="text-muted-foreground">wMAPE</span>
                           <span className="font-medium text-right">{m.wmape.toFixed(1)}%</span>
                           <span className="text-muted-foreground">MAE</span>
-                          <span className="font-medium text-right">{m.mae.toFixed(2)}</span>
+                          <span className="font-medium text-right">{m.mae.toFixed(3)}</span>
                           <span className="text-muted-foreground">RMSE</span>
-                          <span className="font-medium text-right">{m.rmse.toFixed(2)}</span>
-                          <span className="text-muted-foreground">±20%</span>
-                          <span className="font-medium text-right">{m.periods_within_20pct.toFixed(1)}%</span>
-                          <span className="text-muted-foreground">±50%</span>
-                          <span className="font-medium text-right">{m.periods_within_50pct.toFixed(1)}%</span>
+                          <span className="font-medium text-right">{m.rmse.toFixed(3)}</span>
                         </div>
                       </TooltipContent>
                     </Tooltip>

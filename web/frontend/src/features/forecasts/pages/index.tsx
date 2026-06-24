@@ -16,9 +16,10 @@ export function ForecastsPage() {
   useEffect(() => {
     if (summary.data?.latest_training_date && !dateRange.from) {
       const cutoff = parseISO(summary.data.latest_training_date);
+      const fromDate = addDays(cutoff, 1);
       setDateRange({
-        from: cutoff,
-        to: addDays(cutoff, 30),
+        from: fromDate,
+        to: addDays(fromDate, 30),
       });
     }
   }, [summary.data?.latest_training_date]);
@@ -88,6 +89,17 @@ export function ForecastsPage() {
       }));
   }, [forecasts.data]);
 
+  const totals = useMemo(() => {
+    if (!forecasts.data) return null;
+    let pred = 0, act = 0, buf = 0;
+    for (const f of forecasts.data.data) {
+      pred += f.quantity_sold;
+      act += f.actual;
+      buf += f.buffer;
+    }
+    return { predicted: Math.round(pred), actual: Math.round(act), buffer: Math.round(buf) };
+  }, [forecasts.data]);
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
       <ItemSelector
@@ -96,6 +108,23 @@ export function ForecastsPage() {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
       />
+
+      {totals && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">{t("forecasts.totalPredicted")}</p>
+            <p className="text-2xl font-bold">{totals.predicted.toLocaleString()}</p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">{t("forecasts.totalActual")}</p>
+            <p className="text-2xl font-bold">{totals.actual.toLocaleString()}</p>
+          </div>
+          <div className="rounded-lg border p-4">
+            <p className="text-xs text-muted-foreground">{t("forecasts.totalBuffer")}</p>
+            <p className="text-2xl font-bold">{totals.buffer.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
 
       <ForecastChart
         selectedItem={selectedItem}

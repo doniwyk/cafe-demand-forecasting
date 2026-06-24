@@ -106,7 +106,10 @@
     "item": "Item",
     "date": "Date",
     "dateRange": "Date Range",
-    "selectDateRange": "Select date range"
+    "selectDateRange": "Select date range",
+    "totalPredicted": "Total Predicted",
+    "totalActual": "Total Actual",
+    "totalBuffer": "Total Buffer"
   },
   "materials": {
     "materialFilter": "Material Filter",
