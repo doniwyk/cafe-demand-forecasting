@@ -53,7 +53,7 @@ async def get_material_forecast(
     )
     requirements = processor.compute_material_requirements(forecast_df)
 
-    unit_map = _build_unit_map(MENU_BOM_PATH, CONDIMENT_BOM_PATH)
+    unit_map = _build_unit_map()
 
     if material:
         requirements = requirements[
@@ -91,16 +91,18 @@ async def get_material_forecast(
 _unit_map_cache: dict[str, str] | None = None
 
 
-def _build_unit_map(menu_bom_path, condiment_bom_path) -> dict[str, str]:
+def _build_unit_map() -> dict[str, str]:
     global _unit_map_cache
     if _unit_map_cache is not None:
         return _unit_map_cache
+    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
+
     unit_map = {}
     try:
-        menu = pd.read_csv(menu_bom_path)
+        menu = pd.read_csv(MENU_BOM_PATH)
         for _, row in menu.iterrows():
             unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
-        cond = pd.read_csv(condiment_bom_path)
+        cond = pd.read_csv(CONDIMENT_BOM_PATH)
         for _, row in cond.iterrows():
             unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
     except Exception:
@@ -161,7 +163,7 @@ async def export_material_csv(
         .sort_values("Quantity_Required", ascending=False)
     )
 
-    unit_map = _build_unit_map(MENU_BOM_PATH, CONDIMENT_BOM_PATH)
+    unit_map = _build_unit_map()
     lines = ["Material,Total Quantity Required,Unit"]
     for _, row in aggregated.iterrows():
         name = str(row["Raw_Material"])

@@ -13,12 +13,19 @@ class RawMaterialProcessor:
         sales_path: str | Path | None = None,
         menu_bom_path: str | Path = "",
         condiment_bom_path: str | Path = "",
+        menu_bom_df: pd.DataFrame | None = None,
+        condiment_bom_df: pd.DataFrame | None = None,
     ):
-        self.menu_bom_path = Path(menu_bom_path)
-        self.condiment_bom_path = Path(condiment_bom_path)
-
-        self.menu_bom_df = pd.read_csv(self.menu_bom_path)
-        self.condiment_bom_df = pd.read_csv(self.condiment_bom_path)
+        if menu_bom_df is not None and condiment_bom_df is not None:
+            self.menu_bom_df = menu_bom_df.copy()
+            self.condiment_bom_df = condiment_bom_df.copy()
+            self.menu_bom_path = Path()
+            self.condiment_bom_path = Path()
+        else:
+            self.menu_bom_path = Path(menu_bom_path)
+            self.condiment_bom_path = Path(condiment_bom_path)
+            self.menu_bom_df = pd.read_csv(self.menu_bom_path)
+            self.condiment_bom_df = pd.read_csv(self.condiment_bom_path)
 
         self.menu_bom_df["Item_normalized"] = (
             self.menu_bom_df["Item"].str.strip().str.lower()
