@@ -1,16 +1,6 @@
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY web/frontend/package.json web/frontend/bun.lock ./
-RUN npm install
-
-COPY web/frontend/ ./
-RUN npm run build
-
 FROM nginx:alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY web/frontend/dist /usr/share/nginx/html
 
 RUN echo 'server { \
     listen 3000; \
