@@ -55,12 +55,20 @@ async def get_material_forecast(
     df = await filter_sales_to_training_cutoff(session, df)
 
     cached = fc_svc._forecast_cache
+    needed_weeks = max(12, ((date.today() - date(2026, 4, 1)).days // 7) + 8)
+
+    if cached is not None:
+        cached_max = cached["Date"].max()
+        if end_date and pd.Timestamp(end_date) > cached_max:
+            cached = None
+        elif (date.today() - cached_max.date()).days > 14:
+            cached = None
 
     if cached is not None:
         item_forecast_df = cached.copy()
     else:
         def _run_forecast():
-            return generate_forecast(df, weeks=12)
+            return generate_forecast(df, weeks=needed_weeks)
         item_forecast_df = await asyncio.to_thread(_run_forecast)
         fc_svc._forecast_cache = item_forecast_df.copy()
 
