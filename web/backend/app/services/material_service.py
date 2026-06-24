@@ -12,6 +12,29 @@ from app.repositories.forecast_repository import ForecastRepository
 import app.services.forecast_service as fc_svc
 
 
+async def _load_bom_from_db(session: AsyncSession) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str]]:
+    from sqlalchemy import text
+
+    result = await session.execute(text("SELECT type, item_name, ingredient, quantity, unit FROM menu_bom"))
+    menu_rows = result.fetchall()
+    menu_df = pd.DataFrame(menu_rows, columns=["Tipe", "Item", "Bahan", "Qty", "Unit"])
+
+    result = await session.execute(text(
+        "SELECT item_name, total_qty, total_unit, sub_ingredient, qty_per_unit, sub_unit FROM condiment_bom"
+    ))
+    condiment_rows = result.fetchall()
+    condiment_df = pd.DataFrame(condiment_rows, columns=[
+        "Condiment", "Condiment_Qty", "Condiment_Unit", "Sub_Ingredient", "Qty_per_condiment_unit", "Sub_Unit"
+    ])
+
+    unit_map = {}
+    for _, row in menu_df.iterrows():
+        unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
+    for _, row in condiment_df.iterrows():
+        unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
+    return menu_df, condiment_df, unit_map
+
+
 async def get_material_forecast(
     session: AsyncSession,
     material: str | None = None,
@@ -20,7 +43,6 @@ async def get_material_forecast(
     page: int = 1,
     page_size: int = 100,
 ) -> MaterialRequirementPage:
-    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
     from app.ml.raw_materials import RawMaterialProcessor
 
     repo = ForecastRepository(session)
@@ -47,13 +69,9 @@ async def get_material_forecast(
     )
     forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
 
-    processor = RawMaterialProcessor(
-        menu_bom_path=MENU_BOM_PATH,
-        condiment_bom_path=CONDIMENT_BOM_PATH,
-    )
+    menu_df, condiment_df, unit_map = await _load_bom_from_db(session)
+    processor = RawMaterialProcessor(menu_bom_df=menu_df, condiment_bom_df=condiment_df)
     requirements = processor.compute_material_requirements(forecast_df)
-
-    unit_map = _build_unit_map()
 
     if material:
         requirements = requirements[
@@ -88,36 +106,12 @@ async def get_material_forecast(
     )
 
 
-_unit_map_cache: dict[str, str] | None = None
-
-
-def _build_unit_map() -> dict[str, str]:
-    global _unit_map_cache
-    if _unit_map_cache is not None:
-        return _unit_map_cache
-    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
-
-    unit_map = {}
-    try:
-        menu = pd.read_csv(MENU_BOM_PATH)
-        for _, row in menu.iterrows():
-            unit_map[str(row["Bahan"]).strip().lower()] = str(row["Unit"]).strip()
-        cond = pd.read_csv(CONDIMENT_BOM_PATH)
-        for _, row in cond.iterrows():
-            unit_map[str(row["Sub_Ingredient"]).strip().lower()] = str(row["Sub_Unit"]).strip()
-    except Exception:
-        pass
-    _unit_map_cache = unit_map
-    return unit_map
-
-
 async def export_material_csv(
     session: AsyncSession,
     material: str | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> str:
-    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
     from app.ml.raw_materials import RawMaterialProcessor
 
     repo = ForecastRepository(session)
@@ -142,10 +136,8 @@ async def export_material_csv(
     )
     forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
 
-    processor = RawMaterialProcessor(
-        menu_bom_path=MENU_BOM_PATH,
-        condiment_bom_path=CONDIMENT_BOM_PATH,
-    )
+    menu_df, condiment_df, unit_map = await _load_bom_from_db(session)
+    processor = RawMaterialProcessor(menu_bom_df=menu_df, condiment_bom_df=condiment_df)
     requirements = processor.compute_material_requirements(forecast_df)
 
     if material:
@@ -163,7 +155,6 @@ async def export_material_csv(
         .sort_values("Quantity_Required", ascending=False)
     )
 
-    unit_map = _build_unit_map()
     lines = ["Material,Total Quantity Required,Unit"]
     for _, row in aggregated.iterrows():
         name = str(row["Raw_Material"])
