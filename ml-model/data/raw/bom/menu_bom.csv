@@ -1,0 +1,357 @@
+Tipe,Item,Bahan,Qty,Unit
+beverage,Air Mineral,Cleo Botol,1.0000,botol
+beverage,Arunika,BSJ - Gula Aren Syrup,10.0000,ml
+beverage,Arunika,Daun Mint,1.0000,gr
+beverage,Arunika,Es Batu,120.0000,gr
+beverage,Arunika,Lemon,1.0000,gr
+beverage,Arunika,Serai,1.0000,batang
+beverage,Arunika,Sprite,140.0000,ml
+beverage,Black Hot,Beans Arabika,19.0000,gr
+beverage,Black Hot,Cleo Galon,200.0000,ml
+beverage,Black Ice,Beans Arabika,19.0000,gr
+beverage,Black Ice,Cleo Galon,100.0000,ml
+beverage,Black Ice,Es Batu,120.0000,gr
+beverage,Cappucino Hot,Beans Arabika,19.0000,gr
+beverage,Cappucino Hot,Susu UHT/Freshmilk,130.0000,ml
+beverage,Cappucino Ice,BSJ - Gula Aren Syrup,25.0000,ml
+beverage,Cappucino Ice,Beans Arabika,19.0000,gr
+beverage,Cappucino Ice,Es Batu,120.0000,gr
+beverage,Cappucino Ice,Powder Coklat,1.0000,gr
+beverage,Cappucino Ice,Susu UHT/Freshmilk,130.0000,ml
+beverage,Chocolate Hot,BSJ - Simple Syrup,10.0000,ml
+beverage,Chocolate Hot,Powder Coklat,12.0000,gr
+beverage,Chocolate Hot,Susu UHT/Freshmilk,40.0000,ml
+beverage,Chocolate Ice,BSJ - Creamer,50.0000,gr
+beverage,Chocolate Ice,BSJ - Simple Syrup,20.0000,ml
+beverage,Chocolate Ice,BSJ - Whipped Cream,18.0000,gr
+beverage,Chocolate Ice,Es Batu,120.0000,gr
+beverage,Chocolate Ice,Powder Coklat,15.0000,gr
+beverage,Chocolate Ice,Susu UHT/Freshmilk,70.0000,ml
+beverage,Cookies Original,Cookies Sasa Original,1.0000,pcs
+beverage,Cookies Redvelvet,Cookies Sasa Redvelvet,1.0000,pcs
+beverage,Espresso,Beans Arabika,19.0000,gr
+beverage,Espresso,Cleo Galon,25.0000,ml
+beverage,Filter,Beans Arabika,15.0000,gr
+beverage,Filter,Cleo Galon,230.0000,ml
+beverage,Filter,Paper Filter,1.0000,pcs
+beverage,Filter - Ijen Classic Washed Hot,Cleo Galon,300.0000,ml
+beverage,Filter - Ijen Classic Washed Hot,Filter - Ijen Classic Washed,15.0000,gr
+beverage,Filter - Ijen Classic Washed Hot,Paper Filter,1.0000,pcs
+beverage,Filter - Ijen Classic Washed Ice,Cleo Galon,200.0000,ml
+beverage,Filter - Ijen Classic Washed Ice,Es Batu,120.0000,gr
+beverage,Filter - Ijen Classic Washed Ice,Filter - Ijen Classic Washed,15.0000,gr
+beverage,Filter - Ijen Classic Washed Ice,Paper Filter,1.0000,pcs
+beverage,Filter - Semendo Liberika HSN Hot,Cleo Galon,300.0000,ml
+beverage,Filter - Semendo Liberika HSN Hot,Filter - Semendo Liberika HSN,15.0000,gr
+beverage,Filter - Semendo Liberika HSN Hot,Paper Filter,1.0000,pcs
+beverage,Filter - Semendo Liberika HSN Ice,Cleo Galon,200.0000,ml
+beverage,Filter - Semendo Liberika HSN Ice,Es Batu,120.0000,gr
+beverage,Filter - Semendo Liberika HSN Ice,Filter - Semendo Liberika HSN,15.0000,gr
+beverage,Filter - Semendo Liberika HSN Ice,Paper Filter,1.0000,pcs
+beverage,Filter - Sinapeul Black Honey Hot,Cleo Galon,300.0000,ml
+beverage,Filter - Sinapeul Black Honey Hot,Filter - Sinapeul Black Honey,15.0000,gr
+beverage,Filter - Sinapeul Black Honey Hot,Paper Filter,1.0000,pcs
+beverage,Filter - Sinapeul Black Honey Ice,Cleo Galon,200.0000,ml
+beverage,Filter - Sinapeul Black Honey Ice,Es Batu,120.0000,gr
+beverage,Filter - Sinapeul Black Honey Ice,Filter - Sinapeul Black Honey,15.0000,gr
+beverage,Filter - Sinapeul Black Honey Ice,Paper Filter,1.0000,pcs
+beverage,Filter - Strawberry Twist Hot,Cleo Galon,300.0000,ml
+beverage,Filter - Strawberry Twist Hot,Filter - Strawberry Twist,15.0000,gr
+beverage,Filter - Strawberry Twist Hot,Paper Filter,1.0000,pcs
+beverage,Filter - Strawberry Twist Ice,Cleo Galon,200.0000,ml
+beverage,Filter - Strawberry Twist Ice,Es Batu,120.0000,gr
+beverage,Filter - Strawberry Twist Ice,Filter - Strawberry Twist,15.0000,gr
+beverage,Filter - Strawberry Twist Ice,Paper Filter,1.0000,pcs
+beverage,Kasmaran,Kasmaran (Botol),1.0000,botol
+beverage,Kenang,Kenang (Botol),1.0000,botol
+beverage,Kinasih,BSJ - Blend 5050 - Bersemi,30.0000,ml
+beverage,Kinasih,BSJ - Creamer,50.0000,gr
+beverage,Kinasih,BSJ - Whipped Cream,18.0000,gr
+beverage,Kinasih,Es Batu,120.0000,gr
+beverage,Kinasih,Powder Coklat,1.0000,gr
+beverage,Kinasih,Sirup Vanilla,25.0000,ml
+beverage,Kinasih,Susu UHT/Freshmilk,70.0000,ml
+beverage,Kinasih,Topping Caramel - Los Losan,3.0000,gr
+beverage,Kinasih,Topping Caramel - Los Losan,5.0000,gr
+beverage,Kirana,BSJ - Creamer,50.0000,gr
+beverage,Kirana,BSJ - Strawberry Jam,40.0000,gr
+beverage,Kirana,BSJ - Strawberry Jam,4.0000,gr
+beverage,Kirana,BSJ - Whipped Cream,18.0000,gr
+beverage,Kirana,Daun Mint,1.0000,gr
+beverage,Kirana,Es Batu,120.0000,gr
+beverage,Kirana,Powder Coklat,1.0000,gr
+beverage,Kirana,Susu UHT/Freshmilk,70.0000,ml
+beverage,Kopi Susu Husgendam Hot,BSJ - Gula Aren Syrup,13.0000,ml
+beverage,Kopi Susu Husgendam Hot,Beans Arabika,10.0000,gr
+beverage,Kopi Susu Husgendam Hot,Susu UHT Coconut,30.0000,ml
+beverage,Kopi Susu Husgendam Hot,Susu UHT/Freshmilk,100.0000,ml
+beverage,Kopi Susu Husgendam Ice,BSJ - Creamer,30.0000,gr
+beverage,Kopi Susu Husgendam Ice,BSJ - Espresso Arabika Husgendam,30.0000,gr
+beverage,Kopi Susu Husgendam Ice,BSJ - Gula Aren Syrup,20.0000,ml
+beverage,Kopi Susu Husgendam Ice,Es Batu,120.0000,gr
+beverage,Kopi Susu Husgendam Ice,Susu UHT Coconut,100.0000,ml
+beverage,Latte Hot,Beans Arabika,19.0000,gr
+beverage,Latte Hot,Susu UHT/Freshmilk,150.0000,ml
+beverage,Latte Ice,BSJ - Gula Aren Syrup,25.0000,ml
+beverage,Latte Ice,Beans Arabika,19.0000,gr
+beverage,Latte Ice,Es Batu,120.0000,gr
+beverage,Latte Ice,Powder Coklat,1.0000,gr
+beverage,Latte Ice,Susu UHT/Freshmilk,140.0000,ml
+beverage,Lemon Tea Hot,BSJ - Simple Syrup,40.0000,ml
+beverage,Lemon Tea Hot,BSJ - Teh,80.0000,gr
+beverage,Lemon Tea Hot,Cleo Galon,150.0000,ml
+beverage,Lemon Tea Hot,Lemon,4.0000,gr
+beverage,Lemon Tea Hot,Sirup Lemon,0.5000,ml
+beverage,Lemon Tea Ice,BSJ - Simple Syrup,40.0000,ml
+beverage,Lemon Tea Ice,BSJ - Teh,90.0000,gr
+beverage,Lemon Tea Ice,Cleo Galon,50.0000,ml
+beverage,Lemon Tea Ice,Es Batu,120.0000,gr
+beverage,Lemon Tea Ice,Lemon,4.0000,gr
+beverage,Lemon Tea Ice,Sirup Lemon,0.5000,ml
+beverage,Lychee Tea Hot,BSJ - Teh,80.0000,gr
+beverage,Lychee Tea Hot,Cleo Galon,130.0000,ml
+beverage,Lychee Tea Hot,Leci Kaleng,2.0000,biji
+beverage,Lychee Tea Hot,Sirup Leci,15.0000,ml
+beverage,Lychee Tea Ice,BSJ - Simple Syrup,15.0000,ml
+beverage,Lychee Tea Ice,BSJ - Teh,100.0000,gr
+beverage,Lychee Tea Ice,Cleo Galon,100.0000,ml
+beverage,Lychee Tea Ice,Daun Mint,1.0000,gr
+beverage,Lychee Tea Ice,Es Batu,120.0000,gr
+beverage,Lychee Tea Ice,Leci Kaleng,2.0000,biji
+beverage,Lychee Tea Ice,Sirup Leci,15.0000,ml
+beverage,Magic,BSJ - Espresso Arabika Double Ristrette,20.0000,gr
+beverage,Magic,Susu UHT/Freshmilk,150.0000,ml
+beverage,Matcha Hot,BSJ - Simple Syrup,10.0000,ml
+beverage,Matcha Hot,Powder Matcha,12.0000,gr
+beverage,Matcha Hot,Susu UHT/Freshmilk,140.0000,ml
+beverage,Matcha Ice,BSJ - Creamer,50.0000,gr
+beverage,Matcha Ice,BSJ - Simple Syrup,20.0000,ml
+beverage,Matcha Ice,BSJ - Whipped Cream,18.0000,gr
+beverage,Matcha Ice,Es Batu,120.0000,gr
+beverage,Matcha Ice,Powder Matcha,15.0000,gr
+beverage,Matcha Ice,Susu UHT/Freshmilk,70.0000,ml
+beverage,Memukau,BSJ - Blend 5050 - Bersemi,30.0000,ml
+beverage,Memukau,Es Batu,120.0000,gr
+beverage,Memukau,Garam,0.2000,gr
+beverage,Memukau,Gold Label,8.0000,ml
+beverage,Memukau,Gula Aren,3.0000,gr
+beverage,Memukau,Jungle Jus Apple,100.0000,ml
+beverage,Memukau,Sirup Cotton Candy,13.0000,ml
+beverage,Memukau,Sirup Vanilla,2.0000,ml
+beverage,Menawan,BSJ - Blend 5050 - Bersemi,30.0000,ml
+beverage,Menawan,BSJ - Creamer 1:3,100.0000,gr
+beverage,Menawan,Es Batu,120.0000,gr
+beverage,Menawan,Ice Cream Vanilla,55.0000,gr
+beverage,Menawan,SKM,3.0000,ml
+beverage,Menawan,Sirup Cotton Candy,15.0000,ml
+beverage,Mewangi Milk Tea Hot,BSJ - Creamer,50.0000,gr
+beverage,Mewangi Milk Tea Hot,BSJ - Gula Aren Syrup,5.0000,ml
+beverage,Mewangi Milk Tea Hot,BSJ - Teh,150.0000,gr
+beverage,Mewangi Milk Tea Hot,SKM,30.0000,ml
+beverage,Mewangi Milk Tea Ice,BSJ - Creamer,50.0000,gr
+beverage,Mewangi Milk Tea Ice,BSJ - Gula Aren Syrup,10.0000,ml
+beverage,Mewangi Milk Tea Ice,BSJ - Teh,140.0000,gr
+beverage,Mewangi Milk Tea Ice,Es Batu,120.0000,gr
+beverage,Mewangi Milk Tea Ice,SKM,30.0000,ml
+beverage,Nirmala Hot,Cinnamon Powder,1.0000,gr
+beverage,Nirmala Hot,Powder Coklat,1.0000,gr
+beverage,Nirmala Hot,SKM,7.0000,ml
+beverage,Nirmala Hot,Sirup Vanilla,7.0000,ml
+beverage,Nirmala Hot,Susu UHT/Freshmilk,150.0000,ml
+beverage,Nirmala Ice,BSJ - Creamer,50.0000,gr
+beverage,Nirmala Ice,BSJ - Whipped Cream,18.0000,gr
+beverage,Nirmala Ice,Cinnamon Powder,1.0000,gr
+beverage,Nirmala Ice,Es Batu,120.0000,gr
+beverage,Nirmala Ice,Powder Coklat,1.0000,gr
+beverage,Nirmala Ice,SKM,12.0000,ml
+beverage,Nirmala Ice,Sirup Vanilla,15.0000,ml
+beverage,Nirmala Ice,Susu UHT/Freshmilk,70.0000,ml
+beverage,Rayu,Rayu (Botol),1.0000,botol
+beverage,Taro Hot,BSJ - Simple Syrup,10.0000,ml
+beverage,Taro Hot,Powder Taro,12.0000,gr
+beverage,Taro Hot,Susu UHT/Freshmilk,140.0000,ml
+beverage,Taro Ice,BSJ - Creamer,50.0000,gr
+beverage,Taro Ice,BSJ - Simple Syrup,20.0000,ml
+beverage,Taro Ice,BSJ - Whipped Cream,18.0000,gr
+beverage,Taro Ice,Es Batu,120.0000,gr
+beverage,Taro Ice,Powder Taro,15.0000,gr
+beverage,Taro Ice,Susu UHT/Freshmilk,70.0000,ml
+beverage,Tubruk,Beans Robusta,13.0000,gr
+beverage,Tubruk,Cleo Galon,200.0000,ml
+beverage,Vietnam Drip,Beans Robusta,15.0000,gr
+beverage,Vietnam Drip,Cleo Galon,160.0000,ml
+beverage,Vietnam Drip,SKM,25.0000,ml
+food,Anindita Honey Butter,BSJ - Butter Cream,1.0000,porsi
+food,Anindita Honey Butter,BSJ - Waffle Base,2.0000,pcs
+food,Anindita Honey Butter,Gula Halus,7.0000,gr
+food,Anindita Honey Butter,Madu,15.0000,gr
+food,Basreng,BSJ - Bumbu Basreng,3.0000,gr
+food,Basreng,Basreng,9.0000,biji
+food,Basreng,Saos Tomat,30.0000,gr
+food,Candana Vanilla,BSJ - Waffle Base,2.0000,pcs
+food,Candana Vanilla,Ice Cream Vanilla,110.0000,gr
+food,Candana Vanilla,Regal,10.0000,gr
+food,Candana Vanilla,Sirup Maple,1.0000,gr
+food,Cireng,BSJ - Bumbu Cireng,20.0000,gr
+food,Cireng,Cireng,6.0000,biji
+food,Donat,Cinnamon Powder,2.0000,gr
+food,Donat,Donat,5.0000,biji
+food,Donat,Gula Halus,25.0000,gr
+food,Donat,Powder Coklat,1.0000,gr
+food,Husgendam Platter,BSJ - Ayam Slice 60gr,50.0000,gr
+food,Husgendam Platter,BSJ - Tepung Basah,20.0000,gr
+food,Husgendam Platter,BSJ - Tepung Kering,40.0000,gr
+food,Husgendam Platter,Bawang Bombay,25.0000,gr
+food,Husgendam Platter,Kentang Buah,25.0000,gr
+food,Husgendam Platter,Kentang Stik,50.0000,gr
+food,Husgendam Platter,MSG (Royco/Masako),0.5000,gr
+food,Husgendam Platter,Parsley,1.0000,gr
+food,Husgendam Platter,Parsley,4.0000,gr
+food,Husgendam Platter,Saos Sambal,25.0000,gr
+food,Husgendam Platter,Saos Tomat,25.0000,gr
+food,Husgendam Platter,Telur,1.0000,biji
+food,Husgendam Platter,Tepung Roti,25.0000,gr
+food,Kentang,Kentang Stik,120.0000,gr
+food,Kentang,MSG (Royco/Masako),1.0000,gr
+food,Kentang,Parsley,1.0000,gr
+food,Kentang,Saos Tomat,30.0000,gr
+food,Kirana Strawberry,BSJ - Strawberry Jam,20.0000,gr
+food,Kirana Strawberry,BSJ - Waffle Base,3.0000,pcs
+food,Kirana Strawberry,Buah Strawberry,5.0000,gr
+food,Kirana Strawberry,Daun Mint,1.0000,gr
+food,Kirana Strawberry,Ice Cream Vanilla,55.0000,gr
+food,Mie Goreng,BSJ - Bawang,5.0000,gr
+food,Mie Goreng,Bawang Goreng,2.0000,gr
+food,Mie Goreng,Mie Goreng,1.0000,pcs
+food,Mie Goreng,Sawi,20.0000,gr
+food,Mie Rebus,BSJ - Bawang,5.0000,gr
+food,Mie Rebus,Bawang Goreng,2.0000,gr
+food,Mie Rebus,Mie Rebus,1.0000,pcs
+food,Mie Rebus,Sawi,20.0000,gr
+food,Mie Rebus,Telur,1.0000,biji
+food,Nasi Ayam Chili Padi,Ayam Fillet,60.0000,gr
+food,Nasi Ayam Chili Padi,BSJ - Bawang,5.0000,gr
+food,Nasi Ayam Chili Padi,BSJ - Larutan Maizena,20.0000,ml
+food,Nasi Ayam Chili Padi,BSJ - Nasi,200.0000,gr
+food,Nasi Ayam Chili Padi,BSJ - Tepung Basah,50.0000,gr
+food,Nasi Ayam Chili Padi,BSJ - Tepung Kering,30.0000,gr
+food,Nasi Ayam Chili Padi,Garam,1.0000,gr
+food,Nasi Ayam Chili Padi,Lada Hitam Bubuk,1.0000,gr
+food,Nasi Ayam Chili Padi,Micin,1.0000,gr
+food,Nasi Ayam Chili Padi,Parsley,1.0000,gr
+food,Nasi Ayam Chili Padi,Pokcoy,60.0000,gr
+food,Nasi Ayam Chili Padi,Sambal Chili Padi,25.0000,gr
+food,Nasi Ayam Chili Padi,Wijen Biji - Los Losan,1.0000,gr
+food,Nasi Ayam Curry,Ayam Fillet,60.0000,gr
+food,Nasi Ayam Curry,BSJ - Bawang,5.0000,gr
+food,Nasi Ayam Curry,BSJ - Creamer,30.0000,gr
+food,Nasi Ayam Curry,BSJ - Larutan Maizena,20.0000,ml
+food,Nasi Ayam Curry,BSJ - Nasi,200.0000,gr
+food,Nasi Ayam Curry,BSJ - Sayur Curry,15.0000,gr
+food,Nasi Ayam Curry,BSJ - Tepung Basah,40.0000,gr
+food,Nasi Ayam Curry,Bubuk Curry,5.0000,gr
+food,Nasi Ayam Curry,Cleo Galon,150.0000,ml
+food,Nasi Ayam Curry,Garam,1.0000,gr
+food,Nasi Ayam Curry,Kecap Bader,20.0000,gr
+food,Nasi Ayam Curry,Micin,1.0000,gr
+food,Nasi Ayam Curry,Parsley,1.0000,gr
+food,Nasi Ayam Curry,Tepung Roti,30.0000,gr
+food,Nasi Ayam Curry,Wijen Biji - Los Losan,1.0000,gr
+food,Nasi Ayam Daun Jeruk,Ayam Fillet,60.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Daun Jeruk,10.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Nasi,200.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Sambal Bawang,10.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Tepung Basah,50.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Tepung Kering,30.0000,gr
+food,Nasi Ayam Daun Jeruk,BSJ - Timun Slice,2.0000,slice
+food,Nasi Ayam Daun Jeruk,Bawang Goreng,2.0000,gr
+food,Nasi Ayam Daun Jeruk,Mentega - Los Losan,5.0000,gr
+food,Nasi Ayam Daun Jeruk,Serundeng,20.0000,gr
+food,Nasi Ayam Mentega,Ayam Fillet,60.0000,gr
+food,Nasi Ayam Mentega,BSJ - Bawang,5.0000,gr
+food,Nasi Ayam Mentega,BSJ - Larutan Maizena,20.0000,ml
+food,Nasi Ayam Mentega,BSJ - Nasi,200.0000,gr
+food,Nasi Ayam Mentega,BSJ - Tepung Basah,50.0000,gr
+food,Nasi Ayam Mentega,BSJ - Tepung Kering,30.0000,gr
+food,Nasi Ayam Mentega,Bawang Bombay,5.0000,gr
+food,Nasi Ayam Mentega,Cabe Hijau,5.0000,gr
+food,Nasi Ayam Mentega,Cabe Merah,5.0000,gr
+food,Nasi Ayam Mentega,Gula Pasir,5.0000,gr
+food,Nasi Ayam Mentega,Kecap Bader,10.0000,gr
+food,Nasi Ayam Mentega,Mentega - Los Losan,5.0000,gr
+food,Nasi Ayam Mentega,Micin,1.0000,gr
+food,Nasi Ayam Mentega,Saos Mentega,5.0000,gr
+food,Nasi Ayam Mentega,Wijen Biji - Los Losan,1.0000,gr
+food,Nasi Gila,Ayam Fillet,40.0000,gr
+food,Nasi Gila,BSJ - Bawang,5.0000,gr
+food,Nasi Gila,BSJ - Larutan Maizena,10.0000,ml
+food,Nasi Gila,BSJ - Nasi,150.0000,gr
+food,Nasi Gila,BSJ - Timun Slice,2.0000,slice
+food,Nasi Gila,Bawang Goreng,2.0000,gr
+food,Nasi Gila,Cleo Galon,100.0000,ml
+food,Nasi Gila,Kecap Bader,10.0000,gr
+food,Nasi Gila,Kerupuk,10.0000,gr
+food,Nasi Gila,Lada Hitam Bubuk,1.0000,gr
+food,Nasi Gila,Micin,1.0000,gr
+food,Nasi Gila,Minyak Wijen,5.0000,ml
+food,Nasi Gila,Pentol,3.0000,biji
+food,Nasi Gila,Raja Rasa,5.0000,ml
+food,Nasi Gila,Saos Tiram,5.0000,ml
+food,Nasi Gila,Sawi,20.0000,gr
+food,Nasi Gila,Sosis,1.0000,biji
+food,Nasi Goreng Jawa,Ayam Fillet,40.0000,gr
+food,Nasi Goreng Jawa,BSJ - Acar Timun,30.0000,gr
+food,Nasi Goreng Jawa,BSJ - Bawang,5.0000,gr
+food,Nasi Goreng Jawa,BSJ - Nasi,150.0000,gr
+food,Nasi Goreng Jawa,Bawang Goreng,2.0000,gr
+food,Nasi Goreng Jawa,Garam,1.0000,gr
+food,Nasi Goreng Jawa,Kecambah,10.0000,gr
+food,Nasi Goreng Jawa,Kecap Bader,5.0000,gr
+food,Nasi Goreng Jawa,Kerupuk,10.0000,gr
+food,Nasi Goreng Jawa,Lada Hitam Bubuk,1.0000,gr
+food,Nasi Goreng Jawa,Pentol,3.0000,biji
+food,Nasi Goreng Jawa,Raja Rasa,5.0000,ml
+food,Nasi Goreng Jawa,Saos Tiram,5.0000,ml
+food,Nasi Goreng Jawa,Sawi,20.0000,gr
+food,Nasi Goreng Jawa,Telur,1.0000,biji
+food,Nasi Goreng Kunyit,Ayam Fillet,40.0000,gr
+food,Nasi Goreng Kunyit,BSJ - Acar Timun,30.0000,gr
+food,Nasi Goreng Kunyit,BSJ - Bumbu Kunyit,1.0000,porsi
+food,Nasi Goreng Kunyit,BSJ - Nasi,150.0000,gr
+food,Nasi Goreng Kunyit,Cabe Merah,2.0000,gr
+food,Nasi Goreng Kunyit,Gula Pasir,1.2500,gr
+food,Nasi Goreng Kunyit,Kerupuk,10.0000,gr
+food,Nasi Goreng Kunyit,Kulit Ayam,30.0000,gr
+food,Nasi Goreng Kunyit,Lada Hitam Bubuk,1.2500,gr
+food,Nasi Goreng Kunyit,MSG (Royco/Masako),1.2500,gr
+food,Nasi Goreng Kunyit,Micin,1.2500,gr
+food,Nasi Goreng Kunyit,Minyak Wijen,5.0000,ml
+food,Nasi Goreng Kunyit,Pentol,3.0000,biji
+food,Nasi Goreng Kunyit,Raja Rasa,5.0000,ml
+food,New York Cheesecake,New York Cheesecake,1.0000,porsi
+food,Pisang Goreng Madu,BSJ - Pisang Goreng Madu,120.0000,gr
+food,Pisang Goreng Madu,Madu,5.0000,gr
+food,Pisang Goreng Madu,Pisang,1.0000,pcs
+food,Puspa Matcha,BSJ - Matcha Cream,20.0000,gr
+food,Puspa Matcha,BSJ - Waffle Base,2.0000,pcs
+food,Puspa Matcha,Daun Mint,1.0000,gr
+food,Puspa Matcha,Ice Cream Vanilla,55.0000,gr
+food,Puspa Matcha,Powder Matcha,3.0000,gr
+food,Puspa Matcha,Topping Caramel - Los Losan,10.0000,gr
+food,Singkong Keju,Keju - Cheddar,30.0000,gr
+food,Singkong Keju,Singkong,1.0000,pcs
+food,Strawberry Cheesecake,BSJ - Strawberry Jam,20.0000,gr
+food,Strawberry Cheesecake,New York Cheesecake,1.0000,porsi
+food,Tahu Tuna,Parsley,1.0000,gr
+food,Tahu Tuna,Saos Tomat,30.0000,gr
+food,Tahu Tuna,Tahu Tuna,5.0000,biji
+food,Tempe Mendoan,BSJ - Tempe Mendoan,100.0000,gr
+food,Tempe Mendoan,Bawang Goreng,5.0000,gr
+food,Tempe Mendoan,Cabe Rawit,2.0000,gr
+food,Tempe Mendoan,Kecap Indofood,20.0000,gr
+food,Tempe Mendoan,Tempe,5.0000,potong
+food,Virya Choco Banana,BSJ - Waffle Base,2.0000,pcs
+food,Virya Choco Banana,Ice Cream Vanilla,55.0000,gr
+food,Virya Choco Banana,Pisang,0.5000,pcs
+food,Virya Choco Banana,Powder Coklat,8.0000,gr
+food,Virya Choco Banana,Topping Coklat,15.0000,gr
