@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import async_session
 from app.models.forecast import (
     ForecastRecord,
     ForecastPage,
@@ -18,25 +18,23 @@ from app.models.forecast import (
 from app.ml.engine import generate_forecast
 from app.repositories.forecast_repository import ForecastRepository
 
-_forecast_cache: dict[str, pd.DataFrame] = {}
+_forecast_cache: pd.DataFrame | None = None
 
 
 async def filter_sales_to_training_cutoff(
-    session: AsyncSession, df: pd.DataFrame, model_type: str
+    session: AsyncSession, df: pd.DataFrame
 ) -> pd.DataFrame:
     repo = ForecastRepository(session)
-    run = await repo.get_active_run(model_type)
+    run = await repo.get_active_run()
     if run and run.date_range_end:
         cutoff = pd.to_datetime(run.date_range_end)
         df = df[df["Date"] <= cutoff]
     return df
 
 
-def invalidate_forecast_cache(model_type: str | None = None):
-    if model_type:
-        _forecast_cache.pop(model_type, None)
-    else:
-        _forecast_cache.clear()
+def invalidate_forecast_cache():
+    global _forecast_cache
+    _forecast_cache = None
 
 
 async def get_forecasts(
@@ -46,9 +44,7 @@ async def get_forecasts(
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
-    model_type: str | None = None,
 ) -> ForecastPage:
-    model_type = model_type or "xgboost"
     repo = ForecastRepository(session)
     original_df = await repo.get_sales_dataframe()
 
@@ -56,17 +52,16 @@ async def get_forecasts(
         return ForecastPage(data=[], total=0, page=page, page_size=page_size)
 
     df = original_df.copy()
-    df = await filter_sales_to_training_cutoff(session, df, model_type)
+    df = await filter_sales_to_training_cutoff(session, df)
     df = _resample_daily(df)
 
     if df.empty:
         return ForecastPage(data=[], total=0, page=page, page_size=page_size)
 
     forecast_weeks = _compute_forecast_weeks(df, end_date)
-    result_df = await _get_or_generate_forecast(df, forecast_weeks, model_type)
+    result_df = await _get_or_generate_forecast(df, forecast_weeks)
     result_df = _filter_forecast(result_df, start_date, end_date, item)
 
-    # Get actual sales for the same date range
     actual_df = original_df.copy()
     if start_date:
         actual_df = actual_df[actual_df["Date"] >= pd.to_datetime(start_date)]
@@ -75,8 +70,7 @@ async def get_forecasts(
     if item:
         actual_df = actual_df[actual_df["Item"] == item]
 
-    # Merge predictions with actuals
-    pred_data = result_df[["Date", "Item", "Predicted"]].copy()
+    pred_data = result_df[["Date", "Item", "Predicted", "Error_Std", "Buffer", "Supply"]].copy()
     actual_data = actual_df[["Date", "Item", "Quantity_Sold"]].copy()
 
     merged = pd.merge(
@@ -87,6 +81,9 @@ async def get_forecasts(
     )
     merged["Predicted"] = merged["Predicted"].fillna(0)
     merged["Quantity_Sold"] = merged["Quantity_Sold"].fillna(0)
+    merged["Error_Std"] = merged["Error_Std"].fillna(0)
+    merged["Buffer"] = merged["Buffer"].fillna(0)
+    merged["Supply"] = merged["Supply"].fillna(0)
     merged = merged.sort_values(["Date", "Item"])
 
     total = len(merged)
@@ -99,6 +96,9 @@ async def get_forecasts(
                 item=str(row["Item"]),
                 quantity_sold=float(row["Predicted"]),
                 actual=float(row["Quantity_Sold"]),
+                error_std=float(row["Error_Std"]),
+                buffer=float(row["Buffer"]),
+                supply=float(row["Supply"]),
             )
             for _, row in merged.iterrows()
         ],
@@ -109,10 +109,10 @@ async def get_forecasts(
 
 
 async def get_forecast_summary(
-    session: AsyncSession, model_type: str | None = None
+    session: AsyncSession,
 ) -> ForecastSummary:
     repo = ForecastRepository(session)
-    run = await repo.get_active_run(model_type)
+    run = await repo.get_active_run()
     if run is None:
         return ForecastSummary(
             global_metrics=ModelMetrics(r2=0, wmape=0, mae=0, rmse=0),
@@ -163,6 +163,7 @@ async def get_forecast_summary(
 
 
 async def predict_items(request: PredictRequest) -> PredictResponse:
+    from app.db.engine import async_session
     async with async_session() as session:
         repo = ForecastRepository(session)
         df = await repo.get_sales_dataframe(items=request.items)
@@ -170,7 +171,7 @@ async def predict_items(request: PredictRequest) -> PredictResponse:
     df = _resample_daily(df)
 
     def _run():
-        return generate_forecast(df, weeks=request.weeks, model_type=request.model_type)
+        return generate_forecast(df, weeks=request.weeks)
 
     result = await asyncio.to_thread(_run)
     return PredictResponse(
@@ -179,6 +180,9 @@ async def predict_items(request: PredictRequest) -> PredictResponse:
                 date=str(pd.to_datetime(row["Date"]).date()),
                 item=str(row["Item"]),
                 quantity_sold=float(row["Predicted"]),
+                error_std=float(row.get("Error_Std", 0)),
+                buffer=float(row.get("Buffer", 0)),
+                supply=float(row.get("Supply", 0)),
             )
             for _, row in result.iterrows()
         ],
@@ -240,11 +244,11 @@ def _filter_forecast(
 
 
 async def _get_or_generate_forecast(
-    df: pd.DataFrame, forecast_weeks: int, model_type: str
+    df: pd.DataFrame, forecast_weeks: int
 ) -> pd.DataFrame:
-    cache_key = model_type
-    cached = _forecast_cache.get(cache_key)
+    global _forecast_cache
 
+    cached = _forecast_cache
     if cached is not None:
         cache_max = cached["Date"].max()
         needed_max = df["Date"].max() + pd.Timedelta(weeks=forecast_weeks)
@@ -252,8 +256,8 @@ async def _get_or_generate_forecast(
             return cached.copy()
 
     def _run():
-        return generate_forecast(df, weeks=max(forecast_weeks, 8), model_type=model_type)
+        return generate_forecast(df, weeks=max(forecast_weeks, 8))
 
     result_df = await asyncio.to_thread(_run)
-    _forecast_cache[cache_key] = result_df.copy()
+    _forecast_cache = result_df.copy()
     return result_df

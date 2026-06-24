@@ -3,6 +3,9 @@ export interface ForecastRecord {
   item: string;
   quantity_sold: number;
   actual: number;
+  error_std: number;
+  buffer: number;
+  supply: number;
 }
 
 export interface ForecastPage {

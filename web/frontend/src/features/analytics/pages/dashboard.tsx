@@ -13,16 +13,14 @@ import {
 } from "@/components/ui/table";
 import { useABCAnalysis, useModelMetrics } from "@/features/analytics/hooks/use-analytics";
 import { useForecastSummary } from "@/features/forecasts/hooks/use-forecasts";
-import { useModelType } from "@/contexts/model-context";
 import { useTranslation } from "react-i18next";
 import { MetricsGrid } from "@/features/analytics/components/metrics-grid";
 import { CLASS_COLORS } from "@/features/analytics/lib/constants";
 
 export function DashboardPage() {
-  const { modelType } = useModelType();
-  const forecastSummary = useForecastSummary(modelType);
+  const forecastSummary = useForecastSummary();
   const abc = useABCAnalysis();
-  const metrics = useModelMetrics(modelType);
+  const metrics = useModelMetrics();
   const { t } = useTranslation();
 
   const forecastItemCount = useMemo(() => {
@@ -42,11 +40,8 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
-      {/* Top Bento: KPIs + Accuracy (left) | Model Performance (right) */}
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* Left column: KPIs + Accuracy by Class */}
         <div className="lg:col-span-2 flex flex-col gap-4">
-          {/* KPIs horizontal */}
           <div className="grid grid-cols-2 gap-4" data-tour="kpi-cards">
             <Card>
               <CardContent>
@@ -62,7 +57,6 @@ export function DashboardPage() {
             </Card>
           </div>
 
-          {/* Accuracy by Class */}
           <Card data-tour="accuracy-by-class">
             <CardHeader>
               <CardTitle>{t("dashboard.accuracyByClass")}</CardTitle>
@@ -89,7 +83,7 @@ export function DashboardPage() {
                           </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          wMAPE {m.wmape.toFixed(1)}%
+                          MAE {m.mae.toFixed(2)}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="right" className="w-48">
@@ -118,7 +112,6 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* Right column: Model Performance */}
         <Card data-tour="model-performance" className="lg:col-span-3">
           <CardHeader>
             <CardTitle>{t("analytics.modelPerformance")}</CardTitle>
@@ -129,7 +122,6 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      {/* ABC Classification */}
       <Card data-tour="abc-classification">
         <CardHeader>
           <CardTitle>{t("analytics.abcClassification")}</CardTitle>

@@ -12,16 +12,15 @@ export const forecastsApi = {
     item?: string;
     start_date?: string;
     end_date?: string;
-    model_type?: string;
     page?: number;
     page_size?: number;
   }) {
     return http.get<ForecastPage>("/forecasts", params);
   },
-  summary(model_type?: string) {
-    return http.get<ForecastSummary>("/forecasts/summary", { model_type });
+  summary() {
+    return http.get<ForecastSummary>("/forecasts/summary");
   },
-  predict(data: { items: string[]; weeks?: number; model_type?: string }) {
+  predict(data: { items: string[]; weeks?: number }) {
     return http.post<PredictResponse>("/forecasts/predict", data);
   },
   retrain(params: {
@@ -33,7 +32,7 @@ export const forecastsApi = {
     return http.post<RetrainResponse>("/forecasts/retrain", params);
   },
   retrainCancel(model_type: string) {
-    return http.post<{ status: string; model_type?: string; message?: string }>(
+    return http.post<{ status: string; message?: string }>(
       "/forecasts/retrain/cancel",
       { model_type },
     );

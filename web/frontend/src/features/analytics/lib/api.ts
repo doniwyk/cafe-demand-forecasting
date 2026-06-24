@@ -2,11 +2,11 @@ import { http } from "@/lib/request";
 import type { ABCAnalysisResponse, TopSellingItem } from "@/features/analytics/types";
 
 export const analyticsApi = {
-  abc(model_type?: string) {
-    return http.get<ABCAnalysisResponse>("/analytics/abc", { model_type });
+  abc() {
+    return http.get<ABCAnalysisResponse>("/analytics/abc");
   },
-  metrics(model_type?: string) {
-    return http.get<Record<string, number>>("/analytics/metrics", { model_type });
+  metrics() {
+    return http.get<Record<string, number>>("/analytics/metrics");
   },
   topItems(n?: number) {
     return http.get<TopSellingItem[]>("/analytics/top-items", { n });

@@ -8,7 +8,6 @@ export const materialsApi = {
     end_date?: string;
     page?: number;
     page_size?: number;
-    model_type?: string;
   }) {
     return http.get<MaterialRequirementPage>("/materials/forecast", params);
   },

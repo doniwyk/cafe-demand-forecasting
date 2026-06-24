@@ -7,7 +7,6 @@ export function useForecasts(params?: {
   item?: string;
   start_date?: string;
   end_date?: string;
-  model_type?: string;
   page?: number;
   page_size?: number;
 }) {
@@ -17,10 +16,10 @@ export function useForecasts(params?: {
   });
 }
 
-export function useForecastSummary(modelType?: string) {
+export function useForecastSummary() {
   return useQuery({
-    queryKey: ["forecasts", "summary", modelType],
-    queryFn: () => forecastsApi.summary(modelType),
+    queryKey: ["forecasts", "summary"],
+    queryFn: () => forecastsApi.summary(),
   });
 }
 
@@ -28,14 +27,14 @@ export function useRetrain() {
   return useMutation<
     RetrainResponse,
     Error,
-    { model_type: string; max_items?: number; sync_hus?: boolean; include_new_products?: boolean }
+    { model_type: string; max_items?: number; include_new_products?: boolean; end_date?: string }
   >({
     mutationFn: (params) => forecastsApi.retrain(params),
   });
 }
 
 export function useRetrainCancel() {
-  return useMutation<{ status: string; model_type?: string }, Error, string>({
+  return useMutation<{ status: string }, Error, string>({
     mutationFn: (modelType) => forecastsApi.retrainCancel(modelType),
   });
 }

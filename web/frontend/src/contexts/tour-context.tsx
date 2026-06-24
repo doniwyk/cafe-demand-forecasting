@@ -39,7 +39,6 @@ interface StepDef {
 const TOUR_STEPS: Record<string, StepDef[]> = {
   '/': [
     { titleKey: 'tour.sidebar.title', descKey: 'tour.sidebar.desc', element: '[data-tour="sidebar"]', side: 'right', align: 'start' },
-    { titleKey: 'tour.modelSelector.title', descKey: 'tour.modelSelector.desc', element: '[data-tour="model-selector"]', side: 'bottom', align: 'end' },
     { titleKey: 'tour.kpiCards.title', descKey: 'tour.kpiCards.desc', element: '[data-tour="kpi-cards"]', side: 'bottom', align: 'start' },
     { titleKey: 'tour.topItemsChart.title', descKey: 'tour.topItemsChart.desc', element: '[data-tour="top-items-chart"]', side: 'left', align: 'start' },
   ],

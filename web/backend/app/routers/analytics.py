@@ -11,17 +11,15 @@ router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 @router.get("/abc", response_model=ABCAnalysisResponse)
 async def get_abc_analysis(
     session: AsyncSession = Depends(get_session),
-    model_type: str | None = Query(None),
 ):
-    return await analytics_service.get_abc_analysis(session, model_type)
+    return await analytics_service.get_abc_analysis(session)
 
 
 @router.get("/metrics")
 async def get_metrics(
     session: AsyncSession = Depends(get_session),
-    model_type: str | None = Query(None),
 ):
-    return await analytics_service.get_metrics(session, model_type)
+    return await analytics_service.get_metrics(session)
 
 
 @router.get("/top-items")

@@ -9,16 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useModelType, MODEL_TYPES, MODEL_LABELS } from "@/contexts/model-context";
-import type { ModelType } from "@/contexts/model-context";
 import { AppTour } from "@/components/app-tour";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -29,29 +19,6 @@ const routeTitleKeys: Record<string, string> = {
   "/materials/daily-need": "materials.dailyMaterialRequirements",
   "/settings": "sidebar.settings",
 };
-
-function ModelSelector() {
-  const { modelType, setModelType } = useModelType();
-
-  return (
-    <div className="flex items-center gap-2" data-tour="model-selector">
-      <Select value={modelType} onValueChange={(v) => setModelType(v as ModelType)}>
-        <SelectTrigger size="sm" className="w-40">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {MODEL_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {MODEL_LABELS[type]}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
 
 export function AppHeader() {
   const routerState = useRouterState();
@@ -88,7 +55,6 @@ export function AppHeader() {
         >
           {i18n.language === "en" ? "ID" : "EN"}
         </Button>
-        <ModelSelector />
         <AppTour />
       </div>
     </header>

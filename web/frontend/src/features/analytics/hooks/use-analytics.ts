@@ -2,18 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { analyticsApi } from "@/features/analytics/lib/api";
 
 
-export function useABCAnalysis(modelType?: string) {
+export function useABCAnalysis() {
   return useQuery({
-    queryKey: ["analytics", "abc", modelType],
-    queryFn: () => analyticsApi.abc(modelType),
+    queryKey: ["analytics", "abc"],
+    queryFn: () => analyticsApi.abc(),
   });
 }
 
-export function useModelMetrics(modelType?: string) {
+export function useModelMetrics() {
   return useQuery({
-    queryKey: ["analytics", "metrics", modelType],
-    queryFn: () => analyticsApi.metrics(modelType),
+    queryKey: ["analytics", "metrics"],
+    queryFn: () => analyticsApi.metrics(),
   });
 }
-
-

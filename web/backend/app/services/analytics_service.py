@@ -16,35 +16,30 @@ from app.ml.engine import generate_forecast
 
 async def get_abc_analysis(
     session: AsyncSession,
-    model_type: str | None = None,
 ) -> ABCAnalysisResponse:
-    if model_type:
-        repo = ForecastRepository(session)
-        df = await repo.get_sales_dataframe()
-        if df.empty:
-            return ABCAnalysisResponse(class_metrics={}, classifications=[])
+    repo = ForecastRepository(session)
+    df = await repo.get_sales_dataframe()
+    if df.empty:
+        return ABCAnalysisResponse(class_metrics={}, classifications=[])
 
-        from app.services.forecast_service import filter_sales_to_training_cutoff
-        df = await filter_sales_to_training_cutoff(session, df, model_type)
+    from app.services.forecast_service import filter_sales_to_training_cutoff
+    df = await filter_sales_to_training_cutoff(session, df)
 
-        def _run():
-            return generate_forecast(df, weeks=12, model_type=model_type)
+    def _run():
+        return generate_forecast(df, weeks=12)
 
-        forecast_df = await asyncio.to_thread(_run)
+    forecast_df = await asyncio.to_thread(_run)
 
-        item_vol = (
-            forecast_df.groupby("Item")["Predicted"]
-            .sum()
-            .reset_index()
-            .sort_values("Predicted", ascending=False)
-        )
-        rows = [
-            type("Row", (), {"name": row["Item"], "total_vol": row["Predicted"]})
-            for _, row in item_vol.iterrows()
-        ]
-    else:
-        repo = SalesRepository(session)
-        rows = await repo.get_item_volumes()
+    item_vol = (
+        forecast_df.groupby("Item")["Predicted"]
+        .sum()
+        .reset_index()
+        .sort_values("Predicted", ascending=False)
+    )
+    rows = [
+        type("Row", (), {"name": row["Item"], "total_vol": row["Predicted"]})
+        for _, row in item_vol.iterrows()
+    ]
 
     if not rows:
         return ABCAnalysisResponse(class_metrics={}, classifications=[])
@@ -52,11 +47,9 @@ async def get_abc_analysis(
     return _compute_abc_classification(rows)
 
 
-async def get_metrics(
-    session: AsyncSession, model_type: str | None = None
-) -> dict:
+async def get_metrics(session: AsyncSession) -> dict:
     repo = ForecastRepository(session)
-    run = await repo.get_active_run(model_type)
+    run = await repo.get_active_run()
     if run is None:
         return {
             "r2": 0, "wmape": 0, "mae": 0, "rmse": 0,
@@ -94,7 +87,7 @@ def _compute_abc_classification(rows) -> ABCAnalysisResponse:
 
     for r in rows:
         cumulative += r.total_vol
-        pct = cumulative / total
+        pct = cumulative / total if total else 0
         abc = "A" if pct <= 0.70 else ("B" if pct <= 0.90 else "C")
         class_metrics[abc]["n_items"] += 1
         class_metrics[abc]["total_volume"] += r.total_vol

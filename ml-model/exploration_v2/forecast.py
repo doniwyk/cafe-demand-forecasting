@@ -526,8 +526,6 @@ def main():
         meta[item] = {
             "first_sale_date": s["Date_Only"].min() if len(s)>0 else grp["Date_Only"].min(),
             "category": grp["Category"].mode().iloc[0] if not grp["Category"].mode().empty else "?",
-            "rank": float(grp["Item_Rank"].iloc[0]),
-            "rank_pct": float(grp["Item_Rank_Pct"].iloc[0]),
         }
 
     fc = Forecaster(items, meta)

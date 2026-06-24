@@ -1,201 +1,139 @@
 from __future__ import annotations
 
-import importlib
 import json
-from typing import Any
 
 import numpy as np
 import pandas as pd
+from xgboost import XGBRegressor
 
 from app.config import ML_MODELS_DIR
+from app.ml.config import FEATURE_COLUMNS, METADATA_FILE
 from app.ml.features import create_features
+from app.ml.forecaster import Forecaster
 from app.ml.metrics import generate_abc_analysis
-from app.ml.config import DISCONTINUED_ITEMS
+from app.ml.models.xgboost import (
+    load_models as _load_xgb,
+    predict as _predict_xgb,
+    train_models as _train_xgb,
+    train_and_predict as _tap_xgb,
+)
 
-
-_METADATA_FILE: dict[str, str] = {
-    "xgboost": "model_metadata.json",
-    "random_forest": "model_metadata_rf.json",
-    "sarimax": "model_metadata_sarimax.json",
-    "prophet": "model_metadata_prophet.json",
-}
-
-
-def _import_model_fns(model_type: str) -> dict[str, Any]:
-    """Lazily import the right module and return its key functions."""
-    if model_type == "xgboost":
-        from app.ml.models.xgboost import train_models, load_models, predict, train_and_predict
-        return {
-            "train": train_models,
-            "load": load_models,
-            "predict": predict,
-            "train_and_predict": train_and_predict,
-            "needs_features": True,
-        }
-
-    model_modules = {
-        "random_forest": "app.ml.models.random_forest",
-        "sarimax": "app.ml.models.sarimax",
-        "prophet": "app.ml.models.prophet",
-    }
-    module_name = model_modules[model_type]
-    try:
-        mod = importlib.import_module(module_name)
-    except ImportError:
-        raise ImportError(f"Required module {module_name} not available")
-
-    suffix = {"random_forest": "_rf", "sarimax": "_sarimax", "prophet": "_prophet"}[model_type]
-    train_fn = getattr(mod, f"train_models{suffix}", None)
-    load_fn = getattr(mod, f"load_models{suffix}", None)
-    predict_fn = getattr(mod, f"predict{suffix}", None)
-    tap_fn = getattr(mod, f"train_and_predict{suffix}", None)
-
-    if any(fn is None for fn in [train_fn, load_fn, predict_fn, tap_fn]):
-        raise ImportError(f"{module_name} missing required functions")
-
-    return {
-        "train": train_fn,
-        "load": load_fn,
-        "predict": predict_fn,
-        "train_and_predict": tap_fn,
-        "needs_features": model_type in ("xgboost", "random_forest"),
-    }
-
-
-_model_fns_cache: dict[str, dict[str, Any]] = {}
-_models_cache: dict[str, dict[str, Any]] = {
-    mt: {"item_models": None, "global_model": None, "dow_factors": None, "loaded": False}
-    for mt in _METADATA_FILE
-}
-
-
-def _get_fns(model_type: str) -> dict[str, Any]:
-    if model_type not in _model_fns_cache:
-        _model_fns_cache[model_type] = _import_model_fns(model_type)
-    return _model_fns_cache[model_type]
-
-
-def _load_for_model(model_type: str):
-    fns = _get_fns(model_type)
-    im, gm, dow = fns["load"](ML_MODELS_DIR)
-    return im, gm, dow
-
-
-def _ensure_models_loaded(model_type: str = "xgboost"):
-    cache = _models_cache[model_type]
-    if cache["loaded"]:
-        return
-    cache["item_models"], cache["global_model"], cache["dow_factors"] = _load_for_model(model_type)
-    cache["loaded"] = True
-
-
-def _predict_dispatch(model_type: str, df, item_models, global_model, dow_factors):
-    fns = _get_fns(model_type)
-    return fns["predict"](df, item_models=item_models, global_model=global_model, dow_factor_dict=dow_factors)
-
-
-def run_predict(df: pd.DataFrame, model_type: str = "xgboost") -> pd.DataFrame:
-    _ensure_models_loaded(model_type)
-    cache = _models_cache[model_type]
-    return _predict_dispatch(model_type, df, cache["item_models"], cache["global_model"], cache["dow_factors"])
-
-
-def _clean_and_prepare(df_daily: pd.DataFrame, model_type: str) -> pd.DataFrame:
-    df = _clean_data(df_daily)
-    fns = _get_fns(model_type)
-    if fns["needs_features"]:
-        return create_features(df)
-    return df
-
-
-def run_train_and_evaluate(df_daily: pd.DataFrame, model_type: str = "xgboost"):
-    processed = _clean_and_prepare(df_daily, model_type)
-    fns = _get_fns(model_type)
-    fns["train"](processed, ML_MODELS_DIR)
-    test_pred = fns["train_and_predict"](processed)
-    analysis = generate_abc_analysis(test_pred)
-    _models_cache[model_type]["loaded"] = False
-    return analysis
+_model: XGBRegressor | None = None
+_item_errors: dict[str, float] = {}
 
 
 def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.str.strip()
     df["Date"] = pd.to_datetime(df["Date"])
-    df = df[~df["Item"].str.strip().str.lower().str.startswith("add")]
-    if DISCONTINUED_ITEMS:
-        df = df[~df["Item"].isin(DISCONTINUED_ITEMS)]
-    df = (
-        df.set_index("Date")
-        .groupby("Item")
-        .resample("D")["Quantity_Sold"]
-        .sum()
-        .fillna(0)
-        .reset_index()
+
+    items = sorted(df["Item"].unique())
+    dates = pd.date_range(df["Date"].min(), df["Date"].max())
+    grid = pd.DataFrame(
+        [(d, i) for d in dates for i in items], columns=["Date", "Item"]
     )
-    return df
+    full = grid.merge(df, on=["Date", "Item"], how="left")
+    full["Quantity_Sold"] = full["Quantity_Sold"].fillna(0).astype(float)
+
+    if "Category" in full.columns:
+        full["Category"] = full.groupby("Item")["Category"].transform(
+            lambda x: x.mode().iloc[0] if not x.mode().empty else (
+                x.dropna().iloc[0] if x.dropna().shape[0] > 0 else "unknown"))
+    return full
 
 
-def get_model_metadata(model_type: str = "xgboost") -> dict | None:
-    meta_path = ML_MODELS_DIR / _METADATA_FILE.get(model_type, "model_metadata.json")
+def _ensure_loaded():
+    global _model, _item_errors
+    if _model is None:
+        _model, _item_errors = _load_xgb(ML_MODELS_DIR)
+
+
+def run_predict(df: pd.DataFrame) -> pd.DataFrame:
+    _ensure_loaded()
+    return _predict_xgb(df, _model)
+
+
+def run_train_and_evaluate(df_daily: pd.DataFrame):
+    global _model, _item_errors
+    processed = create_features(_clean_data(df_daily))
+    _model = _train_xgb(processed, ML_MODELS_DIR)
+    test_pred = _tap_xgb(processed)
+    analysis = generate_abc_analysis(test_pred)
+    _model = None
+    _item_errors = {}
+    return analysis
+
+
+def get_model_metadata() -> dict | None:
+    meta_path = ML_MODELS_DIR / METADATA_FILE
     if not meta_path.exists():
         return None
     with open(meta_path) as f:
         return json.load(f)
 
 
-def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12, model_type: str = "xgboost") -> pd.DataFrame:
+_SERVICE_Z = {"A": 1.645, "B": 1.282, "C": 1.036}
+
+
+def _classify_abc(data: pd.DataFrame) -> dict[str, str]:
+    item_vol = data.groupby("Item")["Quantity_Sold"].sum().sort_values(ascending=False)
+    total = item_vol.sum()
+    cum_pct = item_vol.cumsum() / total
+    return {item: "A" if p <= 0.70 else "B" if p <= 0.90 else "C" for item, p in cum_pct.items()}
+
+
+def _compute_buffer(item: str, abc: dict[str, str]) -> tuple[float, float, float]:
+    z = _SERVICE_Z.get(abc.get(item, "C"), 1.036)
+    error_std = _item_errors.get(item, 0.0)
+    if error_std == 0.0 and _item_errors:
+        error_std = sum(_item_errors.values()) / len(_item_errors)
+    buffer = round(z * error_std, 2)
+    return error_std, buffer, z
+
+
+def generate_forecast(df_daily: pd.DataFrame, weeks: int = 12) -> pd.DataFrame:
     data = _clean_data(df_daily)
     max_date = data["Date"].max()
-    items = data["Item"].unique()
-    future_dates = pd.date_range(start=max_date + pd.Timedelta(days=1), periods=weeks * 7, freq="D")
-
+    future_dates = pd.date_range(
+        start=max_date + pd.Timedelta(days=1), periods=weeks * 7, freq="D"
+    )
     if len(future_dates) == 0:
         return pd.DataFrame()
 
-    _ensure_models_loaded(model_type)
-    cache = _models_cache[model_type]
+    _ensure_loaded()
+    forecaster = Forecaster(data)
+    abc_class = _classify_abc(data)
 
-    last_known = data.sort_values("Date").groupby("Item").last()["Quantity_Sold"].reset_index()
-    last_map = dict(zip(last_known["Item"], last_known["Quantity_Sold"]))
+    last_day = data[data["Date"] == max_date]
+    cross = {
+        "total_qty": float(last_day["Quantity_Sold"].sum()),
+        "total_items": float((last_day["Quantity_Sold"] > 0).sum()),
+        "total_qty_7d": float(last_day["Quantity_Sold"].sum()),
+    }
+    totals: list[float] = [cross["total_qty"]]
 
-    all_predictions: list[pd.DataFrame] = []
-    current = data.copy()
-    days = list(future_dates)
-    is_iterative = model_type in ("sarimax", "prophet")
+    predictions: list[dict] = []
+    for next_date in future_dates:
+        ts = pd.Timestamp(next_date)
 
-    if is_iterative:
-        for next_date in days:
-            next_df = pd.DataFrame({"Date": [next_date] * len(items), "Item": np.array(items)})
-            next_df["Quantity_Sold"] = next_df["Item"].map(last_map).fillna(1)
-            temp = pd.concat([current, next_df], ignore_index=True)
-            future_row = temp[temp["Date"] == next_date].copy()
-            pred_result = _predict_dispatch(model_type, future_row, cache["item_models"], cache["global_model"], cache["dow_factors"])
-            pred_result["Date"] = next_date
-            pred_result["Item"] = future_row["Item"].values
-            all_predictions.append(pred_result[["Date", "Item", "Predicted"]])
-            next_df["Quantity_Sold"] = pd.Series(pred_result["Predicted"].values, index=next_df.index)
-            current = pd.concat([current, next_df], ignore_index=True)
-    else:
-        for batch_start in range(0, len(days), 7):
-            batch_dates = days[batch_start:batch_start + 7]
-            batch_rows = []
-            for d in batch_dates:
-                df = pd.DataFrame({"Date": [d] * len(items), "Item": np.array(items)})
-                df["Quantity_Sold"] = df["Item"].map(last_map).fillna(1)
-                batch_rows.append(df)
-            batch_df = pd.concat(batch_rows, ignore_index=True)
-            temp = pd.concat([current, batch_df], ignore_index=True)
-            feat = create_features(temp)
-            batch_features = feat[feat["Date"].isin(batch_dates)]
-            pred_result = _predict_dispatch(model_type, batch_features, cache["item_models"], cache["global_model"], cache["dow_factors"])
-            pred_df = batch_features.copy()
-            pred_df["Predicted"] = pred_result["Predicted"].values
-            all_predictions.append(pred_df)
-            for _, row in pred_df.iterrows():
-                batch_df.loc[(batch_df["Date"] == row["Date"]) & (batch_df["Item"] == row["Item"]), "Quantity_Sold"] = row["Predicted"]
-            current = pd.concat([current, batch_df], ignore_index=True)
+        Xf = forecaster.build_features(ts, cross)
+        feats = [c for c in FEATURE_COLUMNS if c in Xf.columns]
+        preds = np.maximum(_model.predict(Xf[feats].fillna(0)), 0)
 
-    result = pd.concat(all_predictions, ignore_index=True)
-    print(f"[{model_type}] Daily recursive forecast for {weeks * 7} days")
+        for i, item in enumerate(forecaster.items):
+            error_std, buffer, z = _compute_buffer(item, abc_class)
+            predictions.append({
+                "Date": next_date,
+                "Item": item,
+                "Predicted": round(float(preds[i]), 2),
+                "Error_Std": error_std,
+                "Buffer": buffer,
+                "Supply": round(float(preds[i]) + buffer, 1),
+            })
+
+        cross = forecaster.update(preds)
+        forecaster.update_cross_7d(cross, totals)
+
+    result = pd.DataFrame(predictions)
+    print(f"[xgboost] Recursive forecast for {weeks * 7} days")
     return result

@@ -6,6 +6,9 @@ class ForecastRecord(BaseModel):
     item: str
     quantity_sold: float
     actual: float = 0.0
+    error_std: float = 0.0
+    buffer: float = 0.0
+    supply: float = 0.0
 
 
 class ForecastPage(BaseModel):
@@ -53,11 +56,9 @@ class ForecastSummary(BaseModel):
 class PredictRequest(BaseModel):
     items: list[str]
     weeks: int = 12
-    model_type: str = "xgboost"
 
 
 class RetrainRequest(BaseModel):
-    model_type: str = "xgboost"
     max_items: int | None = None
     include_new_products: bool = False
     end_date: str | None = None

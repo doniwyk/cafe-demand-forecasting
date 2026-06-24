@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,8 +9,16 @@ import {
 } from "@/components/ui/table";
 import { useTranslation } from "react-i18next";
 
+interface TopSupplyItem {
+  item: string;
+  predicted: number;
+  error_std: number;
+  buffer: number;
+  supply: number;
+}
+
 interface ForecastTableProps {
-  items: { item: string; quantity_sold: number; predicted: number; accuracy_pct: number }[];
+  items: TopSupplyItem[];
 }
 
 export function ForecastTable({ items }: ForecastTableProps) {
@@ -22,16 +29,16 @@ export function ForecastTable({ items }: ForecastTableProps) {
   return (
     <Card data-tour="top-accuracy-table">
       <CardHeader>
-        <CardTitle>{t("forecasts.topItemsByAccuracy")}</CardTitle>
+        <CardTitle>{t("forecasts.topItemsBySupply")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t("forecasts.item")}</TableHead>
-              <TableHead className="text-right">{t("forecasts.actualQty")}</TableHead>
               <TableHead className="text-right">{t("forecasts.predictedQty")}</TableHead>
-              <TableHead className="text-right">{t("forecasts.accuracy")}</TableHead>
+              <TableHead className="text-right">{t("forecasts.buffer")}</TableHead>
+              <TableHead className="text-right">{t("forecasts.supply")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -39,23 +46,13 @@ export function ForecastTable({ items }: ForecastTableProps) {
               <TableRow key={item.item}>
                 <TableCell className="font-medium">{item.item}</TableCell>
                 <TableCell className="text-right">
-                  {Math.round(item.quantity_sold).toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
                   {Math.round(item.predicted).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Badge
-                    variant={
-                      item.accuracy_pct >= 70
-                        ? "default"
-                        : item.accuracy_pct >= 50
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {item.accuracy_pct.toFixed(1)}%
-                  </Badge>
+                  {Math.round(item.buffer).toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {Math.round(item.supply).toLocaleString()}
                 </TableCell>
               </TableRow>
             ))}

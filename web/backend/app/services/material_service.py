@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.material import DailyMaterialRequirement, MaterialRequirementPage
 from app.ml.engine import generate_forecast
 from app.repositories.forecast_repository import ForecastRepository
-from app.services.forecast_service import _forecast_cache
+import app.services.forecast_service as fc_svc
 
 
 async def get_material_forecast(
@@ -19,12 +19,10 @@ async def get_material_forecast(
     end_date: str | None = None,
     page: int = 1,
     page_size: int = 100,
-    model_type: str | None = None,
 ) -> MaterialRequirementPage:
     from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
     from app.ml.raw_materials import RawMaterialProcessor
 
-    model_type = model_type or "xgboost"
     repo = ForecastRepository(session)
     df = await repo.get_sales_dataframe()
 
@@ -32,18 +30,17 @@ async def get_material_forecast(
         return MaterialRequirementPage(data=[], total=0, page=page, page_size=page_size)
 
     from app.services.forecast_service import filter_sales_to_training_cutoff
-    df = await filter_sales_to_training_cutoff(session, df, model_type)
+    df = await filter_sales_to_training_cutoff(session, df)
 
-    cache_key = model_type
-    cached = _forecast_cache.get(cache_key)
+    cached = fc_svc._forecast_cache
 
     if cached is not None:
         item_forecast_df = cached.copy()
     else:
         def _run_forecast():
-            return generate_forecast(df, weeks=12, model_type=model_type)
+            return generate_forecast(df, weeks=12)
         item_forecast_df = await asyncio.to_thread(_run_forecast)
-        _forecast_cache[cache_key] = item_forecast_df.copy()
+        fc_svc._forecast_cache = item_forecast_df.copy()
 
     forecast_df = item_forecast_df[["Date", "Item", "Predicted"]].rename(
         columns={"Predicted": "Quantity"}

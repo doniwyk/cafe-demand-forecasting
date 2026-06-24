@@ -31,8 +31,8 @@ def compute_metrics(y_true, y_pred) -> Dict[str, float]:
     return {
         "r2": round(r2_score(y_true, y_pred), 4),
         "wmape": round(weighted_mape(y_true, y_pred), 2),
-        "mae": round(mean_absolute_error(y_true, y_pred), 2),
-        "rmse": round(float(math.sqrt(mse)), 2),
+        "mae": round(mean_absolute_error(y_true, y_pred), 3),
+        "rmse": round(float(math.sqrt(mse)), 3),
     }
 
 
@@ -41,8 +41,8 @@ def compute_item_metrics(y_true, y_pred, item_col) -> Dict[str, float]:
     return {
         "r2": round(r2_score(y_true, y_pred), 4),
         "wmape": round(weighted_mape(y_true, y_pred), 2),
-        "mae": round(mean_absolute_error(y_true, y_pred), 2),
-        "rmse": round(float(math.sqrt(mse)), 2),
+        "mae": round(mean_absolute_error(y_true, y_pred), 3),
+        "rmse": round(float(math.sqrt(mse)), 3),
         "median_period_accuracy": per_period_median_accuracy(y_true, y_pred, item_col),
         "periods_within_20pct": per_period_within_threshold(y_true, y_pred, item_col, 0.2),
         "periods_within_50pct": per_period_within_threshold(y_true, y_pred, item_col, 0.5),

@@ -18,8 +18,7 @@ async def get_material_forecast(
     end_date: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
-    model_type: str | None = Query(None),
 ):
     return await material_service.get_material_forecast(
-        session, material, start_date, end_date, page, page_size, model_type
+        session, material, start_date, end_date, page, page_size
     )
