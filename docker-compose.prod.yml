@@ -30,6 +30,7 @@ services:
       PYTHONPATH: /app/ml-model
     volumes:
       - modeldata_prod:/app/ml-model/models
+      - ./ml-model/data:/app/ml-model/data:ro
     depends_on:
       db:
         condition: service_healthy
