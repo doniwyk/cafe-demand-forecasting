@@ -5,6 +5,12 @@ ingress:
     service: http://frontend:3000
   - hostname: husgencast-api.doniwyk.my.id
     service: http://backend:8001
-  - hostname: jti-port.doniwyk.my.id
-    service: http://localhost:8082
+  - hostname: husgencast.neuradata.net
+    service: http://frontend:3000
+  - hostname: husgencast-api.neuradata.net
+    service: http://backend:8001
+  - hostname: app.cafe.doniwyk.my.id
+    service: http://frontend:3000
+  - hostname: api.cafe.doniwyk.my.id
+    service: http://backend:8001
   - service: http_status:404
