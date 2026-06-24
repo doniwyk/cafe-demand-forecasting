@@ -107,3 +107,65 @@ def _build_unit_map(menu_bom_path, condiment_bom_path) -> dict[str, str]:
         pass
     _unit_map_cache = unit_map
     return unit_map
+
+
+async def export_material_csv(
+    session: AsyncSession,
+    material: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> str:
+    from app.config import MENU_BOM_PATH, CONDIMENT_BOM_PATH
+    from app.ml.raw_materials import RawMaterialProcessor
+
+    repo = ForecastRepository(session)
+    df = await repo.get_sales_dataframe()
+    if df.empty:
+        return "Material,Total Quantity Required,Unit\n"
+
+    from app.services.forecast_service import filter_sales_to_training_cutoff
+    df = await filter_sales_to_training_cutoff(session, df)
+
+    cached = fc_svc._forecast_cache
+    if cached is not None:
+        item_forecast_df = cached.copy()
+    else:
+        def _run_forecast():
+            return generate_forecast(df, weeks=12)
+        item_forecast_df = await asyncio.to_thread(_run_forecast)
+        fc_svc._forecast_cache = item_forecast_df.copy()
+
+    forecast_df = item_forecast_df[["Date", "Item", "Predicted"]].rename(
+        columns={"Predicted": "Quantity"}
+    )
+    forecast_df["Date"] = pd.to_datetime(forecast_df["Date"]).dt.date
+
+    processor = RawMaterialProcessor(
+        menu_bom_path=MENU_BOM_PATH,
+        condiment_bom_path=CONDIMENT_BOM_PATH,
+    )
+    requirements = processor.compute_material_requirements(forecast_df)
+
+    if material:
+        requirements = requirements[
+            requirements["Raw_Material"].str.contains(material, case=False, na=False)
+        ]
+    if start_date:
+        requirements = requirements[requirements["Date"] >= date.fromisoformat(start_date)]
+    if end_date:
+        requirements = requirements[requirements["Date"] <= date.fromisoformat(end_date)]
+
+    aggregated = (
+        requirements.groupby("Raw_Material", as_index=False)["Quantity_Required"]
+        .sum()
+        .sort_values("Quantity_Required", ascending=False)
+    )
+
+    unit_map = _build_unit_map(MENU_BOM_PATH, CONDIMENT_BOM_PATH)
+    lines = ["Material,Total Quantity Required,Unit"]
+    for _, row in aggregated.iterrows():
+        name = str(row["Raw_Material"])
+        qty = round(float(row["Quantity_Required"]), 2)
+        unit = unit_map.get(name.strip().lower(), "")
+        lines.append(f"{name},{qty},{unit}")
+    return "\n".join(lines)

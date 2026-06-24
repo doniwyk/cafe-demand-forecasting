@@ -38,18 +38,26 @@ export function MaterialTable({
 }: MaterialTableProps) {
   const { t } = useTranslation();
 
-  const exportCsv = useCallback(() => {
-    const headers = ["Material", "Total Quantity Required"];
-    const rows = data.map((d) => [d.material, d.quantity_required]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const exportCsv = useCallback(async () => {
+    const token = localStorage.getItem("access_token");
+    const params = new URLSearchParams();
+    if (dateRange.from) params.set("start_date", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange.to) params.set("end_date", format(dateRange.to, "yyyy-MM-dd"));
+    params.set("export", "1");
+
+    const res = await fetch(`/api/materials/forecast?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const text = await res.text();
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `material-requirements-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [data]);
+  }, [dateRange]);
 
   return (
     <Card data-tour="daily-requirements">
